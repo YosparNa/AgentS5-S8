@@ -40,9 +40,10 @@ def run(state: PipelineState) -> str:
     return chat(messages, temperature=0.7, max_tokens=32768)
 
 
-def re_run_with_feedback(state: PipelineState, feedback: str) -> str:
+def re_run_with_feedback(state: PipelineState, feedback: str, old_script: str = None) -> str:
+    script = old_script or state.script_data or ""
     user_content = f"""## 当前脚本
-{state.script_data}
+{script}
 
 ## 对抗审核反馈（需要修补的问题）
 {feedback}

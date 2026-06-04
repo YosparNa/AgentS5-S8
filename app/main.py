@@ -236,6 +236,7 @@ async def s8_run(req: StageConfig = StageConfig()):
             state.status = PipelineStatus.ROLLBACK
             rb = RollbackEvent(Stage.S8_ADVERSARIAL, Stage.S7_SCRIPT, detail.get("reason", ""), detail.get("scores"))
             state.rollbacks.append(rb)
+            old_script = state.script_data  # 先保存，供 re_run_with_feedback 使用
             state.script_data = None  # 清空，需要重新生成
             state.current_stage = Stage.S7_SCRIPT
             state.add_history("rollback_s7", detail.get("reason", ""))
@@ -244,7 +245,7 @@ async def s8_run(req: StageConfig = StageConfig()):
             await broadcast({"type": "stage_start", "stage": "s7", "message": "回滚到 S7，正在根据审核反馈修补脚本..."})
             feedback = json.dumps(result, ensure_ascii=False)
             try:
-                new_script = await asyncio.to_thread(s7_script.re_run_with_feedback, state, feedback)
+                new_script = await asyncio.to_thread(s7_script.re_run_with_feedback, state, feedback, old_script)
                 state.script_data = new_script
                 state.script_version += 1
                 state.status = PipelineStatus.AWAITING_USER
