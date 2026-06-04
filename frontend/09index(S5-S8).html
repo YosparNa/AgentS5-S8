@@ -3833,6 +3833,19 @@
       } else if(s.config.kind==='adversarial' && o.roles){
         h += o.roles.map(r=>`<div class="bg-white border border-gray-200 rounded-lg p-2.5"><div class="flex items-center gap-3"><div class="text-2xl">${r.emoji||r.avatar}</div><div class="flex-1"><div class="flex items-center gap-2"><span class="text-[12px] font-bold">${r.name}</span>${r.score!==undefined?`<span class="text-[11px] mono font-bold ${r.score>=7?'text-emerald-600':r.score>=5?'text-amber-600':'text-red-600'}">${r.score}/10</span>`:`<span class="text-[10px] mono bg-gray-100 px-1.5 rounded">${r.issues} 条</span>`}</div><div class="text-[10px] text-gray-600">${r.note||r.summary||''}</div></div></div>${r.issues&&r.issues.length&&typeof r.issues[0]==='object'?`<div class="mt-2 space-y-1">${r.issues.map(iss=>`<div class="text-[10px] flex items-start gap-1"><span class="${iss.severity==='high'?'text-red-500':iss.severity==='medium'?'text-amber-500':'text-gray-400'}"><i class="fa-solid fa-circle-exclamation"></i></span><span>${iss.description||iss}${iss.suggestion?' → <i class="text-gray-400">'+iss.suggestion+'</i>':''}</span></div>`).join('')}</div>`:''}${r.suggestions&&r.suggestions.length?`<div class="mt-1.5 text-[10px] text-indigo-600">${r.suggestions.map(x=>'<div>💡 '+x+'</div>').join('')}</div>`:''}</div>`).join('');
         if(o.average_score!==undefined){ h += `<div class="bg-gray-50 border border-gray-200 rounded-lg p-3 mt-2 flex items-center justify-between"><span class="text-[12px] font-bold">综合评分</span><span class="text-[18px] font-black ${o.average_score>=7?'text-emerald-600':o.average_score>=5?'text-amber-600':'text-red-600'}">${o.average_score}/10</span></div>`; }
+        // S8 回滚状态卡片
+        if(s.rollbackTarget){
+          h += `<div class="bg-amber-50 border-2 border-amber-300 rounded-lg p-3 mt-3">
+            <div class="flex items-center gap-2 mb-2"><i class="fa-solid fa-rotate-left text-amber-600"></i><span class="text-[12px] font-bold text-amber-900">审核未通过 · 需回滚到 ${s.rollbackTarget.toUpperCase()}</span></div>
+            <div class="text-[11px] text-amber-800 mb-3">${s.rollbackReason || '评分未达标，需要重新生成'}</div>
+            <div class="flex gap-2">
+              <button onclick="agentHandleRollback()" class="bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-semibold px-3 py-1.5 rounded"><i class="fa-solid fa-rotate-left text-[10px] mr-1"></i>回滚到 ${s.rollbackTarget.toUpperCase()} 重新生成</button>
+              <button onclick="agentS8Run()" class="border border-gray-300 hover:bg-gray-50 text-[11px] px-3 py-1.5 rounded"><i class="fa-solid fa-gavel text-[10px] mr-1"></i>重新审核</button>
+            </div>
+          </div>`;
+        } else if(o.average_score!==undefined && o.average_score>=7){
+          h += `<div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mt-3 flex items-center gap-2"><i class="fa-solid fa-check-circle text-emerald-600"></i><span class="text-[12px] font-bold text-emerald-900">审核通过</span><span class="text-[11px] text-emerald-700">内容质量达标，可以进入下一阶段</span></div>`;
+        }
       } else if(s.config.kind==='storyboard' && o.shots){
         h += o.shots.map(sh=>`<div class="bg-white border ${sh.active?'border-indigo-400':'border-gray-200'} rounded-lg p-2 flex items-start gap-2"><span class="mono text-[10px] bg-gray-100 px-1.5 py-0.5 rounded">${sh.id}</span><div class="flex-1"><div class="text-[11px]">${sh.desc}</div></div>${sh.active?'<span class="text-[9px] text-indigo-600 blink">▶</span>':''}</div>`).join('');
       } else if(s.config.kind==='cover' && o.matrix){
@@ -4955,7 +4968,7 @@
       });
     }
 
-    // 处理 S8 回滚后的数据同步
+    // 处理 S8 回滚后的数据同步 + 跳转
     async function agentHandleRollback() {
       const state = await agentFetch('/api/state');
       if (state.ok || state.current_stage) {
@@ -4963,7 +4976,15 @@
         if (s.topic_data) { STAGE.s5.output = s.topic_data; STAGE.s5.status = 'done'; STAGE.s5.agentResult = true; }
         if (s.outline_data) { STAGE.s6.output = s.outline_data; STAGE.s6.status = 'done'; STAGE.s6.agentResult = true; }
         if (s.script_data) { STAGE.s7.output = { excerpt: s.script_data }; STAGE.s7.status = 'done'; STAGE.s7.agentResult = true; }
-        openStage(s.current_stage);
+        // 清除 S8 回滚状态
+        STAGE.s8.rollbackTarget = null;
+        STAGE.s8.rollbackReason = null;
+        // 跳转到目标阶段
+        const target = s.current_stage || 's5';
+        showToast(`已回滚到 ${target.toUpperCase()}，请重新生成`, 'ok');
+        openStage(target);
+      } else {
+        showToast('回滚失败：无法获取状态', 'error');
       }
     }
 
