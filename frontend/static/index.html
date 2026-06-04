@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>视频剪辑流 Agent</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/css/all.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .pulse { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .stage-dot { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; transition: all 0.3s; }
+    .stage-dot.active { background: #4f46e5; color: white; box-shadow: 0 0 0 4px rgba(79,70,229,0.2); }
+    .stage-dot.done { background: #10b981; color: white; }
+    .stage-dot.pending { background: #e5e7eb; color: #9ca3af; }
+    .topic-card { transition: all 0.2s; cursor: pointer; }
+    .topic-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+    .topic-card.selected { border-color: #4f46e5; background: #eef2ff; }
+    .role-card { border-left: 4px solid; }
+    .script-area { font-family: 'Courier New', monospace; line-height: 1.8; white-space: pre-wrap; }
+    .loading-spinner { border: 3px solid #e5e7eb; border-top: 3px solid #4f46e5; border-radius: 50%; width: 24px; height: 24px; animation: spin 0.8s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .rollback-banner { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); }
+    .success-banner { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); }
+    .log-item { border-left: 3px solid #e5e7eb; padding-left: 12px; margin-bottom: 8px; }
+    .log-item.rollback { border-color: #f59e0b; }
+    .log-item.done { border-color: #10b981; }
+    .log-item.error { border-color: #ef4444; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div id="app" class="max-w-7xl mx-auto px-4 py-6">
+    <!-- 顶部标题 -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">视频剪辑流 Agent</h1>
+        <p class="text-sm text-gray-500 mt-1">S5 选题 → S6 大纲 → S7 脚本 → S8 对抗审核</p>
+      </div>
+      <div id="status-badge" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">就绪</div>
+    </div>
+
+    <!-- 流程进度条 -->
+    <div class="bg-white rounded-xl shadow-sm border p-4 mb-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3 stage-item" data-stage="s5">
+          <div class="stage-dot pending" id="dot-s5">S5</div>
+          <div>
+            <div class="text-sm font-semibold text-gray-700">选题</div>
+            <div class="text-xs text-gray-400" id="label-s5">等待</div>
+          </div>
+        </div>
+        <div class="flex-1 h-0.5 bg-gray-200 mx-3" id="line-1"></div>
+        <div class="flex items-center gap-3 stage-item" data-stage="s6">
+          <div class="stage-dot pending" id="dot-s6">S6</div>
+          <div>
+            <div class="text-sm font-semibold text-gray-700">大纲</div>
+            <div class="text-xs text-gray-400" id="label-s6">等待</div>
+          </div>
+        </div>
+        <div class="flex-1 h-0.5 bg-gray-200 mx-3" id="line-2"></div>
+        <div class="flex items-center gap-3 stage-item" data-stage="s7">
+          <div class="stage-dot pending" id="dot-s7">S7</div>
+          <div>
+            <div class="text-sm font-semibold text-gray-700">脚本</div>
+            <div class="text-xs text-gray-400" id="label-s7">等待</div>
+          </div>
+        </div>
+        <div class="flex-1 h-0.5 bg-gray-200 mx-3" id="line-3"></div>
+        <div class="flex items-center gap-3 stage-item" data-stage="s8">
+          <div class="stage-dot pending" id="dot-s8">S8</div>
+          <div>
+            <div class="text-sm font-semibold text-gray-700">对抗</div>
+            <div class="text-xs text-gray-400" id="label-s8">等待</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 回滚/成功横幅 -->
+    <div id="rollback-banner" class="hidden rollback-banner rounded-xl p-4 mb-6 flex items-center gap-3">
+      <i class="fa-solid fa-rotate-left text-amber-600 text-xl"></i>
+      <div>
+        <div class="font-semibold text-amber-800" id="rollback-title">回滚中...</div>
+        <div class="text-sm text-amber-700" id="rollback-reason"></div>
+      </div>
+    </div>
+    <div id="success-banner" class="hidden success-banner rounded-xl p-4 mb-6 flex items-center gap-3">
+      <i class="fa-solid fa-circle-check text-emerald-600 text-xl"></i>
+      <div>
+        <div class="font-semibold text-emerald-800">全部通过！</div>
+        <div class="text-sm text-emerald-700" id="success-detail"></div>
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="grid grid-cols-12 gap-6">
+      <!-- 左侧：工作区 -->
+      <div class="col-span-8">
+        <!-- 初始化面板 -->
+        <div id="panel-init" class="bg-white rounded-xl shadow-sm border p-6 fade-in">
+          <h2 class="text-lg font-bold mb-4"><i class="fa-solid fa-play text-indigo-500 mr-2"></i>初始化流程</h2>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">频道定位描述</label>
+            <textarea id="input-channel" rows="2" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="例：科技评测频道，聚焦 AI 工具和效率软件，受众是 25-35 岁的互联网从业者"></textarea>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">输入数据（热点、竞品分析、评论等）</label>
+            <textarea id="input-data" rows="8" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="粘贴你收集的数据：热点话题、竞品视频分析、用户评论、行业报告等..."></textarea>
+          </div>
+          <button onclick="initPipeline()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2.5 rounded-lg transition">
+            <i class="fa-solid fa-rocket mr-1.5"></i>开始生成选题
+          </button>
+        </div>
+
+        <!-- S5 选题面板 -->
+        <div id="panel-s5" class="hidden bg-white rounded-xl shadow-sm border p-6 fade-in">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold"><i class="fa-solid fa-lightbulb text-yellow-500 mr-2"></i>S5 候选选题</h2>
+            <span class="text-xs text-gray-400" id="s5-version"></span>
+          </div>
+          <div id="s5-loading" class="hidden text-center py-8">
+            <div class="loading-spinner mx-auto mb-3"></div>
+            <p class="text-sm text-gray-500">正在生成选题...</p>
+          </div>
+          <div id="s5-topics" class="space-y-3"></div>
+          <div id="s5-actions" class="hidden mt-4 flex gap-3">
+            <button onclick="confirmTopic()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2 rounded-lg transition" id="btn-confirm-topic" disabled>
+              <i class="fa-solid fa-lock mr-1.5"></i>锁定选题，进入大纲
+            </button>
+          </div>
+        </div>
+
+        <!-- S6 大纲面板 -->
+        <div id="panel-s6" class="hidden bg-white rounded-xl shadow-sm border p-6 fade-in">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold"><i class="fa-solid fa-list-tree text-blue-500 mr-2"></i>S6 视频大纲</h2>
+            <span class="text-xs text-gray-400" id="s6-version"></span>
+          </div>
+          <div id="s6-loading" class="hidden text-center py-8">
+            <div class="loading-spinner mx-auto mb-3"></div>
+            <p class="text-sm text-gray-500">正在生成大纲...</p>
+          </div>
+          <div id="s6-content"></div>
+          <div id="s6-actions" class="hidden mt-4">
+            <button onclick="confirmOutline()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2 rounded-lg transition">
+              <i class="fa-solid fa-check mr-1.5"></i>确认大纲，生成脚本
+            </button>
+          </div>
+        </div>
+
+        <!-- S7 脚本面板 -->
+        <div id="panel-s7" class="hidden bg-white rounded-xl shadow-sm border p-6 fade-in">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold"><i class="fa-solid fa-file-pen text-green-500 mr-2"></i>S7 口播脚本</h2>
+            <span class="text-xs text-gray-400" id="s7-version"></span>
+          </div>
+          <div id="s7-loading" class="hidden text-center py-8">
+            <div class="loading-spinner mx-auto mb-3"></div>
+            <p class="text-sm text-gray-500">正在生成脚本...</p>
+          </div>
+          <div id="s7-content" class="hidden">
+            <div class="text-xs text-gray-400 mb-2" id="s7-stats"></div>
+            <div class="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto script-area text-sm" id="s7-script"></div>
+          </div>
+          <div id="s7-actions" class="hidden mt-4">
+            <button onclick="confirmScript()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2 rounded-lg transition">
+              <i class="fa-solid fa-check mr-1.5"></i>确认脚本，进入对抗审核
+            </button>
+          </div>
+        </div>
+
+        <!-- S8 对抗面板 -->
+        <div id="panel-s8" class="hidden bg-white rounded-xl shadow-sm border p-6 fade-in">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold"><i class="fa-solid fa-gavel text-red-500 mr-2"></i>S8 五角色对抗审核</h2>
+            <span class="text-xs text-gray-400" id="s8-version"></span>
+          </div>
+          <div id="s8-loading" class="hidden text-center py-8">
+            <div class="loading-spinner mx-auto mb-3"></div>
+            <p class="text-sm text-gray-500">5 个角色正在并行审核...</p>
+          </div>
+          <div id="s8-roles" class="grid grid-cols-1 gap-4"></div>
+          <div id="s8-summary" class="hidden mt-4 bg-gray-50 rounded-lg p-4"></div>
+        </div>
+      </div>
+
+      <!-- 右侧：状态面板 -->
+      <div class="col-span-4">
+        <div class="bg-white rounded-xl shadow-sm border p-4 sticky top-6">
+          <h3 class="text-sm font-bold text-gray-700 mb-3"><i class="fa-solid fa-clock-rotate-left mr-1.5 text-gray-400"></i>操作日志</h3>
+          <div id="log-list" class="space-y-1 max-h-[600px] overflow-y-auto text-xs">
+            <div class="text-gray-400 text-center py-4">等待开始...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== 全局状态 =====
+    let pipelineState = null;
+    let selectedTopicIndex = -1;
+    let ws = null;
+
+    // ===== WebSocket =====
+    function connectWS() {
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${location.host}/ws`);
+      ws.onmessage = (e) => {
+        const msg = JSON.parse(e.data);
+        handleWSMessage(msg);
+      };
+      ws.onclose = () => setTimeout(connectWS, 2000);
+    }
+
+    function handleWSMessage(msg) {
+      switch (msg.type) {
+        case 'connected':
+        case 'state_update':
+          pipelineState = msg.data;
+          updateUI();
+          break;
+        case 'stage_start':
+          showLoading(msg.stage, true);
+          addLog(msg.stage, msg.message, 'running');
+          break;
+        case 'stage_done':
+          showLoading(msg.stage, false);
+          handleStageDone(msg.stage, msg.data, msg.is_rollback);
+          break;
+        case 'topic_selected':
+          addLog('s5', `锁定选题: ${msg.topic.title}`, 'done');
+          break;
+        case 'rollback':
+          showRollback(msg.from, msg.to, msg.reason, msg.scores);
+          addLog(msg.to, `回滚: ${msg.reason}`, 'rollback');
+          break;
+        case 'pipeline_done':
+          showSuccess(msg.detail);
+          addLog('done', '全部阶段通过！', 'done');
+          break;
+        case 'error':
+          showLoading(msg.stage, false);
+          addLog(msg.stage, `错误: ${msg.message}`, 'error');
+          alert(`错误: ${msg.message}`);
+          break;
+      }
+    }
+
+    // ===== UI 更新 =====
+    function updateUI() {
+      if (!pipelineState) return;
+      const s = pipelineState;
+      // 更新进度点
+      ['s5','s6','s7','s8'].forEach(id => {
+        const dot = document.getElementById(`dot-${id}`);
+        const label = document.getElementById(`label-${id}`);
+        if (s.current_stage === id && s.status === 'running') {
+          dot.className = 'stage-dot active pulse';
+          label.textContent = '运行中...';
+        } else if (isStageDone(id, s)) {
+          dot.className = 'stage-dot done';
+          label.textContent = '✓ 完成';
+        } else if (s.current_stage === id) {
+          dot.className = 'stage-dot active';
+          label.textContent = '当前';
+        } else {
+          dot.className = 'stage-dot pending';
+          label.textContent = '等待';
+        }
+      });
+      // 更新连线
+      const stages = ['s5','s6','s7','s8'];
+      const curIdx = stages.indexOf(s.current_stage);
+      for (let i = 1; i <= 3; i++) {
+        document.getElementById(`line-${i}`).style.background = i <= curIdx ? '#10b981' : '#e5e7eb';
+      }
+      // 状态标签
+      const badge = document.getElementById('status-badge');
+      const statusMap = { idle: ['就绪','bg-gray-100 text-gray-600'], running: ['运行中...','bg-indigo-100 text-indigo-700'], awaiting_user: ['等待操作','bg-amber-100 text-amber-700'], completed: ['已完成','bg-emerald-100 text-emerald-700'], rollback: ['回滚中','bg-amber-100 text-amber-700'] };
+      const [text, cls] = statusMap[s.status] || statusMap.idle;
+      badge.textContent = text;
+      badge.className = `px-3 py-1.5 rounded-full text-xs font-semibold ${cls}`;
+    }
+
+    function isStageDone(id, s) {
+      const map = { s5: 'topic_version', s6: 'outline_version', s7: 'script_version', s8: 'adversarial_version' };
+      return s[map[id]] > 0;
+    }
+
+    // ===== 操作日志 =====
+    function addLog(stage, text, type = 'info') {
+      const list = document.getElementById('log-list');
+      if (list.querySelector('.text-gray-400')) list.innerHTML = '';
+      const cls = type === 'rollback' ? 'rollback' : type === 'done' ? 'done' : type === 'error' ? 'error' : '';
+      const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      list.innerHTML = `<div class="log-item ${cls}"><span class="text-gray-400">${time}</span> <span class="font-medium text-gray-700">[${stage.toUpperCase()}]</span> ${text}</div>` + list.innerHTML;
+    }
+
+    // ===== 初始化 =====
+    async function initPipeline() {
+      const userData = document.getElementById('input-data').value.trim();
+      const channelDesc = document.getElementById('input-channel').value.trim();
+      if (!userData) { alert('请输入数据'); return; }
+      document.getElementById('panel-init').classList.add('hidden');
+      document.getElementById('panel-s5').classList.remove('hidden');
+      await fetch('/api/init', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ user_data: userData, channel_desc: channelDesc }) });
+      // 自动开始生成选题
+      await fetch('/api/s5/generate', { method: 'POST' });
+    }
+
+    // ===== Loading 控制 =====
+    function showLoading(stage, show) {
+      const el = document.getElementById(`${stage}-loading`);
+      if (el) el.classList.toggle('hidden', !show);
+    }
+
+    // ===== S5 选题 =====
+    function handleStageDone(stage, data, isRollback) {
+      if (stage === 's5') renderTopics(data, isRollback);
+      else if (stage === 's6') renderOutline(data, isRollback);
+      else if (stage === 's7') renderScript(data, isRollback);
+      else if (stage === 's8') renderAdversarial(data);
+    }
+
+    function renderTopics(data, isRollback) {
+      const container = document.getElementById('s5-topics');
+      const topics = data.topics || [];
+      container.innerHTML = topics.map((t, i) => `
+        <div class="topic-card border rounded-lg p-4 ${selectedTopicIndex === i ? 'selected' : ''}" onclick="selectTopic(${i})">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-xs font-bold text-indigo-600">#${t.rank || i+1}</span>
+                <span class="text-sm font-bold text-gray-900">${t.title}</span>
+              </div>
+              <p class="text-xs text-gray-600 mb-2">${t.angle || ''}</p>
+              ${t.unique ? `<p class="text-xs text-indigo-600"><i class="fa-solid fa-star mr-1"></i>${t.unique}</p>` : ''}
+              ${t.hook_idea ? `<p class="text-xs text-amber-600 mt-1"><i class="fa-solid fa-hook mr-1"></i>钩子: ${t.hook_idea}</p>` : ''}
+              ${t.keywords ? `<div class="flex gap-1 mt-2">${t.keywords.map(k => `<span class="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">${k}</span>`).join('')}</div>` : ''}
+            </div>
+            <div class="ml-3 text-right">
+              <div class="text-2xl font-black ${t.score >= 8 ? 'text-emerald-500' : t.score >= 6 ? 'text-amber-500' : 'text-red-500'}">${t.score}</div>
+              <div class="text-[10px] text-gray-400">/10</div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('s5-actions').classList.remove('hidden');
+      if (isRollback) {
+        document.getElementById('s5-version').textContent = `V${pipelineState?.topic_version || '?'} (重新生成)`;
+        selectedTopicIndex = -1;
+        document.getElementById('btn-confirm-topic').disabled = true;
+      }
+    }
+
+    function selectTopic(i) {
+      selectedTopicIndex = i;
+      document.querySelectorAll('.topic-card').forEach((c, j) => c.classList.toggle('selected', j === i));
+      document.getElementById('btn-confirm-topic').disabled = false;
+    }
+
+    async function confirmTopic() {
+      if (selectedTopicIndex < 0) return;
+      document.getElementById('panel-s6').classList.remove('hidden');
+      await fetch('/api/s5/select', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ index: selectedTopicIndex }) });
+      await fetch('/api/s6/generate', { method: 'POST' });
+    }
+
+    // ===== S6 大纲 =====
+    function renderOutline(data, isRollback) {
+      const container = document.getElementById('s6-content');
+      const outline = data.outline || [];
+      container.innerHTML = `
+        <div class="space-y-2">
+          ${outline.map(ch => `
+            <div class="border rounded-lg p-3 ${ch.crisis ? 'border-red-200 bg-red-50' : 'border-gray-200'}">
+              <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold text-gray-400">第${ch.chapter}章</span>
+                  <span class="text-sm font-semibold text-gray-800">${ch.title}</span>
+                  ${ch.crisis ? '<span class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold">危机点</span>' : ''}
+                </div>
+                <div class="flex items-center gap-3 text-xs text-gray-500">
+                  <span><i class="fa-regular fa-clock mr-0.5"></i>${ch.duration}</span>
+                  <span class="font-bold ${ch.tension >= 8 ? 'text-red-500' : ch.tension >= 6 ? 'text-amber-500' : 'text-gray-400'}">张力 ${ch.tension}/10</span>
+                </div>
+              </div>
+              ${ch.hook ? `<p class="text-xs text-amber-600 mb-1"><i class="fa-solid fa-hook mr-1"></i>${ch.hook}</p>` : ''}
+              <p class="text-xs text-gray-600">${ch.description || ''}</p>
+            </div>
+          `).join('')}
+        </div>
+        ${data.total_duration ? `<div class="mt-3 text-sm text-gray-500"><i class="fa-regular fa-clock mr-1"></i>总时长: ${data.total_duration} | 危机点: ${(data.crisis_points || []).join(', ')} | 高潮位置: ${data.climax_position || '?'}</div>` : ''}
+      `;
+      document.getElementById('s6-actions').classList.remove('hidden');
+      if (isRollback) document.getElementById('s6-version').textContent = `V${pipelineState?.outline_version || '?'} (重新生成)`;
+    }
+
+    async function confirmOutline() {
+      document.getElementById('panel-s7').classList.remove('hidden');
+      await fetch('/api/s6/confirm', { method: 'POST' });
+      await fetch('/api/s7/generate', { method: 'POST' });
+    }
+
+    // ===== S7 脚本 =====
+    function renderScript(data, isRollback) {
+      document.getElementById('s7-content').classList.remove('hidden');
+      document.getElementById('s7-stats').textContent = `${data.word_count || 0} 字 · V${pipelineState?.script_version || '?'}`;
+      document.getElementById('s7-script').textContent = data.script || '';
+      document.getElementById('s7-actions').classList.remove('hidden');
+      if (isRollback) document.getElementById('s7-version').textContent = `V${pipelineState?.script_version || '?'} (回滚修补)`;
+    }
+
+    async function confirmScript() {
+      document.getElementById('panel-s8').classList.remove('hidden');
+      await fetch('/api/s7/confirm', { method: 'POST' });
+      await fetch('/api/s8/run', { method: 'POST' });
+    }
+
+    // ===== S8 对抗 =====
+    function renderAdversarial(data) {
+      const container = document.getElementById('s8-roles');
+      const roles = data.roles || [];
+      const colors = { '杠精': '#ef4444', '同行': '#3b82f6', '小白': '#8b5cf6', '老粉': '#ec4899', '合规': '#f59e0b' };
+      container.innerHTML = roles.map(r => `
+        <div class="role-card rounded-lg p-4 bg-gray-50" style="border-left-color: ${colors[r.name] || '#9ca3af'}">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">${r.emoji}</span>
+              <span class="font-bold text-gray-800">${r.name}</span>
+              <span class="text-[10px] text-gray-400">${r.focus || ''}</span>
+            </div>
+            <div class="text-xl font-black ${r.score >= 7 ? 'text-emerald-500' : r.score >= 5 ? 'text-amber-500' : 'text-red-500'}">${r.score}/10</div>
+          </div>
+          ${r.summary ? `<p class="text-sm text-gray-700 mb-2">${r.summary}</p>` : ''}
+          ${r.issues && r.issues.length ? `
+            <div class="space-y-1">
+              ${r.issues.map(iss => `
+                <div class="text-xs flex items-start gap-1.5">
+                  <span class="shrink-0 mt-0.5 ${iss.severity === 'high' ? 'text-red-500' : iss.severity === 'medium' ? 'text-amber-500' : 'text-gray-400'}">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                  </span>
+                  <span><b>${iss.severity?.toUpperCase() || ''}</b> ${iss.description || iss} ${iss.suggestion ? `<i class="text-gray-400">→ ${iss.suggestion}</i>` : ''}</span>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+          ${r.suggestions && r.suggestions.length ? `<div class="mt-2 text-xs text-indigo-600">${r.suggestions.map(s => `<div>💡 ${s}</div>`).join('')}</div>` : ''}
+          ${r.highlights && r.highlights.length ? `<div class="mt-2 text-xs text-emerald-600">${r.highlights.map(h => `<div>✅ ${h}</div>`).join('')}</div>` : ''}
+        </div>
+      `).join('');
+      // 综合评分
+      document.getElementById('s8-summary').classList.remove('hidden');
+      document.getElementById('s8-summary').innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="font-semibold text-gray-700">综合评分</span>
+          <span class="text-2xl font-black ${data.average_score >= 7 ? 'text-emerald-500' : data.average_score >= 5 ? 'text-amber-500' : 'text-red-500'}">${data.average_score}/10</span>
+        </div>
+      `;
+    }
+
+    // ===== 回滚与成功 =====
+    function showRollback(from, to, reason, scores) {
+      const banner = document.getElementById('rollback-banner');
+      banner.classList.remove('hidden');
+      document.getElementById('rollback-title').textContent = `从 ${from.toUpperCase()} 回滚到 ${to.toUpperCase()}`;
+      document.getElementById('rollback-reason').textContent = reason;
+      setTimeout(() => banner.classList.add('hidden'), 8000);
+      // 切换面板
+      ['s5','s6','s7','s8'].forEach(id => {
+        const panel = document.getElementById(`panel-${id}`);
+        if (id === to) panel.classList.remove('hidden');
+      });
+      updateUI();
+    }
+
+    function showSuccess(detail) {
+      const banner = document.getElementById('success-banner');
+      banner.classList.remove('hidden');
+      document.getElementById('success-detail').textContent = `平均分 ${detail?.average || '?'}，全部角色通过`;
+    }
+
+    // ===== 启动 =====
+    connectWS();
+  </script>
+</body>
+</html>
