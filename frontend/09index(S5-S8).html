@@ -4665,88 +4665,73 @@
     // S5 输入数据持久化
     let savedChannelDesc = '';
     let savedUserData = '';
-    // 配置面板状态持久化（解决切换Tab后配置丢失问题）
-    const configState = {
-      s5: { toggles: [true, true, true], sliders: [7, 8, 6, 9] },
-      s6: { selectedOption: 0, sliders: [3, 78, 8] },
-      s7: { bannedWords: '禁用：综上所述 / 在当今时代', toggles: [true, true] },
-      s8: { toggles: [true, true, true, true, true] },
-    };
+    // 配置面板状态持久化（存入 STAGE 对象，不污染全局）
+    // 每个阶段的 STAGE[x].configValues 存储当前配置快照
     function saveConfigState(stageId) {
-      const panel = document.querySelector(`[data-stage="${stageId}"]`) || document.querySelector(`.drawer-body`);
+      const panel = document.querySelector('.drawer-body');
       if (!panel) return;
       const toggles = panel.querySelectorAll('.toggle');
       const sliders = panel.querySelectorAll('input[type="range"]');
+      const cv = STAGE[stageId].configValues || (STAGE[stageId].configValues = {});
       if (stageId === 's5') {
-        configState.s5.toggles = [toggles[0]?.classList.contains('on') ?? true, toggles[1]?.classList.contains('on') ?? true, toggles[2]?.classList.contains('on') ?? true];
-        configState.s5.sliders = [parseInt(sliders[0]?.value ?? 7), parseInt(sliders[1]?.value ?? 8), parseInt(sliders[2]?.value ?? 6), parseInt(sliders[3]?.value ?? 9)];
+        cv.toggles = [toggles[0]?.classList.contains('on') ?? true, toggles[1]?.classList.contains('on') ?? true, toggles[2]?.classList.contains('on') ?? true];
+        cv.sliders = [parseInt(sliders[0]?.value ?? 7), parseInt(sliders[1]?.value ?? 8), parseInt(sliders[2]?.value ?? 6), parseInt(sliders[3]?.value ?? 9)];
       } else if (stageId === 's6') {
         const opts = panel.querySelectorAll('[data-cb="前 3 秒钩子"] .grid > div');
-        opts.forEach((d, i) => { if (d.classList.contains('border-indigo-500')) configState.s6.selectedOption = i; });
-        configState.s6.sliders = [parseInt(sliders[0]?.value ?? 3), parseInt(sliders[1]?.value ?? 78), parseInt(sliders[2]?.value ?? 8)];
+        opts.forEach((d, i) => { if (d.classList.contains('border-indigo-500')) cv.selectedOption = i; });
+        cv.sliders = [parseInt(sliders[0]?.value ?? 3), parseInt(sliders[1]?.value ?? 78), parseInt(sliders[2]?.value ?? 8)];
       } else if (stageId === 's7') {
         const ta = panel.querySelector('[data-cb="个人化口语"] textarea');
-        if (ta) configState.s7.bannedWords = ta.value;
-        configState.s7.toggles = [toggles[0]?.classList.contains('on') ?? true, toggles[1]?.classList.contains('on') ?? true];
+        if (ta) cv.bannedWords = ta.value;
+        cv.toggles = [toggles[0]?.classList.contains('on') ?? true, toggles[1]?.classList.contains('on') ?? true];
       } else if (stageId === 's8') {
-        configState.s8.toggles = Array.from(toggles).map(t => t.classList.contains('on'));
+        cv.toggles = Array.from(toggles).map(t => t.classList.contains('on'));
       }
     }
     function restoreConfigState(stageId) {
       const panel = document.querySelector('.drawer-body');
       if (!panel) return;
+      const cv = STAGE[stageId]?.configValues;
+      if (!cv) return;  // 无已保存状态，保持默认
       requestAnimationFrame(() => {
         const toggles = panel.querySelectorAll('.toggle');
         const sliders = panel.querySelectorAll('input[type="range"]');
         if (stageId === 's5') {
-          configState.s5.toggles.forEach((v, i) => { if (toggles[i]) toggles[i].classList.toggle('on', v); });
-          configState.s5.sliders.forEach((v, i) => { if (sliders[i]) { sliders[i].value = v; sliders[i].dispatchEvent(new Event('input')); } });
-          // 恢复 textarea
+          (cv.toggles || []).forEach((v, i) => { if (toggles[i]) toggles[i].classList.toggle('on', v); });
+          (cv.sliders || []).forEach((v, i) => { if (sliders[i]) { sliders[i].value = v; sliders[i].dispatchEvent(new Event('input')); } });
           const cd = document.getElementById('agentChannelDesc');
           const ud = document.getElementById('agentUserData');
           if (cd && savedChannelDesc) cd.value = savedChannelDesc;
           if (ud && savedUserData) ud.value = savedUserData;
         } else if (stageId === 's6') {
-          configState.s6.sliders.forEach((v, i) => { if (sliders[i]) { sliders[i].value = v; sliders[i].dispatchEvent(new Event('input')); } });
+          (cv.sliders || []).forEach((v, i) => { if (sliders[i]) { sliders[i].value = v; sliders[i].dispatchEvent(new Event('input')); } });
           const opts = panel.querySelectorAll('[data-cb="前 3 秒钩子"] .grid > div');
           opts.forEach((d, i) => {
             d.classList.remove('border-indigo-500', 'bg-indigo-50');
             d.classList.add('border-gray-200');
-            if (i === configState.s6.selectedOption) {
+            if (i === (cv.selectedOption ?? 0)) {
               d.classList.remove('border-gray-200');
               d.classList.add('border-indigo-500', 'bg-indigo-50');
             }
           });
         } else if (stageId === 's7') {
-          configState.s7.toggles.forEach((v, i) => { if (toggles[i]) toggles[i].classList.toggle('on', v); });
+          (cv.toggles || []).forEach((v, i) => { if (toggles[i]) toggles[i].classList.toggle('on', v); });
           const ta = panel.querySelector('[data-cb="个人化口语"] textarea');
-          if (ta && configState.s7.bannedWords) ta.value = configState.s7.bannedWords;
+          if (ta && cv.bannedWords) ta.value = cv.bannedWords;
         } else if (stageId === 's8') {
-          configState.s8.toggles.forEach((v, i) => { if (toggles[i]) toggles[i].classList.toggle('on', v); });
+          (cv.toggles || []).forEach((v, i) => { if (toggles[i]) toggles[i].classList.toggle('on', v); });
         }
-        // 绑定保存事件
         bindConfigSaveEvents(stageId);
       });
     }
     function bindConfigSaveEvents(stageId) {
       const panel = document.querySelector('.drawer-body');
       if (!panel) return;
-      // toggle 点击时保存
-      panel.querySelectorAll('.toggle').forEach(t => {
-        t.addEventListener('click', () => setTimeout(() => saveConfigState(stageId), 10));
-      });
-      // slider 变化时保存
-      panel.querySelectorAll('input[type="range"]').forEach(s => {
-        s.addEventListener('input', () => saveConfigState(stageId));
-      });
-      // textarea 变化时保存
-      panel.querySelectorAll('textarea').forEach(ta => {
-        ta.addEventListener('input', () => saveConfigState(stageId));
-      });
-      // option 选择时保存
-      panel.querySelectorAll('[data-cb="前 3 秒钩子"] .grid > div').forEach(d => {
-        d.addEventListener('click', () => setTimeout(() => saveConfigState(stageId), 10));
-      });
+      const save = () => saveConfigState(stageId);
+      panel.querySelectorAll('.toggle').forEach(t => t.addEventListener('click', () => setTimeout(save, 10)));
+      panel.querySelectorAll('input[type="range"]').forEach(s => s.addEventListener('input', save));
+      panel.querySelectorAll('textarea').forEach(ta => ta.addEventListener('input', save));
+      panel.querySelectorAll('[data-cb="前 3 秒钩子"] .grid > div').forEach(d => d.addEventListener('click', () => setTimeout(save, 10)));
     }
     // S6 正在重做的章节集合
     let regeneratingChapters = new Set();
