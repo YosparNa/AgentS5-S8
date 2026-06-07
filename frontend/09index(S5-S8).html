@@ -3769,7 +3769,7 @@
       }
       if(s.config.kind==='topic' && o.topics){
         const isLocked = o.locked === true;
-        h += o.topics.map((t,i)=>`<div class="bg-white border-2 ${t.locked?'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200 shadow-md':STAGE.s5._selectedIdx===i?'border-emerald-400 ring-2 ring-emerald-100':'border-gray-200'} rounded-lg p-3 ${isLocked?'':'cursor-pointer'} hover:border-indigo-300 transition relative" onclick="${isLocked?'':`STAGE.s5._selectedIdx=${i};renderDrawer()`}">${t.locked?'<div class="absolute -top-2 -right-2 bg-indigo-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] shadow"><i class="fa-solid fa-lock"></i></div>':''}<div class="flex justify-between mb-1"><span class="mono text-[10px] ${t.locked?'bg-indigo-100 text-indigo-700':'bg-gray-100'} px-1.5 py-0.5 rounded">#${t.rank||i+1}</span><span class="text-[11px] mono font-bold ${t.score>=8?'text-emerald-600':'text-gray-500'}">${t.score}</span></div><div class="text-[12px] font-semibold">${t.title}</div>${t.angle?`<div class="mt-1 text-[10px] text-gray-600">${t.angle}</div>`:''}${t.unique?`<div class="mt-1 text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-100 rounded p-1.5"><b>独特视角：</b>${t.unique}</div>`:''}${t.hook_idea?`<div class="mt-1 text-[10px] text-amber-600"><i class="fa-solid fa-hook mr-1"></i>${t.hook_idea}</div>`:''}${t.keywords?`<div class="flex flex-wrap gap-1 mt-1.5">${t.keywords.map(k=>`<span class="text-[9px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">${k}</span>`).join('')}</div>`:''}</div>`).join('');
+        h += o.topics.map((t,i)=>`<div class="bg-white border-2 ${t.locked?'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200 shadow-md':STAGE.s5._selectedIdx===i?'border-emerald-400 ring-2 ring-emerald-100':'border-gray-200'} rounded-lg p-3 ${isLocked?'':'cursor-pointer'} hover:border-indigo-300 transition relative" onclick="${isLocked?'':`STAGE.s5._selectedIdx=${i};renderDrawer()`}">${t.locked?'<div class="absolute -top-2 -right-2 bg-indigo-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] shadow"><i class="fa-solid fa-lock"></i></div>':''}<div class="flex justify-between mb-1"><span class="mono text-[10px] ${t.locked?'bg-indigo-100 text-indigo-700':'bg-gray-100'} px-1.5 py-0.5 rounded">#${t.rank||i+1}</span><span class="text-[11px] mono font-bold ${t.score>=8?'text-emerald-600':'text-gray-500'}">${t.score}</span></div><div class="text-[12px] font-semibold">${t.title}</div>${t.angle?`<div class="mt-1 text-[10px] text-gray-600">${t.angle}</div>`:''}${t.unique?`<div class="mt-1 text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-100 rounded p-1.5"><b>独特视角：</b>${t.unique}</div>`:''}${t.rationale?`<div class="mt-1 text-[10px] text-gray-500">${t.rationale}</div>`:''}${t.keywords?`<div class="flex flex-wrap gap-1 mt-1.5">${t.keywords.map(k=>`<span class="text-[9px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">${k}</span>`).join('')}</div>`:''}</div>`).join('');
       } else if(s.config.kind==='outline' && o.outline){
         // 张力曲线（美化版）
         const maxT = Math.max(...o.outline.map(c=>c.tension||0));
@@ -3799,7 +3799,7 @@
             <div class="p-3.5">
               <div class="flex items-start justify-between mb-2">
                 <div class="flex items-center gap-2 flex-1 min-w-0">
-                  <span class="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style="background:${borderColor}">${c.num||idx+1}</span>
+                  <span class="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style="background:${borderColor}">${idx+1}</span>
                   <span class="text-[13px] font-bold text-gray-900 truncate">${c.ch}</span>
                   ${c.crisis?'<span class="shrink-0 text-[9px] bg-red-600 text-white px-1.5 py-0.5 rounded-full font-bold">⚠ 危机点</span>':''}
                 </div>
@@ -3836,8 +3836,8 @@
       } else if(s.config.kind==='script' && o.excerpt){
         h += `<div class="bg-white rounded-lg border border-gray-200 p-3"><pre class="text-[12px] leading-relaxed whitespace-pre-wrap font-sans">${o.excerpt}</pre></div>`;
       } else if(s.config.kind==='adversarial' && o.roles){
-        h += o.roles.map(r=>`<div class="bg-white border border-gray-200 rounded-lg p-2.5"><div class="flex items-center gap-3"><div class="text-2xl">${r.emoji||r.avatar}</div><div class="flex-1"><div class="flex items-center gap-2"><span class="text-[12px] font-bold">${r.name}</span>${r.score!==undefined?`<span class="text-[11px] mono font-bold ${r.score>=7?'text-emerald-600':r.score>=5?'text-amber-600':'text-red-600'}">${r.score}/10</span>`:`<span class="text-[10px] mono bg-gray-100 px-1.5 rounded">${r.issues} 条</span>`}</div><div class="text-[10px] text-gray-600">${r.note||r.summary||''}</div></div></div>${r.issues&&r.issues.length&&typeof r.issues[0]==='object'?`<div class="mt-2 space-y-1">${r.issues.map(iss=>`<div class="text-[10px] flex items-start gap-1"><span class="${iss.severity==='high'?'text-red-500':iss.severity==='medium'?'text-amber-500':'text-gray-400'}"><i class="fa-solid fa-circle-exclamation"></i></span><span>${iss.description||iss}${iss.suggestion?' → <i class="text-gray-400">'+iss.suggestion+'</i>':''}</span></div>`).join('')}</div>`:''}${r.suggestions&&r.suggestions.length?`<div class="mt-1.5 text-[10px] text-indigo-600">${r.suggestions.map(x=>'<div>💡 '+x+'</div>').join('')}</div>`:''}</div>`).join('');
-        if(o.average_score!==undefined){ h += `<div class="bg-gray-50 border border-gray-200 rounded-lg p-3 mt-2 flex items-center justify-between"><span class="text-[12px] font-bold">综合评分</span><span class="text-[18px] font-black ${o.average_score>=7?'text-emerald-600':o.average_score>=5?'text-amber-600':'text-red-600'}">${o.average_score}/10</span></div>`; }
+        h += o.roles.map(r=>`<div class="bg-white border border-gray-200 rounded-lg p-2.5"><div class="flex items-center gap-3"><div class="text-2xl">${r.avatar}</div><div class="flex-1"><div class="flex items-center gap-2"><span class="text-[12px] font-bold">${r.name}</span>${r.score!==undefined?`<span class="text-[11px] mono font-bold ${r.score>=7?'text-emerald-600':r.score>=5?'text-amber-600':'text-red-600'}">${r.score}/10</span>`:`<span class="text-[10px] mono bg-gray-100 px-1.5 rounded">${typeof r.issues==='number'?r.issues+' 条':r.issues?.length||0+' 条'}</span>`}</div><div class="text-[10px] text-gray-600">${r.note||''}</div></div></div>${r.issues&&r.issues.length&&typeof r.issues[0]==='object'?`<div class="mt-2 space-y-1">${r.issues.map(iss=>`<div class="text-[10px] flex items-start gap-1"><span class="${iss.severity==='high'?'text-red-500':iss.severity==='medium'?'text-amber-500':'text-gray-400'}"><i class="fa-solid fa-circle-exclamation"></i></span><span>${iss.description||iss}${iss.suggestion?' → <i class="text-gray-400">'+iss.suggestion+'</i>':''}</span></div>`).join('')}</div>`:''}${r.suggestions&&r.suggestions.length?`<div class="mt-1.5 text-[10px] text-indigo-600">${r.suggestions.map(x=>'<div>💡 '+x+'</div>').join('')}</div>`:''}</div>`).join('');
+        if(o.averageScore!==undefined){ h += `<div class="bg-gray-50 border border-gray-200 rounded-lg p-3 mt-2 flex items-center justify-between"><span class="text-[12px] font-bold">综合评分</span><span class="text-[18px] font-black ${o.averageScore>=7?'text-emerald-600':o.averageScore>=5?'text-amber-600':'text-red-600'}">${o.averageScore}/10</span></div>`; }
         // S8 回滚状态卡片
         if(s.rollbackTarget){
           h += `<div class="bg-amber-50 border-2 border-amber-300 rounded-lg p-3 mt-3">
@@ -3848,7 +3848,7 @@
               <button onclick="agentS8Run()" class="border border-gray-300 hover:bg-gray-50 text-[11px] px-3 py-1.5 rounded"><i class="fa-solid fa-gavel text-[10px] mr-1"></i>重新审核</button>
             </div>
           </div>`;
-        } else if(o.average_score!==undefined && o.average_score>=7){
+        } else if(o.averageScore!==undefined && o.averageScore>=7){
           h += `<div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mt-3 flex items-center gap-2"><i class="fa-solid fa-check-circle text-emerald-600"></i><span class="text-[12px] font-bold text-emerald-900">审核通过</span><span class="text-[11px] text-emerald-700">内容质量达标，可以进入下一阶段</span></div>`;
         }
       } else if(s.config.kind==='storyboard' && o.shots){
@@ -4805,8 +4805,8 @@
     async function agentLockTopic() {
       if (STAGE.s5._selectedIdx === undefined) { showToast('请先点击选择一个选题', 'warn'); return; }
       const idx = STAGE.s5._selectedIdx;
-      const res = await agentFetch('/api/s5/select', { index: idx });
-      if (res.ok) {
+      const res = await agentFetch('/api/s5/select', { candidateId: idx });
+      if (res.success) {
         STAGE.s5.output.locked = true;
         STAGE.s5.output.topics.forEach((t, i) => t.locked = (i === idx));
         renderDrawer();
@@ -4884,12 +4884,12 @@
         const res = await agentFetch(apiPath, configFn ? { config: configFn() } : {});
         stopProgress();
         agentRunning = false; agentLock = '';
-        if (res.ok && res.data) {
+        if (res.success && res.data) {
           onSuccess(res);
         } else {
           stage.output = oldOutput; stage.status = oldStatus; stage.agentResult = oldResult;
           if (stage.wordCount !== undefined) stage.wordCount = oldExtra;
-          showToast(`${stageId.toUpperCase()} 失败: ${res.error || res.detail || '未知错误'}`, 'error');
+          showToast(`${stageId.toUpperCase()} 失败: ${res.error?.message || '未知错误'}`, 'error');
         }
       } catch(e) {
         stopProgress();
@@ -4911,11 +4911,11 @@
       startProgress('s5');
       renderDrawer();
       // 初始化
-      const initRes = await agentFetch('/api/init', { user_data: userData, channel_desc: channelDesc });
-      if (initRes.error || initRes.detail) {
+      const initRes = await agentFetch('/api/init', { userData: userData, channelDesc: channelDesc });
+      if (!initRes.success) {
         stopProgress();
         agentRunning = false; agentLock = ''; renderDrawer();
-        showToast('初始化失败: ' + (initRes.error || initRes.detail), 'error');
+        showToast('初始化失败: ' + (initRes.error?.message || '未知错误'), 'error');
         return;
       }
       // 备份旧数据（失败时恢复）
@@ -4926,17 +4926,16 @@
       const res = await agentFetch('/api/s5/generate', { config: getS5Config() });
       stopProgress();
       agentRunning = false; agentLock = '';
-      if (res.ok && res.data) {
+      if (res.success && res.data) {
         STAGE.s5.output = res.data;
         STAGE.s5.status = 'done';
         STAGE.s5.agentResult = true;
         agentSaveHistory('s5', `生成 ${res.data.topics?.length || 0} 个选题`, res.data);
       } else {
-        // 失败：恢复旧数据
         STAGE.s5.output = oldOutput;
         STAGE.s5.status = oldStatus;
         STAGE.s5.agentResult = oldResult;
-        showToast('S5 生成失败: ' + (res.error || res.detail), 'error');
+        showToast('S5 生成失败: ' + (res.error?.message || '未知错误'), 'error');
       }
       renderDrawer();
       restoreAgentInput();
@@ -4944,8 +4943,8 @@
 
     // S5: 锁定选题
     async function agentS5Select(idx) {
-      const res = await agentFetch('/api/s5/select', { index: idx });
-      if (res.ok) {
+      const res = await agentFetch('/api/s5/select', { candidateId: idx });
+      if (res.success) {
         STAGE.s5.output.lockedIdx = idx;
         STAGE.s5.output.topics.forEach((t,i) => t.locked = (i === idx));
         renderDrawer();
@@ -4956,16 +4955,7 @@
     async function agentS6Generate() {
       if (!checkDependency('s6')) return;
       await agentCallWithBackup('s6', 's6', '/api/s6/generate', getS6Config, (res) => {
-        if (res.data.outline) {
-          res.data.outline = res.data.outline.map(ch => ({
-            ch: ch.title || ch.ch || `第${ch.chapter}章`, num: ch.chapter,
-            dur: ch.duration || ch.dur || '', tension: ch.tension || 5,
-            hook: ch.hook || '', crisis: ch.crisis || false,
-            description: ch.description || '', purpose: ch.purpose || '',
-            transition_to_next: ch.transition_to_next || '',
-            pros: ch.pros || [], cons: ch.cons || [],
-          }));
-        }
+        // 字段已标准化（文档 §3 S6 artifact）
         STAGE.s6.output = res.data; STAGE.s6.status = 'done'; STAGE.s6.agentResult = true;
         agentSaveHistory('s6', `大纲 ${res.data.outline?.length || 0} 章`, res.data);
       });
@@ -4976,7 +4966,7 @@
       await agentFetch('/api/s6/confirm');
     }
 
-    // S6: 重新生成/改进某个章节（自动判断：有cons则改进，无cons则重做）
+    // S6: 重新生成/改进某个章节
     async function agentRegenChapter(idx) {
       if (regeneratingChapters.has(idx)) { showToast('该章节正在处理中', 'warn'); return; }
       regeneratingChapters.add(idx);
@@ -4984,22 +4974,14 @@
       try {
         const ch = STAGE.s6.output?.outline?.[idx];
         const hasCons = ch?.cons && ch.cons.length > 0;
-        const body = { chapter_index: idx };
+        const body = { chapterIndex: idx };
         if (hasCons) body.feedback = ch.cons.join('；');
         const res = await agentFetch('/api/s6/regen-chapter', body);
-        if (res.ok && res.chapter) {
-          const rch = res.chapter;
-          STAGE.s6.output.outline[idx] = {
-            ch: rch.title || rch.ch || `第${rch.chapter}章`, num: rch.chapter,
-            dur: rch.duration || rch.dur || '', tension: rch.tension || 5,
-            hook: rch.hook || '', crisis: rch.crisis || false,
-            description: rch.description || '', purpose: rch.purpose || '',
-            transition_to_next: rch.transition_to_next || '',
-            pros: rch.pros || [], cons: rch.cons || [],
-          };
+        if (res.success && res.data?.chapter) {
+          STAGE.s6.output.outline[idx] = res.data.chapter;
           showToast(`第${idx+1}章已${hasCons?'改进':'重新生成'}`, 'ok');
         } else {
-          showToast('失败: ' + (res.error || '未知错误'), 'error');
+          showToast('失败: ' + (res.error?.message || '未知错误'), 'error');
         }
       } catch(e) {
         showToast('失败: ' + e.message, 'error');
@@ -5008,17 +4990,16 @@
       renderDrawer();
     }
 
-    // S7: 生成脚本
+    // S7: 生成脚本（文档 §3 S7 artifact：{excerpt, body_md, word_count}）
     async function agentS7Generate() {
       if (!checkDependency('s7')) return;
       await agentCallWithBackup('s7', 's7', '/api/s7/generate', getS7Config, (res) => {
-        const scriptText = typeof res.data === 'string' ? res.data : (res.data.script || '');
-        const wordCount = scriptText.length;
-        const output = { excerpt: scriptText };
+        const d = res.data;
+        const output = { excerpt: d.body_md || d.excerpt || '', word_count: d.word_count || 0 };
         STAGE.s7.output = output;
         STAGE.s7.status = 'done'; STAGE.s7.agentResult = true;
-        STAGE.s7.wordCount = wordCount;
-        agentSaveHistory('s7', `脚本 ${wordCount} 字`, output);
+        STAGE.s7.wordCount = d.word_count || 0;
+        agentSaveHistory('s7', `脚本 ${d.word_count || 0} 字`, output);
       });
     }
 
@@ -5028,92 +5009,84 @@
     }
 
     // S8: 对抗审核
+    // S8: 对抗审核（文档 §3 S8 artifact：{roles[{role_key, name, issues, note, avatar}]}）
     async function agentS8Run() {
       if (!checkDependency('s8')) return;
       await agentCallWithBackup('s8', 's8', '/api/s8/run', getS8Config, (res) => {
-        if (res.data.roles) {
-          res.data.roles = res.data.roles.map(r => ({
-            avatar: r.emoji || r.avatar || '❓', emoji: r.emoji || r.avatar || '❓',
-            name: r.name || '未知', issues: r.issues || [], note: r.summary || r.note || '',
-            score: r.score, suggestions: r.suggestions || [],
-          }));
-        }
-        STAGE.s8.output = res.data; STAGE.s8.status = 'done'; STAGE.s8.agentResult = true;
-        STAGE.s8.agentDecision = res.decision; STAGE.s8.agentDetail = res.detail;
-        agentSaveHistory('s8', `对抗审核 平均${res.data.average_score || 0}分`, res.data);
-        if (res.decision === 'rollback_s7') { STAGE.s8.rollbackTarget = 's7'; STAGE.s8.rollbackReason = res.detail?.reason || '需修补脚本'; }
-        else if (res.decision === 'rollback_s5') { STAGE.s8.rollbackTarget = 's5'; STAGE.s8.rollbackReason = res.detail?.reason || '需重做选题'; }
+        const d = res.data;
+        STAGE.s8.output = d; STAGE.s8.status = 'done'; STAGE.s8.agentResult = true;
+        STAGE.s8.agentDecision = d.decision; STAGE.s8.agentDetail = d.rollbackReason;
+        agentSaveHistory('s8', `对抗审核 平均${d.averageScore || 0}分`, d);
+        if (d.decision === 'rollback_s7') { STAGE.s8.rollbackTarget = 's7'; STAGE.s8.rollbackReason = d.rollbackReason || '需修补脚本'; }
+        else if (d.decision === 'rollback_s5') { STAGE.s8.rollbackTarget = 's5'; STAGE.s8.rollbackReason = d.rollbackReason || '需重做选题'; }
       });
     }
 
     // 处理 S8 回滚后的数据同步 + 跳转
     async function agentHandleRollback() {
-      const state = await agentFetch('/api/state');
-      if (state.ok || state.current_stage) {
-        const s = state;
+      const res = await agentFetch('/api/state');
+      const s = res.data || res;
+      if (res.success || s.current_stage) {
         if (s.topic_data) { STAGE.s5.output = s.topic_data; STAGE.s5.status = 'done'; STAGE.s5.agentResult = true; }
         if (s.outline_data) { STAGE.s6.output = s.outline_data; STAGE.s6.status = 'done'; STAGE.s6.agentResult = true; }
         if (s.script_data) { STAGE.s7.output = { excerpt: s.script_data }; STAGE.s7.status = 'done'; STAGE.s7.agentResult = true; }
-        // 清除 S8 回滚状态和旧产物
         STAGE.s8.rollbackTarget = null;
         STAGE.s8.rollbackReason = null;
         STAGE.s8.output = {};
         STAGE.s8.agentResult = false;
         STAGE.s8.status = 'pending';
-        // 跳转到目标阶段
         const target = s.current_stage || 's5';
         showToast(`已回滚到 ${target.toUpperCase()}，请重新生成`, 'ok');
         openStage(target);
       } else {
-        showToast('回滚失败：无法获取状态', 'error');
+        showToast('回滚失败', 'error');
       }
     }
 
-    // 读取 S5 配置面板的值
+    // 读取 S5 配置面板的值（文档 §2.3 S5 keys）
     function getS5Config() {
-      const toggles = document.querySelectorAll('#panel-s5 .toggle, [data-stage="s5"] .toggle');
       return {
-        avoid_shock: document.querySelector('[data-cb="反 AI 套路"] .toggle:nth-child(1)')?.classList.contains('on') ?? true,
-        avoid_empty: document.querySelector('[data-cb="反 AI 套路"] .toggle:nth-child(2)')?.classList.contains('on') ?? true,
-        avoid_ai: document.querySelector('[data-cb="反 AI 套路"] .toggle:nth-child(3)')?.classList.contains('on') ?? true,
+        exclude_shock_title: document.querySelector('[data-cb="反 AI 套路"] .toggle:nth-child(1)')?.classList.contains('on') ?? true,
+        exclude_empty_buzzwords: document.querySelector('[data-cb="反 AI 套路"] .toggle:nth-child(2)')?.classList.contains('on') ?? true,
+        exclude_ai_filler: document.querySelector('[data-cb="反 AI 套路"] .toggle:nth-child(3)')?.classList.contains('on') ?? true,
       };
     }
 
-    // 读取 S6 配置面板的值
+    // 读取 S6 配置面板的值（文档 §2.3 S6 keys）
     function getS6Config() {
       const hookDivs = document.querySelectorAll('[data-cb="前 3 秒钩子"] .grid > div');
-      let hookStrategy = 'anti_consensus';
-      const strategies = ['anti_consensus', 'conflict', 'number', 'visual'];
+      const hookTypes = ['counterintuitive', 'conflict_suspense', 'number_impact', 'visual_promise'];
+      let hookType = 'counterintuitive';
       hookDivs.forEach((div, i) => {
-        if (div.classList.contains('border-indigo-500')) hookStrategy = strategies[i] || 'anti_consensus';
+        if (div.classList.contains('border-indigo-500')) hookType = hookTypes[i] || 'counterintuitive';
       });
       const sliders = document.querySelectorAll('[data-cb="节奏曲线"] input[type="range"]');
       return {
-        hook_strategy: hookStrategy,
+        hook_type: hookType,
         crisis_density: sliders[0] ? parseInt(sliders[0].value) : 3,
-        climax_position: sliders[1] ? parseInt(sliders[1].value) : 78,
+        climax_pct: sliders[1] ? parseInt(sliders[1].value) : 78,
         chapter_count: sliders[2] ? parseInt(sliders[2].value) : 8,
       };
     }
 
-    // 读取 S7 配置面板的值
+    // 读取 S7 配置面板的值（文档 §2.3 S7 keys）
     function getS7Config() {
       const textarea = document.querySelector('[data-cb="个人化口语"] textarea');
       const toggles = document.querySelectorAll('[data-cb="危机点"] .toggle');
       return {
-        banned_words: textarea?.value || '',
-        crisis_per_chapter: toggles[0]?.classList.contains('on') ?? true,
-        crisis_hook_interval: toggles[1]?.classList.contains('on') ?? true,
+        spoken_style_bans: textarea?.value || '',
+        one_twist_per_chapter: toggles[0]?.classList.contains('on') ?? true,
+        hook_every_2_3_min: toggles[1]?.classList.contains('on') ?? true,
       };
     }
 
-    // 读取 S8 配置面板的值
+    // 读取 S8 配置面板的值（文档 §2.3 S8 keys：role_key）
     function getS8Config() {
-      const roleNames = ['杠精', '同行', '小白', '老粉', '合规'];
+      const roleKeys = ['nitpicker', 'peer', 'novice', 'fan', 'compliance'];
       const enabled_roles = {};
       const toggles = document.querySelectorAll('[data-cb="红队角色"] .toggle');
-      roleNames.forEach((name, i) => {
-        enabled_roles[name] = toggles[i]?.classList.contains('on') ?? true;
+      roleKeys.forEach((key, i) => {
+        enabled_roles[key] = toggles[i]?.classList.contains('on') ?? true;
       });
       return { enabled_roles };
     }
@@ -5153,7 +5126,7 @@
       if (k === 'adversarial') {
         if (agentLock==='s8') return '<div class="flex items-center gap-2 text-indigo-600"><div class="w-3.5 h-3.5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div><span class="text-[11px] font-semibold">审核中...</span></div>';
         if (hasOutput && s.agentResult) {
-          let h = `<span class="text-emerald-600 text-[11px] mr-2"><i class="fa-solid fa-check mr-1"></i>审核完成 · 平均 ${s.output.average_score}/10</span>`;
+          let h = `<span class="text-emerald-600 text-[11px] mr-2"><i class="fa-solid fa-check mr-1"></i>审核完成 · 平均 ${s.output.averageScore}/10</span>`;
           if (s.rollbackTarget) {
             h += `<span class="text-amber-600 text-[10px] mr-2"><i class="fa-solid fa-rotate-left mr-1"></i>需回滚到 ${s.rollbackTarget.toUpperCase()}</span>
               <button onclick="agentHandleRollback()" class="bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-semibold px-2 py-1 rounded mr-2">执行回滚</button>`;
