@@ -274,16 +274,12 @@ async def s7_generate(req: S7GenerateRequest = S7GenerateRequest()):
     if not state.outline_data:
         return fail("INVALID_INPUT", "请先生成大纲")
     def save(r):
-        state.script_data = r
+        # r 现在是 dict（含 script/excerpt/body_md/word_count）
+        script_text = r.get("script", r.get("body_md", "")) if isinstance(r, dict) else r
+        state.script_data = script_text
         state.script_version += 1
-    result = await _run_stage(req.config, s7_script.run, "s7", "脚本",
-                              lambda r: len(r) if isinstance(r, str) else 0, save)
-    # 包装为 V1 格式
-    if result.get("success") and result.get("data"):
-        script = result["data"]
-        if isinstance(script, str):
-            result["data"] = {"script": script, "wordCount": len(script)}
-    return result
+    return await _run_stage(req.config, s7_script.run, "s7", "脚本",
+                            lambda r: r.get("word_count", 0) if isinstance(r, dict) else 0, save)
 
 
 @app.post("/api/s7/confirm")
@@ -376,6 +372,12 @@ async def s8_run(req: S8RunRequest = S8RunRequest()):
 
         await broadcast("state_update", state.to_dict())
         return ok({
+            # artifact 信封
+            "artifact_id": result.get("artifact_id"),
+            "artifact_type": result.get("artifact_type", "adversarial_review"),
+            "stage_code": "S8",
+            "produced_at": result.get("produced_at"),
+            # S8 专属字段
             "runId": f"run_{state.id}",
             "decision": decision,
             "averageScore": result.get("average_score", 0),
@@ -383,6 +385,7 @@ async def s8_run(req: S8RunRequest = S8RunRequest()):
             "rollbackTarget": rollback_target,
             "rollbackReason": rollback_reason,
             # 兼容旧字段
+            "average_score": result.get("average_score", 0),
             "data": result,
             "detail": detail,
         })

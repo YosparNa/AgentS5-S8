@@ -1,14 +1,17 @@
 """S8 对抗 Agent：5 个角色并行审核脚本"""
 
 import asyncio
+import uuid
+from datetime import datetime, timezone
 from app.llm import chat_json
 from app.pipeline import PipelineState
 
 SYSTEM_PROMPT = open("app/prompts/s8_adversarial.txt", encoding="utf-8").read()
 
-# 5 个角色定义（维度去重，各有明确检查范围）
+# 5 个角色定义（对齐文档 §2.3 role_key + §3 artifact schema）
 ROLES = [
     {
+        "role_key": "nitpicker",
         "name": "杠精",
         "emoji": "\U0001f624",
         "persona": "你是一个严格的事实核查员。你的审核范围只限于事实和逻辑，不涉及其他方面。\n\n"
@@ -27,6 +30,7 @@ ROLES = [
         "focus": "事实准确性、逻辑漏洞、数据来源、因果关系",
     },
     {
+        "role_key": "peer",
         "name": "同行",
         "emoji": "\U0001f9d1‍\U0001f4bb",
         "persona": "你是一个同领域的资深内容创作者，有5年以上从业经验。你的审核范围只限于内容专业性，不涉及其他方面。\n\n"
@@ -45,6 +49,7 @@ ROLES = [
         "focus": "术语准确性、信息时效、内容深度、差异化",
     },
     {
+        "role_key": "novice",
         "name": "小白",
         "emoji": "\U0001f636",
         "persona": "你是一个完全不懂这个领域的小白观众，25岁，上班族，刷短视频就是图个乐和涨知识。你的审核范围只限于易懂性和吸引力。\n\n"
@@ -64,6 +69,7 @@ ROLES = [
         "focus": "易懂性、术语解释、开头吸引力、节奏感",
     },
     {
+        "role_key": "fan",
         "name": "老粉",
         "emoji": "❤️",
         "persona": "你是这个频道的忠实粉丝，看了至少30期视频，对频道风格非常熟悉。你的审核范围只限于观众体验和互动设计。\n\n"
@@ -84,6 +90,7 @@ ROLES = [
         "focus": "频道调性、CTA自然度、互动引导、情感节奏",
     },
     {
+        "role_key": "compliance",
         "name": "合规",
         "emoji": "⚖️",
         "persona": "你是一个有5年经验的内容合规审核员，熟悉国内各大平台的内容政策。你的审核范围只限于法律和平台合规。\n\n"
@@ -128,14 +135,17 @@ def _review_single(role: dict, script: str) -> dict:
         fallback = chat(messages, temperature=0.6, max_tokens=8000)
         result = {"score": 5, "summary": fallback[:200], "issues": [], "suggestions": [], "highlights": []}
 
-    # 标准化输出
+    # 标准化输出（对齐文档 §3 S8 artifact schema）
     return {
+        "role_key": role["role_key"],
         "name": role["name"],
-        "emoji": role["emoji"],
+        "avatar": role["emoji"],
+        "emoji": role["emoji"],  # 兼容
         "focus": role["focus"],
         "score": result.get("score", 5),
         "issues": result.get("issues", []),
         "summary": result.get("summary", ""),
+        "note": result.get("summary", ""),  # 兼容文档 note 字段
         "suggestions": result.get("suggestions", []),
         "highlights": result.get("highlights", []),
     }
@@ -201,5 +211,13 @@ async def run_async(state: PipelineState) -> dict:
 
 
 def run(state: PipelineState) -> dict:
-    """同步入口（内部用 asyncio.run）。"""
-    return asyncio.run(run_async(state))
+    """同步入口（内部用 asyncio.run）。返回 artifact dict。"""
+    result = asyncio.run(run_async(state))
+    # 包装 artifact 信封
+    return {
+        "artifact_id": f"art_{uuid.uuid4().hex[:8]}",
+        "artifact_type": "adversarial_review",
+        "stage_code": "S8",
+        "produced_at": datetime.now(timezone.utc).isoformat(),
+        **result,
+    }
