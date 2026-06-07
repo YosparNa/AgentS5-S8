@@ -1,22 +1,41 @@
-"""OpenAI 兼容的 LLM 客户端封装（小米 MiMo）"""
+"""LLM 客户端封装（小米 MiMo）— 使用 requests 绕过代理 SSL 问题"""
 
 import os
 import json
 import re
+import requests
 from pathlib import Path
-from openai import OpenAI
 from dotenv import load_dotenv
 
 # 加载项目根目录的 .env
 _env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(_env_path)
 
-client = OpenAI(
-    api_key=os.getenv("XIAOMI_API_KEY", ""),
-    base_url="https://token-plan-cn.xiaomimimo.com/v1",
-)
-
+API_KEY = os.getenv("XIAOMI_API_KEY", "")
+BASE_URL = "https://token-plan-cn.xiaomimimo.com/v1"
 DEFAULT_MODEL = "mimo-v2.5-pro"
+
+
+def _call_api(messages: list[dict], model: str, temperature: float, max_tokens: int, response_format: dict | None = None) -> str:
+    """直接调用 MiMo API，使用 requests（绕过 httpx/openai 的代理 SSL 问题）。"""
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    if response_format:
+        payload["response_format"] = response_format
+
+    resp = requests.post(
+        f"{BASE_URL}/chat/completions",
+        headers={"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"},
+        json=payload,
+        timeout=300,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    return data["choices"][0]["message"]["content"]
 
 
 def chat(
@@ -27,16 +46,7 @@ def chat(
     response_format: dict | None = None,
 ) -> str:
     """单次对话调用，返回文本。"""
-    kwargs = dict(
-        model=model,
-        messages=messages,
-        temperature=temperature,
-        max_tokens=max_tokens,
-    )
-    if response_format:
-        kwargs["response_format"] = response_format
-    resp = client.chat.completions.create(**kwargs)
-    return resp.choices[0].message.content
+    return _call_api(messages, model, temperature, max_tokens, response_format)
 
 
 def chat_json(
@@ -46,20 +56,12 @@ def chat_json(
     max_tokens: int = 4096,
 ) -> dict:
     """对话调用，强制返回 JSON 对象。"""
-    text = chat(
-        messages=messages,
-        model=model,
-        temperature=temperature,
-        max_tokens=max_tokens,
-        response_format={"type": "json_object"},
-    )
+    text = _call_api(messages, model, temperature, max_tokens, {"type": "json_object"})
     return _extract_json(text)
 
 
 def _fix_control_chars(s: str) -> str:
-    """修复 JSON 字符串中的裸控制字符。
-    LLM 经常在 JSON 字符串值里生成裸换行符/制表符，
-    违反 JSON 规范导致 json.loads 失败。"""
+    """修复 JSON 字符串中的裸控制字符。"""
     result = []
     in_string = False
     escape_next = False
@@ -85,62 +87,47 @@ def _fix_control_chars(s: str) -> str:
 
 def _try_parse(s: str):
     """尝试多种方式解析 JSON。"""
-    # 1. 直接解析
     try:
         return json.loads(s)
     except json.JSONDecodeError:
         pass
-
-    # 2. 修复控制字符
     try:
         return json.loads(_fix_control_chars(s))
     except (json.JSONDecodeError, ValueError):
         pass
-
-    # 3. 修复尾逗号
     try:
         cleaned = re.sub(r',\s*([}\]])', r'\1', s)
         return json.loads(_fix_control_chars(cleaned))
     except (json.JSONDecodeError, ValueError):
         pass
-
-    # 4. 修复单引号
     try:
         cleaned = s.replace("'", '"')
         return json.loads(_fix_control_chars(cleaned))
     except (json.JSONDecodeError, ValueError):
         pass
-
     return None
 
 
 def _extract_json(text: str) -> dict:
     """从 LLM 回复中提取 JSON，处理各种格式。"""
     text = text.strip()
-
-    # 去掉 markdown 代码块
     if text.startswith("```"):
         text = text.split("\n", 1)[1] if "\n" in text else text[3:]
         if "```" in text:
             text = text.rsplit("```", 1)[0]
         text = text.strip()
-
-    # 去掉 <think>...</think> 标签
     text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
 
-    # 先尝试完整文本
     result = _try_parse(text)
     if result is not None:
         return result
 
-    # 提取第一个 { ... } 块
     match = re.search(r'\{.*\}', text, re.DOTALL)
     if match:
         result = _try_parse(match.group())
         if result is not None:
             return result
 
-    # 提取第一个 [ ... ] 块
     match = re.search(r'\[.*\]', text, re.DOTALL)
     if match:
         result = _try_parse(match.group())
