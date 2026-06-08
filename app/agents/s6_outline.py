@@ -7,14 +7,14 @@ from app.utils import build_config_instructions, get_config
 SYSTEM_PROMPT = open("app/prompts/s6_outline.txt", encoding="utf-8").read()
 
 CONFIG_MAPPING = [
-    ('hook_strategy', '钩子策略', {
-        'anti_consensus': '用反常识/颠覆认知的方式开头',
-        'conflict': '用冲突/悬念的方式开头',
-        'number': '用具体数字/数据冲击开头',
-        'visual': '用画面承诺开头',
+    ('hook_type', '钩子类型', {
+        'counterintuitive': '用反常识/颠覆认知的方式开头',
+        'conflict_suspense': '用冲突/悬念的方式开头',
+        'number_impact': '用具体数字/数据冲击开头',
+        'visual_promise': '用画面承诺开头',
     }),
     ('crisis_density', '危机点密度', None),
-    ('climax_position', '高潮位置百分比', None),
+    ('climax_pct', '高潮位置百分比', None),
     ('chapter_count', '章节数', None),
 ]
 

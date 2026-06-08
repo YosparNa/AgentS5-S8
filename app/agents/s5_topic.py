@@ -7,13 +7,13 @@ from app.utils import build_config_instructions, get_config
 SYSTEM_PROMPT = open("app/prompts/s5_topic.txt", encoding="utf-8").read()
 
 CONFIG_MAPPING = [
-    ('avoid_shock', '排除震惊体标题', {True: '是', False: '否'}),
-    ('avoid_empty', '排除假大空内容', {True: '是', False: '否'}),
-    ('avoid_ai', '排除AI套话', {True: '是', False: '否'}),
-    ('emotion_conflict', '认知冲突权重', None),
-    ('emotion_resonance', '共鸣度权重', None),
-    ('emotion_crisis', '危机感权重', None),
-    ('emotion_curiosity', '好奇驱动权重', None),
+    ('exclude_shock_title', '排除震惊体标题', {True: '是', False: '否'}),
+    ('exclude_empty_buzzwords', '排除假大空内容', {True: '是', False: '否'}),
+    ('exclude_ai_filler', '排除AI套话', {True: '是', False: '否'}),
+    ('cognitive_conflict', '认知冲突权重', None),
+    ('resonance', '共鸣权重', None),
+    ('crisis', '危机感权重', None),
+    ('curiosity', '好奇心权重', None),
 ]
 
 

@@ -7,9 +7,9 @@ from app.utils import build_config_instructions, get_config
 SYSTEM_PROMPT = open("app/prompts/s7_script.txt", encoding="utf-8").read()
 
 CONFIG_MAPPING = [
-    ('banned_words', '额外禁用词', None),
-    ('crisis_per_chapter', '每章至少包含1个反预期转折点', {True: '是', False: '否'}),
-    ('crisis_hook_interval', '每2-3分钟设置一个留人钩子', {True: '是', False: '否'}),
+    ('spoken_style_bans', '额外禁用词', None),
+    ('one_twist_per_chapter', '每章至少包含1个反预期转折点', {True: '是', False: '否'}),
+    ('hook_every_2_3_min', '每2-3分钟设置一个留人钩子', {True: '是', False: '否'}),
 ]
 
 
