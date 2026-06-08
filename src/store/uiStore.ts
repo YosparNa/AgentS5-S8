@@ -52,7 +52,7 @@ export const useUi = create<UiState>((set, get) => ({
   stageDrawer: { open: false, wide: false, stageId: null, tab: "output" },
   openStage: (id, active) =>
     set({ stageDrawer: { open: true, wide: !!active, stageId: id, tab: active ? "live" : "output" } }),
-  closeDrawer: () => set((s) => ({ stageDrawer: { ...s.stageDrawer, open: false, wide: false } })),
+  closeDrawer: () => set({ stageDrawer: { open: false, wide: false, stageId: null, tab: "output" } }),
   switchDrawerTab: (tab) => set((s) => ({ stageDrawer: { ...s.stageDrawer, tab } })),
 
   editMode: false,

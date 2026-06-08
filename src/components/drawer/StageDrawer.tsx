@@ -167,46 +167,73 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
   // —— S5-S8: Agent 生成按钮 ——
   const isS5S8 = ["topic", "outline", "script", "adversarial"].includes(kind);
   if (isS5S8) {
-    const runStore = useRun.getState();
+    const runStore = useRun();
     const stageKey = stage.code.toLowerCase();
     const isRunning = runStore.runningStage === stageKey;
-    const wfId = runStore.wfId;
+    const selectedIdx = runStore.selectedTopicIdx;
+    const lockedIdx = runStore.lockedTopicIdx;
+
+    // 进度条
+    const ProgressBar = isRunning ? (
+      <div className="flex-1">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[10px] text-gray-500">{runStore.progressRemaining || "预计..."}</span>
+          <span className="text-[10px] mono text-gray-400">{runStore.progressElapsed}</span>
+        </div>
+        <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+          <div className="h-full rounded-full bg-indigo-500 transition-all duration-100" style={{ width: runStore.progressPct + "%" }} />
+        </div>
+      </div>
+    ) : null;
 
     // S5 选题
     if (kind === "topic") {
       if (status === "pending" || status === "active") {
         return (
           <>
-            <div />
+            {ProgressBar || <div />}
             <button
               disabled={isRunning}
               onClick={async () => {
-                if (!wfId) {
-                  // 首次运行：创建 workflow + 运行 S5
-                  await runStore.createAndRunS5("AI编程工具评测", "AI工具频道");
-                } else {
-                  await runStore.runStage("S5");
-                }
+                await runStore.createAndRunS5FromS4();
                 closeDrawer();
               }}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
             >
               <Icon.Sparkles size={10} />
-              {isRunning ? "生成中..." : "AI 生成选题"}
+              {isRunning ? "生成中..." : "AI 生成选题（从S4热点）"}
             </button>
           </>
         );
       }
       if (status === "done") {
+        const isLocked = lockedIdx !== null;
         return (
           <>
-            <button className="text-[11px] border border-gray-200 px-2.5 py-1.5 rounded hover:bg-gray-50 flex items-center gap-1"
-              onClick={async () => { await runStore.runStage("S5"); closeDrawer(); }}>
-              <Icon.Rotate size={10} /> 重跑
-            </button>
-            <button className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold px-3 py-1.5 rounded"
-              onClick={closeDrawer}>
-              锁定选题
+            <div className="flex gap-2 items-center">
+              <button className="text-[11px] border border-gray-200 px-2.5 py-1.5 rounded hover:bg-gray-50 flex items-center gap-1"
+                onClick={async () => { await runStore.runStage("S5"); closeDrawer(); }}>
+                <Icon.Rotate size={10} /> 重跑
+              </button>
+              {isLocked ? (
+                <button className="text-[11px] border border-indigo-300 text-indigo-600 px-2.5 py-1.5 rounded hover:bg-indigo-50 flex items-center gap-1"
+                  onClick={() => { runStore.unlockTopic(); }}>
+                  <Icon.Lock size={10} /> 取消锁定
+                </button>
+              ) : (
+                <button
+                  disabled={selectedIdx === null}
+                  className="text-[11px] border border-indigo-300 text-indigo-600 px-2.5 py-1.5 rounded hover:bg-indigo-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+                  onClick={() => { runStore.lockTopic(); }}>
+                  <Icon.Lock size={10} /> 锁定选题
+                </button>
+              )}
+            </div>
+            <button
+              disabled={!isLocked}
+              className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
+              onClick={() => { closeDrawer(); runStore.navigateStage(1); }}>
+              <Icon.ArrowRight size={10} /> 确认并进入S6
             </button>
           </>
         );
@@ -218,7 +245,7 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
       if (status === "pending" || status === "active") {
         return (
           <>
-            <div />
+            {ProgressBar || <div />}
             <button
               disabled={isRunning}
               onClick={async () => { await runStore.runStage("S6"); closeDrawer(); }}
@@ -233,10 +260,16 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
       if (status === "awaiting_review") {
         return (
           <>
-            <button className="text-[11px] border border-red-300 text-red-600 px-2.5 py-1.5 rounded hover:bg-red-50"
-              onClick={async () => { await runStore.rejectBackend("S6", "用户驳回"); closeDrawer(); }}>
-              驳回
-            </button>
+            <div className="flex gap-2 items-center flex-wrap">
+              <button className="text-[11px] border border-gray-200 px-2.5 py-1.5 rounded hover:bg-gray-50 flex items-center gap-1"
+                onClick={async () => { await runStore.runStage("S6"); closeDrawer(); }}>
+                <Icon.Rotate size={10} /> 重新生成大纲
+              </button>
+              <button className="text-[11px] border border-amber-300 text-amber-600 px-2.5 py-1.5 rounded hover:bg-amber-50"
+                onClick={async () => { await runStore.rejectBackend("S6", "用户驳回到S5", "s5"); runStore.navigateStage(-1); closeDrawer(); }}>
+                回到S5重新选题
+              </button>
+            </div>
             <button className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
               onClick={async () => { await runStore.approveBackend("S6"); closeDrawer(); }}>
               <Icon.Check size={10} /> 审核通过
@@ -251,7 +284,7 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
       if (status === "pending" || status === "active") {
         return (
           <>
-            <div />
+            {ProgressBar || <div />}
             <button
               disabled={isRunning}
               onClick={async () => { await runStore.runStage("S7"); closeDrawer(); }}
@@ -270,9 +303,9 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
               onClick={async () => { await runStore.runStage("S7"); closeDrawer(); }}>
               <Icon.Rotate size={10} /> 重跑
             </button>
-            <button className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold px-3 py-1.5 rounded"
-              onClick={closeDrawer}>
-              确认脚本
+            <button className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
+              onClick={() => { closeDrawer(); runStore.navigateStage(1); }}>
+              <Icon.ArrowRight size={10} /> 确认并进入S8
             </button>
           </>
         );
@@ -284,7 +317,7 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
       if (status === "pending" || status === "active") {
         return (
           <>
-            <div />
+            {ProgressBar || <div />}
             <button
               disabled={isRunning}
               onClick={async () => { await runStore.runStage("S8"); closeDrawer(); }}
@@ -299,10 +332,20 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
       if (status === "awaiting_review") {
         return (
           <>
-            <button className="text-[11px] border border-red-300 text-red-600 px-2.5 py-1.5 rounded hover:bg-red-50"
-              onClick={async () => { await runStore.rejectBackend("S8", "用户驳回"); closeDrawer(); }}>
-              驳回
-            </button>
+            <div className="flex gap-1.5 items-center flex-wrap">
+              <button className="text-[10px] border border-red-300 text-red-600 px-2 py-1 rounded hover:bg-red-50"
+                onClick={async () => { await runStore.rejectBackend("S8", "驳回到S5", "s5"); closeDrawer(); }}>
+                驳回(S5)
+              </button>
+              <button className="text-[10px] border border-red-300 text-red-600 px-2 py-1 rounded hover:bg-red-50"
+                onClick={async () => { await runStore.rejectBackend("S8", "驳回到S6", "s6"); closeDrawer(); }}>
+                驳回(S6)
+              </button>
+              <button className="text-[10px] border border-red-300 text-red-600 px-2 py-1 rounded hover:bg-red-50"
+                onClick={async () => { await runStore.rejectBackend("S8", "驳回到S7", "s7"); closeDrawer(); }}>
+                驳回(S7)
+              </button>
+            </div>
             <button className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
               onClick={async () => { await runStore.approveBackend("S8"); closeDrawer(); }}>
               <Icon.Check size={10} /> 审核通过
@@ -385,12 +428,13 @@ export function StageDrawer() {
   const openModal = useUi((s) => s.openModal);
 
   const [stage, setStage] = useState<StageDef | undefined>(undefined);
+  const stageVersion = useRun((s) => s.stageVersion);
 
   useEffect(() => {
     if (stageId) {
       dataProvider.getStage(stageId).then(setStage);
     }
-  }, [stageId]);
+  }, [stageId, stageVersion]);
 
   const status = useRun((s) => (stageId ? s.nodeStatus(stageId) : "pending"));
 
