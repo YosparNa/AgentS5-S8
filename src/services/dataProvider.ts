@@ -349,8 +349,8 @@ export const dataProvider = {
   },
 
   /** 驳回阶段 */
-  async rejectStage(wfId: string, code: string, reason: string): Promise<wf.WorkflowView> {
-    const r = await wf.rejectStage(wfId, code, reason);
+  async rejectStage(wfId: string, code: string, reason: string, rollbackTo?: string): Promise<wf.WorkflowView> {
+    const r = await wf.rejectStage(wfId, code, reason, rollbackTo);
     _syncStages(r);
     return r;
   },

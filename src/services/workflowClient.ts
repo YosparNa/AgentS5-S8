@@ -104,10 +104,10 @@ export async function approveStage(wfId: string, stageCode: string, body?: { not
   });
 }
 
-export async function rejectStage(wfId: string, stageCode: string, reason: string): Promise<WorkflowView> {
+export async function rejectStage(wfId: string, stageCode: string, reason: string, rollbackTo?: string): Promise<WorkflowView> {
   return apiFetch(`/api/workflows/${wfId}/stages/${stageCode}/reject`, {
     method: "POST",
-    body: JSON.stringify({ reason }),
+    body: JSON.stringify({ reason, rollback_to: rollbackTo }),
   });
 }
 

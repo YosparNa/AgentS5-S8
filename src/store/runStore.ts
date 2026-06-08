@@ -7,6 +7,7 @@ import { create } from "zustand";
 import type { RunFlow, RunStatus, NodeRun, ChecklistItem, StageFlowIO, WorkflowNode, StageDef } from "@/types";
 import { dataProvider } from "@/services/dataProvider";
 import type { WorkflowView } from "@/services/workflowClient";
+import { useConfig } from "@/store/configStore";
 // G1: all mock data (nodes / stage defs / per-stage simulate targets) is pulled
 // through dataProvider into store state — the store no longer imports src/data
 // directly, so the whole workbench data path is a single backend seam.
@@ -53,6 +54,30 @@ interface RunState {
   // S5-S8 后端对接
   wfId: string | null;
   runningStage: string | null;
+  stageVersion: number; // 每次阶段数据更新时递增，触发抽屉重载
+
+  // S5 选题状态
+  selectedTopicIdx: number | null;
+  lockedTopicIdx: number | null;
+
+  // S7 脚本编辑
+  editedScript: string;
+
+  // S8 回滚目标
+  rollbackTarget: string | null;
+
+  // 自动化模式
+  autoMode: boolean;
+  currentAutoStep: string; // 'idle' | 's5' | 's6' | 's6_review' | 's7' | 's7_edit' | 's8' | 's8_review' | 'done'
+
+  // 进度跟踪
+  progressPct: number;
+  progressElapsed: string;
+  progressRemaining: string;
+
+  // 运行历史
+  agentHistory: Array<{ id: string; stage: string; summary: string; timestamp: string; data: unknown }>;
+  stageCurrentHist: Record<string, string>;
 
   // Actions
   loadRun(wfId?: string): void;
@@ -68,9 +93,21 @@ interface RunState {
   rejectReview(): void;
   removeNodeRun(nodeId: string): void;
   runStage(stageCode: string, config?: Record<string, unknown>): Promise<void>;
-  createAndRunS5(userData: string, channelDesc: string, config?: Record<string, unknown>): Promise<void>;
+  createAndRunS5(userData: string, channelDesc: string): Promise<void>;
+  createAndRunS5FromS4(): Promise<void>;
   approveBackend(code: string): Promise<void>;
-  rejectBackend(code: string, reason: string): Promise<void>;
+  rejectBackend(code: string, reason: string, rollbackTo?: string): Promise<void>;
+  navigateStage(direction: number): void;
+  agentSaveHistory(stageId: string, summary: string, data: unknown): void;
+  agentRollback(histId: string): void;
+  selectTopic(idx: number): void;
+  lockTopic(): void;
+  unlockTopic(): void;
+  setEditedScript(text: string): void;
+  setRollbackTarget(target: string | null): void;
+  runFullWorkflow(): Promise<void>;
+  approveAndContinue(): Promise<void>;
+  rejectAndRollback(target: string): Promise<void>;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -116,6 +153,7 @@ function _syncStagesToRun(wfv: WorkflowView, set: Function, get: Function) {
   set({
     run: { ...get().run, currentNodeId, nodes: runNodes },
     currentNodeId,
+    stageVersion: get().stageVersion + 1,
     pendingNodeId: wfv.stages.find(s => s.status === "awaiting_review")?.stage_code.toLowerCase() ?? null,
     simPhase: wfv.stages.find(s => s.status === "awaiting_review") ? "awaiting_review" : "idle",
   });
@@ -346,6 +384,18 @@ export const useRun = create<RunState>((set, get) => {
     stageRunMock: {},
     wfId: null,
     runningStage: null,
+    stageVersion: 0,
+    selectedTopicIdx: null,
+    lockedTopicIdx: null,
+    editedScript: "",
+    rollbackTarget: null,
+    autoMode: false,
+    currentAutoStep: "idle",
+    progressPct: 0,
+    progressElapsed: "0s",
+    progressRemaining: "",
+    agentHistory: [],
+    stageCurrentHist: {},
 
     loadStages() {
       dataProvider.getStages().then((s) => set({ stages: s }));
@@ -494,40 +544,105 @@ export const useRun = create<RunState>((set, get) => {
 
     // ===== S5-S8 后端对接 =====
 
-    async createAndRunS5(userData: string, channelDesc: string, config: Record<string, unknown> = {}) {
-      set({ simPhase: "running", runningStage: "s5" });
+    async createAndRunS5FromS4() {
+      // 从 S4 热点数据自动生成输入数据
+      const { HOTSPOTS } = await import("@/data/hotspots");
+      const hotspotText = HOTSPOTS.slice(0, 5).map(h =>
+        `【${h.title}】${h.angle}（${h.expire}，来源：${h.srcs.join('、')}）`
+      ).join('\n');
+      const userData = `基于以下热点数据进行选题：\n\n${hotspotText}`;
+      const channelDesc = "AI 工具评测频道，聚焦编程效率工具，受众是独立开发者";
+      return this.createAndRunS5(userData, channelDesc);
+    },
+
+    async createAndRunS5(userData: string, channelDesc: string) {
+      const STAGE_TIMES: Record<string, number> = { s5: 37, s6: 40, s7: 90, s8: 75 };
+      const startTime = Date.now();
+      const progressTimer = setInterval(() => {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const total = STAGE_TIMES["s5"] || 37;
+        const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
+        const remaining = Math.max(0, Math.round(total - elapsed));
+        set({
+          progressPct: pct,
+          progressElapsed: elapsed < 60 ? Math.round(elapsed) + "s" : Math.floor(elapsed / 60) + "m" + Math.round(elapsed % 60) + "s",
+          progressRemaining: remaining > 0 ? remaining + "s" : "即将完成...",
+        });
+      }, 100);
+      set({ simPhase: "running", runningStage: "s5", progressPct: 0, progressElapsed: "0s", progressRemaining: "" });
       try {
         const wfId = await dataProvider.createWorkflowOnly(userData, channelDesc);
         set({ wfId });
-        const wfv = await dataProvider.runS5(wfId, config);
+        const s5Config = useConfig.getState().getS5Config();
+        const wfv = await dataProvider.runS5(wfId, s5Config);
+        clearInterval(progressTimer);
+        set({ progressPct: 100, progressElapsed: Math.round((Date.now() - startTime) / 1000) + "s", progressRemaining: "已完成" });
         _syncStagesToRun(wfv, set, get);
+        // 保存历史
+        const topics = wfv.stages.find(s => s.stage_code === "S5")?.output_artifact?.topics;
+        get().agentSaveHistory("s5", `生成 ${Array.isArray(topics) ? topics.length : 0} 个选题`, topics);
         set({ simPhase: "idle", runningStage: null });
         get().loadStages();
       } catch (e) {
+        clearInterval(progressTimer);
         console.error("S5 failed:", e);
-        set({ simPhase: "idle", runningStage: null });
+        set({ simPhase: "idle", runningStage: null, progressPct: 0 });
       }
     },
 
     async runStage(stageCode: string, config: Record<string, unknown> = {}) {
       const { wfId } = get();
       if (!wfId) return;
+      const STAGE_TIMES: Record<string, number> = { s5: 37, s6: 40, s7: 90, s8: 75 };
       const key = stageCode.toLowerCase();
-      set({ simPhase: "running", runningStage: key });
+      const startTime = Date.now();
+      const progressTimer = setInterval(() => {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const total = STAGE_TIMES[key] || 60;
+        const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
+        const remaining = Math.max(0, Math.round(total - elapsed));
+        set({
+          progressPct: pct,
+          progressElapsed: elapsed < 60 ? Math.round(elapsed) + "s" : Math.floor(elapsed / 60) + "m" + Math.round(elapsed % 60) + "s",
+          progressRemaining: remaining > 0 ? remaining + "s" : "即将完成...",
+        });
+      }, 100);
+      set({ simPhase: "running", runningStage: key, progressPct: 0, progressElapsed: "0s", progressRemaining: "" });
       try {
+        // 从 configStore 读取配置
+        const cfg = useConfig.getState();
+        const stageConfig = Object.keys(config).length > 0 ? config :
+          stageCode === "S5" ? cfg.getS5Config() :
+          stageCode === "S6" ? cfg.getS6Config() :
+          stageCode === "S7" ? cfg.getS7Config() :
+          stageCode === "S8" ? cfg.getS8Config() : {};
+
         let wfv;
-        if (stageCode === "S5") wfv = await dataProvider.runS5(wfId, config);
-        else if (stageCode === "S6") wfv = await dataProvider.runS6(wfId, config);
-        else if (stageCode === "S7") wfv = await dataProvider.runS7(wfId, config);
-        else if (stageCode === "S8") wfv = await dataProvider.runS8(wfId, config);
+        if (stageCode === "S5") wfv = await dataProvider.runS5(wfId, stageConfig);
+        else if (stageCode === "S6") wfv = await dataProvider.runS6(wfId, stageConfig);
+        else if (stageCode === "S7") wfv = await dataProvider.runS7(wfId, stageConfig);
+        else if (stageCode === "S8") wfv = await dataProvider.runS8(wfId, stageConfig);
+
+        clearInterval(progressTimer);
+        set({ progressPct: 100, progressElapsed: Math.round((Date.now() - startTime) / 1000) + "s", progressRemaining: "已完成" });
+
         if (wfv) {
           _syncStagesToRun(wfv, set, get);
+          // 保存历史
+          const stage = wfv.stages.find(s => s.stage_code === stageCode);
+          const artifact = stage?.output_artifact;
+          const summary = stageCode === "S5" ? `选题 ${(artifact?.topics as unknown[])?.length || 0} 个` :
+            stageCode === "S6" ? `大纲 ${(artifact?.outline as unknown[])?.length || 0} 章` :
+            stageCode === "S7" ? `脚本 ${artifact?.word_count || 0} 字` :
+            stageCode === "S8" ? `对抗审核 平均${artifact?.average_score || 0}分` : stageCode;
+          get().agentSaveHistory(key, summary, artifact);
         }
         set({ simPhase: "idle", runningStage: null });
         get().loadStages();
       } catch (e) {
+        clearInterval(progressTimer);
         console.error(`${stageCode} failed:`, e);
-        set({ simPhase: "idle", runningStage: null });
+        set({ simPhase: "idle", runningStage: null, progressPct: 0 });
       }
     },
 
@@ -543,15 +658,307 @@ export const useRun = create<RunState>((set, get) => {
       }
     },
 
-    async rejectBackend(code: string, reason: string) {
+    async rejectBackend(code: string, reason: string, rollbackTo?: string) {
       const { wfId } = get();
       if (!wfId) return;
       try {
-        const wfv = await dataProvider.rejectStage(wfId, code, reason);
+        const wfv = await dataProvider.rejectStage(wfId, code, reason, rollbackTo);
         _syncStagesToRun(wfv, set, get);
         get().loadStages();
       } catch (e) {
         console.error(`Reject ${code} failed:`, e);
+      }
+    },
+
+    navigateStage(direction: number) {
+      const ORDER = ["s5", "s6", "s7", "s8"];
+      // 优先从 run.nodes 中找当前阶段（更可靠）
+      let currentIdx = -1;
+      const { run, currentNodeId } = get();
+      for (let i = ORDER.length - 1; i >= 0; i--) {
+        const nodeStatus = run.nodes[ORDER[i]]?.status;
+        if (nodeStatus === "active" || nodeStatus === "awaiting_review") {
+          currentIdx = i;
+          break;
+        }
+      }
+      if (currentIdx < 0) currentIdx = ORDER.indexOf(currentNodeId);
+      if (currentIdx < 0) return;
+      const nextIdx = currentIdx + direction;
+      if (nextIdx < 0 || nextIdx >= ORDER.length) return;
+      const nextId = ORDER[nextIdx];
+      set((s) => ({
+        currentNodeId: nextId,
+        run: { ...s.run, currentNodeId: nextId },
+      }));
+      // 打开抽屉
+      import("@/store/uiStore").then(({ useUi }) => {
+        useUi.getState().openStage(nextId);
+      });
+    },
+
+    agentSaveHistory(stageId: string, summary: string, data: unknown) {
+      const histId = "hist_" + Date.now();
+      set((s) => ({
+        agentHistory: [
+          { id: histId, stage: stageId, summary, timestamp: new Date().toLocaleString("zh-CN"), data },
+          ...s.agentHistory,
+        ].slice(0, 20),
+        stageCurrentHist: { ...s.stageCurrentHist, [stageId]: histId },
+      }));
+    },
+
+    agentRollback(histId: string) {
+      const { agentHistory } = get();
+      const hist = agentHistory.find((h) => h.id === histId);
+      if (!hist) return;
+      // 回滚到历史版本的产物
+      set((s) => {
+        const nodes = { ...s.run.nodes };
+        nodes[hist.stage] = { ...nodes[hist.stage], status: "done" as RunStatus };
+        return { run: { ...s.run, nodes } };
+      });
+      get().loadStages();
+    },
+
+    selectTopic(idx: number) {
+      set({ selectedTopicIdx: idx });
+    },
+
+    lockTopic() {
+      const { selectedTopicIdx } = get();
+      if (selectedTopicIdx === null) return;
+      set({ lockedTopicIdx: selectedTopicIdx });
+    },
+
+    unlockTopic() {
+      set({ lockedTopicIdx: null });
+    },
+
+    setEditedScript(text: string) {
+      set({ editedScript: text });
+    },
+
+    setRollbackTarget(target: string | null) {
+      set({ rollbackTarget: target });
+    },
+
+    // ===== 自动化工作流 =====
+
+    async runFullWorkflow() {
+      set({ autoMode: true, currentAutoStep: "s5" });
+
+      // Step 1: 从S4获取数据，创建workflow
+      const { HOTSPOTS } = await import("@/data/hotspots");
+      const hotspotText = HOTSPOTS.slice(0, 5).map(h =>
+        `【${h.title}】${h.angle}（${h.expire}）`
+      ).join("\n");
+      const userData = `基于以下热点数据进行选题：\n\n${hotspotText}`;
+      const channelDesc = "AI 工具评测频道";
+
+      // Step 2: 创建workflow + 运行S5
+      const STAGE_TIMES: Record<string, number> = { s5: 37, s6: 40, s7: 90, s8: 75 };
+      const startTime = Date.now();
+      const progressTimer = setInterval(() => {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const total = STAGE_TIMES["s5"] || 37;
+        const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
+        const remaining = Math.max(0, Math.round(total - elapsed));
+        set({
+          progressPct: pct,
+          progressElapsed: elapsed < 60 ? Math.round(elapsed) + "s" : Math.floor(elapsed / 60) + "m" + Math.round(elapsed % 60) + "s",
+          progressRemaining: remaining > 0 ? remaining + "s" : "即将完成...",
+        });
+      }, 100);
+
+      set({ simPhase: "running", runningStage: "s5", progressPct: 0, progressElapsed: "0s", progressRemaining: "" });
+      // 立即更新工作台 S5 节点为 active
+      set((s) => ({ run: { ...s.run, nodes: { ...s.run.nodes, s5: { ...s.run.nodes.s5, status: "active" as RunStatus, percent: 0 } } } }));
+
+      try {
+        const wfId = await dataProvider.createWorkflowOnly(userData, channelDesc);
+        set({ wfId });
+        const s5Config = useConfig.getState().getS5Config();
+        const wfv5 = await dataProvider.runS5(wfId, s5Config);
+        clearInterval(progressTimer);
+        set({ progressPct: 100, progressElapsed: Math.round((Date.now() - startTime) / 1000) + "s", progressRemaining: "已完成" });
+        _syncStagesToRun(wfv5, set, get);
+
+        // Step 3: 自动锁定最高分选题
+        const topics = (wfv5.stages.find(s => s.stage_code === "S5")?.output_artifact?.topics ?? []) as Array<{ score: number }>;
+        if (topics.length > 0) {
+          const bestIdx = topics.reduce((maxI, t, i, arr) => t.score > arr[maxI].score ? i : maxI, 0);
+          set({ selectedTopicIdx: bestIdx, lockedTopicIdx: bestIdx });
+        }
+
+        // Step 4: 自动运行S6
+        set({ currentAutoStep: "s6", runningStage: "s6", progressPct: 0 });
+        // S5 done → S6 active
+        set((s) => ({
+          run: {
+            ...s.run,
+            nodes: {
+              ...s.run.nodes,
+              s5: { ...s.run.nodes.s5, status: "done" as RunStatus, percent: 100 },
+              s6: { ...s.run.nodes.s6, status: "active" as RunStatus, percent: 0 },
+            },
+          },
+        }));
+        get().loadStages();
+        // 延迟 500ms 确保 UI 刷新显示 S5→S6 过渡
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const s6Config = useConfig.getState().getS6Config();
+        const wfv6 = await dataProvider.runS6(wfId, s6Config);
+        _syncStagesToRun(wfv6, set, get);
+
+        // Step 5: S6等待审核
+        set({ currentAutoStep: "s6_review", simPhase: "idle", runningStage: null });
+        get().loadStages();
+      } catch (e) {
+        clearInterval(progressTimer);
+        console.error("runFullWorkflow failed:", e);
+        set({ autoMode: false, currentAutoStep: "idle", simPhase: "idle", runningStage: null, progressPct: 0 });
+      }
+    },
+
+    async approveAndContinue() {
+      const { wfId, currentAutoStep } = get();
+      if (!wfId) return;
+
+      const STAGE_TIMES: Record<string, number> = { s7: 90, s8: 75 };
+
+      try {
+        if (currentAutoStep === "s6_review") {
+          await dataProvider.approveStage(wfId, "S6");
+          // S6 completed → S7 active
+          set((s) => ({
+            run: {
+              ...s.run,
+              nodes: {
+                ...s.run.nodes,
+                s6: { ...s.run.nodes.s6, status: "done" as RunStatus, percent: 100 },
+                s7: { ...s.run.nodes.s7, status: "active" as RunStatus, percent: 0 },
+              },
+            },
+          }));
+          get().loadStages();
+          // 延迟 500ms 确保 UI 刷新
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          // 运行 S7 带进度
+          const startTime = Date.now();
+          const total = STAGE_TIMES["s7"] || 90;
+          set({ currentAutoStep: "s7", simPhase: "running", runningStage: "s7", progressPct: 0 });
+          // S7 → active in workbench
+          set((s) => ({ run: { ...s.run, nodes: { ...s.run.nodes, s7: { ...s.run.nodes.s7, status: "active" as RunStatus, percent: 0 } } } }));
+          get().loadStages();
+          const progressTimer = setInterval(() => {
+            const elapsed = (Date.now() - startTime) / 1000;
+            const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
+            const remaining = Math.max(0, Math.round(total - elapsed));
+            set({ progressPct: pct, progressElapsed: Math.round(elapsed) + "s", progressRemaining: remaining + "s" });
+          }, 100);
+
+          const s7Config = useConfig.getState().getS7Config();
+          const wfv7 = await dataProvider.runS7(wfId, s7Config);
+          clearInterval(progressTimer);
+          set({ progressPct: 100, progressElapsed: Math.round((Date.now() - startTime) / 1000) + "s", progressRemaining: "已完成" });
+          _syncStagesToRun(wfv7, set, get);
+
+          const script = (wfv7.stages.find(s => s.stage_code === "S7")?.output_artifact?.body_md as string) || "";
+          set({ editedScript: script, currentAutoStep: "s7_edit", simPhase: "idle", runningStage: null, progressPct: 0 });
+          get().loadStages();
+          // 等待 UI 显示 S7 完成状态
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+        } else if (currentAutoStep === "s7_edit") {
+          // S7 确认 → 等待 UI 刷新 → 运行 S8 带进度
+          const startTime = Date.now();
+          const total = STAGE_TIMES["s8"] || 75;
+          set({ currentAutoStep: "s8", simPhase: "running", runningStage: "s8", progressPct: 0 });
+          // S7 done → S8 active in workbench
+          set((s) => ({
+            run: {
+              ...s.run,
+              nodes: {
+                ...s.run.nodes,
+                s7: { ...s.run.nodes.s7, status: "done" as RunStatus, percent: 100 },
+                s8: { ...s.run.nodes.s8, status: "active" as RunStatus, percent: 0 },
+              },
+            },
+          }));
+          get().loadStages();
+          // 延迟 500ms 确保 UI 刷新
+          await new Promise(resolve => setTimeout(resolve, 500));
+          const progressTimer = setInterval(() => {
+            const elapsed = (Date.now() - startTime) / 1000;
+            const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
+            const remaining = Math.max(0, Math.round(total - elapsed));
+            set({ progressPct: pct, progressElapsed: Math.round(elapsed) + "s", progressRemaining: remaining + "s" });
+          }, 100);
+
+          const s8Config = useConfig.getState().getS8Config();
+          const wfv8 = await dataProvider.runS8(wfId, s8Config);
+          clearInterval(progressTimer);
+          set({ progressPct: 100, progressElapsed: Math.round((Date.now() - startTime) / 1000) + "s", progressRemaining: "已完成" });
+          _syncStagesToRun(wfv8, set, get);
+          set({ currentAutoStep: "s8_review", simPhase: "idle", runningStage: null, progressPct: 0 });
+          get().loadStages();
+
+        } else if (currentAutoStep === "s8_review") {
+          await dataProvider.approveStage(wfId, "S8");
+          set({ currentAutoStep: "done", autoMode: false, simPhase: "idle", runningStage: null, progressPct: 0 });
+          get().loadStages();
+        }
+      } catch (e) {
+        console.error("approveAndContinue failed:", e);
+        set({ simPhase: "idle", runningStage: null, progressPct: 0 });
+      }
+    },
+
+    async rejectAndRollback(target: string) {
+      const { wfId } = get();
+      if (!wfId) return;
+
+      try {
+        // 调用后端驳回
+        await dataProvider.rejectStage(wfId, "S8", `回滚到${target}`);
+        set({ rollbackTarget: target, currentAutoStep: target, simPhase: "running" });
+
+        // 根据回滚目标重新运行
+        if (target === "s5") {
+          // 清空所有，重新运行S5
+          set({ runningStage: "s5" });
+          const s5Config = useConfig.getState().getS5Config();
+          const wfv = await dataProvider.runS5(wfId, s5Config);
+          _syncStagesToRun(wfv, set, get);
+          // 自动锁定最高分选题
+          const topics = (wfv.stages.find(s => s.stage_code === "S5")?.output_artifact?.topics ?? []) as Array<{ score: number }>;
+          if (topics.length > 0) {
+            const bestIdx = topics.reduce((maxI, t, i, arr) => t.score > arr[maxI].score ? i : maxI, 0);
+            set({ selectedTopicIdx: bestIdx, lockedTopicIdx: bestIdx });
+          }
+          set({ currentAutoStep: "s6" });
+        } else if (target === "s6") {
+          set({ runningStage: "s6" });
+          const s6Config = useConfig.getState().getS6Config();
+          const wfv = await dataProvider.runS6(wfId, s6Config);
+          _syncStagesToRun(wfv, set, get);
+          set({ currentAutoStep: "s6_review" });
+        } else if (target === "s7") {
+          set({ runningStage: "s7" });
+          const s7Config = useConfig.getState().getS7Config();
+          const wfv = await dataProvider.runS7(wfId, s7Config);
+          _syncStagesToRun(wfv, set, get);
+          const script = (wfv.stages.find(s => s.stage_code === "S7")?.output_artifact?.body_md as string) || "";
+          set({ editedScript: script, currentAutoStep: "s7_edit" });
+        }
+
+        set({ simPhase: "idle", runningStage: null });
+        get().loadStages();
+      } catch (e) {
+        console.error("rejectAndRollback failed:", e);
+        set({ simPhase: "idle", runningStage: null });
       }
     },
   };
