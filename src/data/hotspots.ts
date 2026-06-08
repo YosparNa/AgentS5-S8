@@ -1,0 +1,117 @@
+// 来源 PROTO lines 3812–3817 (renderHotPro → hotspots array)
+// Pure typed constants — no logic here.
+
+import type { Hotspot } from "@/types";
+
+export const HOTSPOTS: Hotspot[] = [
+  {
+    emoji: "🔥",
+    title: "Sora 2 商用条款变更",
+    score: 32,
+    dims: [9, 8, 8, 7],
+    dnaFit: 9,
+    expire: "2 天后过期",
+    srcs: ["HN #1", "TheRundown", "X 热搜"],
+    trend: [3, 5, 8, 12, 18, 24, 30, 35, 38, 36],
+    peak: "24h 见顶",
+    competitors: [
+      { n: "Matt Wolfe", a: "已做", t: "4h 前", type: "解读型" },
+      { n: "AI Search", a: "在做", t: "直播预告", type: "评测型" },
+      { n: "Ali Abdaal", a: "未跟", type: "不在赛道" },
+    ],
+    angle: '"为什么 Sora 2 的条款变化对独立开发者反而是好事" — 反共识 + 切独立开发者痛点',
+    titles: [
+      "Sora 2 偷偷改了商用条款，独立开发者必看",
+      "条款变化对小团队反而是好事？",
+      "Sora 2 商用：3 个你漏看的坑",
+    ],
+    risk: "信息时效快，48h 后失去价值",
+  },
+  {
+    emoji: "⚡",
+    title: "Anthropic 完成 5B 融资",
+    score: 31,
+    dims: [8, 9, 7, 7],
+    dnaFit: 7,
+    expire: "1 天后过期",
+    srcs: ["TheRundown", "TLDR", "HN"],
+    trend: [2, 4, 7, 11, 16, 22, 27, 30, 28, 25],
+    peak: "已过峰值",
+    competitors: [
+      { n: "Matt Wolfe", a: "已做", t: "12h 前", type: "快讯型" },
+      { n: "4 个对标", a: "已做", type: "分析型" },
+    ],
+    angle: '"从 Anthropic 融资条款看 Claude 接下来的产品方向" — 二次解读，比快讯延后但更深',
+    titles: [
+      "Anthropic 融了 50 亿，Claude 要变天",
+      "从融资条款看 Claude 下一步",
+      "5B 背后：Claude 的产品野心",
+    ],
+    risk: "已被覆盖，需要找极独特角度",
+  },
+  {
+    emoji: "💡",
+    title: "GPT-5.5 路线图泄露",
+    score: 29,
+    dims: [7, 8, 8, 6],
+    dnaFit: 6,
+    expire: "5 天后过期",
+    srcs: ["X 热搜", "AlphaSignal", "Reddit"],
+    trend: [8, 15, 22, 28, 32, 30, 27, 25, 22, 20],
+    peak: "平台期",
+    competitors: [
+      { n: "Theo", a: "已做", t: "8h 前", type: "技术拆解" },
+      { n: "AI Search", a: "未跟" },
+    ],
+    angle: '"GPT-5.5 路线图里被忽略的 3 个细节" — 找别人没讲的细节',
+    titles: [
+      "GPT-5.5 路线图泄露：被忽略的 3 个细节",
+      "OpenAI 没说的，我帮你扒出来了",
+      "GPT-5.5 真正的杀手锏",
+    ],
+    risk: "OpenAI 未官宣，事实风险",
+  },
+  {
+    emoji: "🛠",
+    title: "Cursor 收购 Supermaven",
+    score: 28,
+    dims: [7, 9, 6, 6],
+    dnaFit: 9,
+    expire: "3 天后过期",
+    srcs: ["HN", "X", "TechCrunch"],
+    trend: [5, 9, 14, 18, 21, 20, 17, 14, 11, 9],
+    peak: "下降中",
+    competitors: [
+      { n: "Theo", a: "已做" },
+      { n: "Fireship", a: "已做", t: "2h 前" },
+    ],
+    angle: '"Cursor 现在能不能替代 Copilot 了？" — 实操对比测评，差异化',
+    titles: [
+      "Cursor 吞了 Supermaven，现在能替代 Copilot 吗",
+      "收购后实测：Cursor 提速了多少",
+      "独立开发者该不该换 Cursor",
+    ],
+    risk: "独立开发者关注度高，竞争激烈",
+  },
+  {
+    emoji: "🍎",
+    title: "Apple Intelligence 国行版功能",
+    score: 27,
+    dims: [6, 7, 9, 5],
+    dnaFit: 5,
+    expire: "6 天后过期",
+    srcs: ["微博热搜", "即刻", "TGN"],
+    trend: [12, 18, 24, 28, 32, 35, 38, 36, 33, 30],
+    peak: "上升中",
+    competitors: [
+      { n: "未跟", a: "空白" },
+    ],
+    angle: '"国行 Apple Intelligence 阉割了什么？" — 蓝海，可抢首发',
+    titles: [
+      "国行 Apple Intelligence 到底阉割了什么",
+      "实测国行 AI：能用吗",
+      "国行 AI 功能全清单",
+    ],
+    risk: "敏感话题，注意合规",
+  },
+];
