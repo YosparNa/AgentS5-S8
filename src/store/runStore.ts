@@ -791,7 +791,9 @@ export const useRun = create<RunState>((set, get) => {
           set({ selectedTopicIdx: bestIdx, lockedTopicIdx: bestIdx });
         }
 
-        // Step 4: 自动运行S6
+        // Step 4: 自动运行S6（带进度）
+        const s6StartTime = Date.now();
+        const s6Total = STAGE_TIMES["s6"] || 40;
         set({ currentAutoStep: "s6", runningStage: "s6", progressPct: 0 });
         // S5 done → S6 active
         set((s) => ({
@@ -807,8 +809,18 @@ export const useRun = create<RunState>((set, get) => {
         get().loadStages();
         // 延迟 500ms 确保 UI 刷新显示 S5→S6 过渡
         await new Promise(resolve => setTimeout(resolve, 500));
+
+        const s6ProgressTimer = setInterval(() => {
+          const elapsed = (Date.now() - s6StartTime) / 1000;
+          const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (s6Total - 1)) * 92), 95);
+          const remaining = Math.max(0, Math.round(s6Total - elapsed));
+          set({ progressPct: pct, progressElapsed: Math.round(elapsed) + "s", progressRemaining: remaining + "s" });
+        }, 100);
+
         const s6Config = useConfig.getState().getS6Config();
         const wfv6 = await dataProvider.runS6(wfId, s6Config);
+        clearInterval(s6ProgressTimer);
+        set({ progressPct: 100, progressElapsed: Math.round((Date.now() - s6StartTime) / 1000) + "s", progressRemaining: "已完成" });
         _syncStagesToRun(wfv6, set, get);
 
         // Step 5: S6等待审核
