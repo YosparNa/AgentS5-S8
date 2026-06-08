@@ -295,6 +295,9 @@ export function LiveTab() {
   const isRunning = runningStage === stage;
   const meta = STAGE_META[stage];
 
+  // 检查是否是其他阶段在运行（用于显示状态）
+  const otherStageRunning = runningStage && runningStage !== stage && pct > 0 && pct < 100;
+
   // Determine which stage icon to show
   const StageIcon =
     stage === "s5"
@@ -335,6 +338,10 @@ export function LiveTab() {
             <div className="text-[10px] text-gray-500 mt-0.5">
               {isRunning ? (
                 <span className="text-indigo-600 blink">正在运行...</span>
+              ) : otherStageRunning ? (
+                <span className="text-amber-600">
+                  {STAGE_META[runningStage!]?.title ?? runningStage} 正在运行
+                </span>
               ) : pct >= 100 ? (
                 <span className="text-emerald-600">执行完成</span>
               ) : (

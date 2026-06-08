@@ -131,8 +131,19 @@ function isEnabled(nodeId: string, nodes: WorkflowNode[]): boolean {
 /** 将后端 WorkflowView 的 stages 状态同步到 runStore 的 run.nodes */
 function _syncStagesToRun(wfv: WorkflowView, set: Function, get: Function) {
   const runNodes: Record<string, NodeRun> = { ...get().run.nodes };
+  const currentAutoStep = get().currentAutoStep;
+
+  // 不要覆盖正在运行或待确认的阶段
+  const protectedStages = new Set<string>();
+  if (currentAutoStep === "s7" || currentAutoStep === "s7_edit") protectedStages.add("s7");
+  if (currentAutoStep === "s8" || currentAutoStep === "s8_review") protectedStages.add("s8");
+
   for (const s of wfv.stages) {
     const key = s.stage_code.toLowerCase();
+
+    // 跳过受保护的阶段，避免覆盖正在进行的状态
+    if (protectedStages.has(key)) continue;
+
     const status = s.status as RunStatus;
     const isDone = s.status === "completed" || s.status === "done";
     runNodes[key] = {
@@ -428,6 +439,10 @@ export const useRun = create<RunState>((set, get) => {
     },
 
     loadRun(wfId) {
+      // 如果 wfId 未改变且 run 已有状态，则跳过重新加载（避免状态重置）
+      if (wfId && get().wfId === wfId && Object.keys(get().run.nodes).length > 0) {
+        return;
+      }
       // Load per-stage simulate targets too, so the engine has them before any
       // simulate() click (which only happens well after mount).
       dataProvider.getStageRunMock().then((m) => set({ stageRunMock: m }));
@@ -875,7 +890,19 @@ export const useRun = create<RunState>((set, get) => {
           const wfv7 = await dataProvider.runS7(wfId, s7Config);
           clearInterval(progressTimer);
           set({ progressPct: 100, progressElapsed: Math.round((Date.now() - startTime) / 1000) + "s", progressRemaining: "已完成" });
-          _syncStagesToRun(wfv7, set, get);
+
+          // S7 完成后，手动设置 S7=done, S8=pending（不使用 _syncStagesToRun，
+          // 因为后端返回的 workflow 会把 S8 标记为 active，跳过用户确认阶段）
+          set((s) => ({
+            run: {
+              ...s.run,
+              nodes: {
+                ...s.run.nodes,
+                s7: { ...s.run.nodes.s7, status: "done" as RunStatus, percent: 100, doneCount: 1, totalCount: 1 },
+                s8: { ...s.run.nodes.s8, status: "pending" as RunStatus, percent: 0, doneCount: 0, totalCount: 1 },
+              },
+            },
+          }));
 
           const script = (wfv7.stages.find(s => s.stage_code === "S7")?.output_artifact?.body_md as string) || "";
           set({ editedScript: script, currentAutoStep: "s7_edit", simPhase: "idle", runningStage: null, progressPct: 0 });
