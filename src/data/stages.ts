@@ -143,12 +143,7 @@ export const STAGES: Record<string, StageDef> = {
     title: "选题 ★",
     subtitle: "反 AI 套路",
     model: "Opus 4.7",
-    output: {
-      topics: [
-        { rank: 1, title: "Manus vs NotebookLM：派系战争", score: 8.6, locked: true, unique: '"派系战争"框架' },
-        { rank: 2, title: "Manus 替代 NotebookLM？", score: 8.1 },
-      ],
-    },
+    output: {},
     config: { kind: "topic" },
     flow: {
       inputs: [
@@ -167,14 +162,7 @@ export const STAGES: Record<string, StageDef> = {
     subtitle: "钩子 · 张力",
     model: "Opus 4.7 + 人审",
     audit: "②",
-    output: {
-      outline: [
-        { ch: "钩子", dur: "15s", tension: 9, hook: "反常识：他们俩根本不是竞品" },
-        { ch: "1 派系起源", dur: "1:30", tension: 6 },
-        { ch: "5 实战对比", dur: "4:00", tension: 9, crisis: true },
-        { ch: "6 反转", dur: "1:30", tension: 10, crisis: true },
-      ],
-    },
+    output: {},
     config: { kind: "outline" },
     flow: {
       inputs: [{ layer: "video", label: "S5 选题" }],
@@ -188,10 +176,7 @@ export const STAGES: Record<string, StageDef> = {
     title: "脚本 ★",
     subtitle: "危机点",
     model: "Opus 4.7",
-    output: {
-      excerpt:
-        "你以为 Manus 和 NotebookLM 是同一个赛道？错了。他们根本不在同一个战场。\n\n说白了，这俩家伙的世界观就不一样。Manus 想替你“动手”，NotebookLM 想帮你“理解”。",
-    },
+    output: {},
     config: { kind: "script" },
     flow: {
       inputs: [{ layer: "video", label: "S6" }],
@@ -206,15 +191,7 @@ export const STAGES: Record<string, StageDef> = {
     subtitle: "5 红队",
     model: "Sonnet 4.6 ×5",
     audit: "③",
-    output: {
-      roles: [
-        { avatar: "😤", name: "杠精", issues: 6, note: "挑 3 处未证实" },
-        { avatar: "🧑‍💻", name: "同行", issues: 5, note: "2 处术语修正" },
-        { avatar: "😶", name: "小白", issues: 7, note: "补 2 个类比" },
-        { avatar: "❤️", name: "老粉", issues: 4, note: "CTA 改" },
-        { avatar: "⚖️", name: "合规", issues: 6, note: "替换措辞" },
-      ],
-    },
+    output: {},
     config: { kind: "adversarial" },
     flow: {
       inputs: [{ layer: "video", label: "S7" }],

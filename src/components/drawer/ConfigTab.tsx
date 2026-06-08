@@ -5,6 +5,7 @@
 import { useState } from "react";
 import type { StageDef } from "@/types";
 import { cn } from "@/lib/cn";
+import { useConfig, CONFIG_PERSIST, setConfigValue } from "@/store/configStore";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: Toggle knob (shared by Sw, Rs, SrcRow)
@@ -42,14 +43,28 @@ function Cb({ title, desc, children }: CbProps) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sw — switch list (PROTO `sw`)
-// items: [label, defaultOn, note?][]
+// 使用 CONFIG_PERSIST 持久化，切换 Tab 不丢失
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface SwProps {
   items: [string, boolean, string?][];
+  persistKey?: string; // 可选：用于持久化的 key
 }
-function Sw({ items }: SwProps) {
-  const [states, setStates] = useState<boolean[]>(() => items.map(([, o]) => o));
+function Sw({ items, persistKey }: SwProps) {
+  const kind = persistKey || "__sw_" + items.map(([n]) => n).join("_");
+  // 从 CONFIG_PERSIST 读取初始值，没有则用 items 的默认值
+  const stored = CONFIG_PERSIST["sw"]?.[kind] as boolean[] | undefined;
+  const [states, setStates] = useState<boolean[]>(() => stored ?? items.map(([, o]) => o));
+
+  const toggle = (i: number) => {
+    setStates((prev) => {
+      const next = prev.map((s, idx) => (idx === i ? !s : s));
+      // 立即写入持久化存储
+      setConfigValue("sw", kind, next);
+      return next;
+    });
+  };
+
   return (
     <div className="space-y-1.5">
       {items.map(([n, , note], i) => (
@@ -58,10 +73,7 @@ function Sw({ items }: SwProps) {
             <div className="text-[11px] font-medium">{n}</div>
             {note ? <div className="text-[10px] text-gray-500 mt-0.5">{note}</div> : null}
           </div>
-          <Toggle
-            on={states[i]}
-            onChange={(v) => setStates((prev) => prev.map((s, idx) => (idx === i ? v : s)))}
-          />
+          <Toggle on={states[i]} onChange={() => toggle(i)} />
         </div>
       ))}
     </div>
@@ -70,14 +82,26 @@ function Sw({ items }: SwProps) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sl — labeled range sliders (PROTO `sl`)
-// items: [label, value, max][]
+// 使用 CONFIG_PERSIST 持久化，切换 Tab 不丢失
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface SlProps {
   items: [string, number, number][];
+  persistKey?: string;
 }
-function Sl({ items }: SlProps) {
-  const [values, setValues] = useState<number[]>(() => items.map(([, v]) => v));
+function Sl({ items, persistKey }: SlProps) {
+  const kind = persistKey || "__sl_" + items.map(([n]) => n).join("_");
+  const stored = CONFIG_PERSIST["sl"]?.[kind] as number[] | undefined;
+  const [values, setValues] = useState<number[]>(() => stored ?? items.map(([, v]) => v));
+
+  const update = (i: number, v: number) => {
+    setValues((prev) => {
+      const next = prev.map((s, idx) => (idx === i ? v : s));
+      setConfigValue("sl", kind, next);
+      return next;
+    });
+  };
+
   return (
     <div className="space-y-2.5">
       {items.map(([n, , m], i) => (
@@ -93,10 +117,8 @@ function Sl({ items }: SlProps) {
             min={0}
             max={m}
             value={values[i]}
-            onChange={(e) => {
-              const v = Number(e.target.value);
-              setValues((prev) => prev.map((s, idx) => (idx === i ? v : s)));
-            }}
+            onChange={(e) => update(i, Number(e.target.value))}
+
             className="w-full input-range"
           />
         </div>
@@ -106,64 +128,6 @@ function Sl({ items }: SlProps) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Opt — 2-col option cards, single-select (PROTO `opt`)
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface OptProps {
-  items: string[];
-  sel: number;
-}
-function Opt({ items, sel }: OptProps) {
-  const [selected, setSelected] = useState(sel);
-  return (
-    <div className="grid grid-cols-2 gap-1.5">
-      {items.map((it, i) => (
-        <div
-          key={i}
-          onClick={() => setSelected(i)}
-          className={cn(
-            "border-2 rounded-lg p-2 cursor-pointer text-[11px] font-bold hover:border-indigo-400",
-            selected === i
-              ? "border-indigo-500 bg-indigo-50"
-              : "border-gray-200"
-          )}
-        >
-          {it}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Rs — red-team role rows with toggle (PROTO `rs`)
-// items: [avatar, name, desc, defaultOn][]
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface RsProps {
-  items: [string, string, string, boolean][];
-}
-function Rs({ items }: RsProps) {
-  const [states, setStates] = useState<boolean[]>(() => items.map(([, , , o]) => o));
-  return (
-    <div className="space-y-1.5">
-      {items.map(([a, n, d], i) => (
-        <div key={i} className="flex items-center gap-2 p-2 rounded hover:bg-gray-50">
-          <span className="text-xl">{a}</span>
-          <div className="flex-1">
-            <div className="text-[11px] font-bold">{n}</div>
-            <div className="text-[10px] text-gray-500">{d}</div>
-          </div>
-          <Toggle
-            on={states[i]}
-            onChange={(v) => setStates((prev) => prev.map((s, idx) => (idx === i ? v : s)))}
-          />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // SrcRow — a source row with toggle (PROTO `srcRow`)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -271,6 +235,84 @@ function PillSingle({ items, sel }: PillSingleProps) {
         >
           {it}
         </button>
+      ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 受控子组件（configStore 驱动，切换 Tab 不丢失状态）
+// ─────────────────────────────────────────────────────────────────────────────
+
+function SwCtrl({ items }: { items: { label: string; value: boolean; onChange: (v: boolean) => void }[] }) {
+  return (
+    <div className="space-y-1.5">
+      {items.map((item, i) => (
+        <div key={i} className="flex justify-between gap-2 p-1.5 rounded hover:bg-gray-50">
+          <div className="flex-1">
+            <div className="text-[11px] font-medium">{item.label}</div>
+          </div>
+          <Toggle on={item.value} onChange={item.onChange} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SlCtrl({ items }: { items: { label: string; value: number; max: number; onChange: (v: number) => void }[] }) {
+  return (
+    <div className="space-y-2.5">
+      {items.map((item, i) => (
+        <div key={i}>
+          <div className="flex justify-between mb-1">
+            <span className="text-[11px] font-medium">{item.label}</span>
+            <span className="text-[11px] mono text-indigo-600 font-bold">{item.value}/{item.max}</span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={item.max}
+            value={item.value}
+            className="w-full input-range"
+            onChange={(e) => item.onChange(parseInt(e.target.value))}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function OptCtrl({ items, selected, onChange }: { items: string[]; selected: number; onChange: (v: number) => void }) {
+  return (
+    <div className="grid grid-cols-2 gap-1.5">
+      {items.map((it, i) => (
+        <div
+          key={i}
+          className={cn(
+            "border-2 rounded-lg p-2 cursor-pointer hover:border-indigo-400 text-[11px] font-bold text-center",
+            i === selected ? "border-indigo-500 bg-indigo-50" : "border-gray-200"
+          )}
+          onClick={() => onChange(i)}
+        >
+          {it}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RsCtrl({ items }: { items: { emoji: string; name: string; desc: string; value: boolean; onChange: (v: boolean) => void }[] }) {
+  return (
+    <div className="space-y-1.5">
+      {items.map((item, i) => (
+        <div key={i} className="flex items-center gap-2 p-2 rounded hover:bg-gray-50">
+          <span className="text-xl">{item.emoji}</span>
+          <div className="flex-1">
+            <div className="text-[11px] font-bold">{item.name}</div>
+            <div className="text-[10px] text-gray-500">{item.desc}</div>
+          </div>
+          <Toggle on={item.value} onChange={item.onChange} />
+        </div>
       ))}
     </div>
   );
@@ -447,16 +489,21 @@ export function ConfigTab({ stage }: Props) {
       );
       break;
 
-    // ── topic ────────────────────────────────────────────────────────────────
-    case "topic":
+    // ── topic (S5) ───────────────────────────────────────────────────────────
+    case "topic": {
+      const cfg = useConfig();
       content = (
         <>
+          <div className="bg-indigo-50 border border-indigo-200 rounded p-3 text-[11px] text-indigo-900 mb-1">
+            <b>AI 选题 Agent</b> · 输入数据后在底部点击「AI 生成选题」
+          </div>
           <Cb title="频道定位描述" desc="简要描述你的频道定位、目标受众、内容风格">
             <textarea
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-[11px] outline-none focus:border-indigo-400 transition resize-none"
               rows={3}
               placeholder="例：AI 工具评测频道，聚焦效率工具和编程辅助，受众是 25-35 岁互联网从业者"
-              defaultValue=""
+              value={cfg.s5_channelDesc}
+              onChange={(e) => cfg.setS5ChannelDesc(e.target.value)}
             />
           </Cb>
           <Cb title="输入数据" desc="粘贴热点、竞品分析、用户评论、行业数据等">
@@ -464,74 +511,104 @@ export function ConfigTab({ stage }: Props) {
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-[11px] outline-none focus:border-indigo-400 transition resize-none font-mono"
               rows={8}
               placeholder="粘贴你收集的数据..."
-              defaultValue=""
+              value={cfg.s5_userData}
+              onChange={(e) => cfg.setS5UserData(e.target.value)}
             />
           </Cb>
           <Cb title="反 AI 套路">
-            <Sw items={[["排除震惊体", true], ["排除假大空", true], ["排除 AI 套话", true]]} />
+            <SwCtrl
+              items={[
+                { label: "排除震惊体", value: cfg.s5_toggles[0], onChange: (v: boolean) => cfg.setS5Toggle(0, v) },
+                { label: "排除假大空", value: cfg.s5_toggles[1], onChange: (v: boolean) => cfg.setS5Toggle(1, v) },
+                { label: "排除 AI 套话", value: cfg.s5_toggles[2], onChange: (v: boolean) => cfg.setS5Toggle(2, v) },
+              ]}
+            />
           </Cb>
           <Cb title="情绪波动评分">
-            <Sl
+            <SlCtrl
               items={[
-                ["认知冲突", 7, 10],
-                ["共鸣度", 8, 10],
-                ["危机感", 6, 10],
-                ["好奇驱动", 9, 10],
+                { label: "认知冲突", value: cfg.s5_sliders[0], max: 10, onChange: (v: number) => cfg.setS5Slider(0, v) },
+                { label: "共鸣度", value: cfg.s5_sliders[1], max: 10, onChange: (v: number) => cfg.setS5Slider(1, v) },
+                { label: "危机感", value: cfg.s5_sliders[2], max: 10, onChange: (v: number) => cfg.setS5Slider(2, v) },
+                { label: "好奇驱动", value: cfg.s5_sliders[3], max: 10, onChange: (v: number) => cfg.setS5Slider(3, v) },
               ]}
             />
           </Cb>
         </>
       );
       break;
+    }
 
-    // ── outline ──────────────────────────────────────────────────────────────
-    case "outline":
+    // ── outline (S6) ─────────────────────────────────────────────────────────
+    case "outline": {
+      const cfg = useConfig();
       content = (
         <>
           <Cb title="前 3 秒钩子">
-            <Opt items={["反常识", "冲突悬念", "数字冲击", "画面承诺"]} sel={0} />
+            <OptCtrl
+              items={["反常识", "冲突悬念", "数字冲击", "画面承诺"]}
+              selected={cfg.s6_selectedOption}
+              onChange={cfg.setS6SelectedOption}
+            />
           </Cb>
           <Cb title="节奏曲线">
-            <Sl items={[["危机点密度", 3, 5], ["高潮位 %", 78, 100], ["章节数", 8, 12]]} />
+            <SlCtrl
+              items={[
+                { label: "危机点密度", value: cfg.s6_sliders[0], max: 5, onChange: (v: number) => cfg.setS6Slider(0, v) },
+                { label: "高潮位 %", value: cfg.s6_sliders[1], max: 100, onChange: (v: number) => cfg.setS6Slider(1, v) },
+                { label: "章节数", value: cfg.s6_sliders[2], max: 12, onChange: (v: number) => cfg.setS6Slider(2, v) },
+              ]}
+            />
           </Cb>
         </>
       );
       break;
+    }
 
-    // ── script ───────────────────────────────────────────────────────────────
-    case "script":
+    // ── script (S7) ──────────────────────────────────────────────────────────
+    case "script": {
+      const cfg = useConfig();
       content = (
         <>
           <Cb title="个人化口语">
             <textarea
-              className="w-full text-[11px] border rounded p-2 resize-none"
+              className="w-full text-[11px] border rounded p-2 resize-none outline-none focus:border-indigo-400"
               rows={2}
-              defaultValue="禁用：综上所述 / 在当今时代"
+              value={cfg.s7_bannedWords}
+              onChange={(e) => cfg.setS7BannedWords(e.target.value)}
             />
           </Cb>
           <Cb title="危机点">
-            <Sw items={[["每章 1 反预期", true], ["每 2-3 分钟留人钩子", true]]} />
+            <SwCtrl
+              items={[
+                { label: "每章 1 反预期", value: cfg.s7_toggles[0], onChange: (v: boolean) => cfg.setS7Toggle(0, v) },
+                { label: "每 2-3 分钟留人钩子", value: cfg.s7_toggles[1], onChange: (v: boolean) => cfg.setS7Toggle(1, v) },
+              ]}
+            />
           </Cb>
         </>
       );
       break;
+    }
 
-    // ── adversarial ──────────────────────────────────────────────────────────
-    case "adversarial":
+    // ── adversarial (S8) ─────────────────────────────────────────────────────
+    case "adversarial": {
+      const cfg = useConfig();
       content = (
         <Cb title="红队角色">
-          <Rs
+          <RsCtrl
             items={[
-              ["😤", "杠精", "逻辑漏洞", true],
-              ["🧑‍💻", "同行", "技术错误", true],
-              ["😶", "小白", "听不懂", true],
-              ["❤️", "老粉", "人设违和", true],
-              ["⚖️", "合规", "红线", true],
+              { emoji: "😤", name: "杠精", desc: "逻辑漏洞", value: cfg.s8_toggles[0], onChange: (v: boolean) => cfg.setS8Toggle(0, v) },
+              { emoji: "🧑‍💻", name: "同行", desc: "技术错误", value: cfg.s8_toggles[1], onChange: (v: boolean) => cfg.setS8Toggle(1, v) },
+              { emoji: "😶", name: "小白", desc: "听不懂", value: cfg.s8_toggles[2], onChange: (v: boolean) => cfg.setS8Toggle(2, v) },
+              { emoji: "❤️", name: "老粉", desc: "人设违和", value: cfg.s8_toggles[3], onChange: (v: boolean) => cfg.setS8Toggle(3, v) },
+              { emoji: "⚖️", name: "合规", desc: "红线", value: cfg.s8_toggles[4], onChange: (v: boolean) => cfg.setS8Toggle(4, v) },
             ]}
           />
         </Cb>
       );
       break;
+    }
 
     // ── storyboard ───────────────────────────────────────────────────────────
     case "storyboard":
