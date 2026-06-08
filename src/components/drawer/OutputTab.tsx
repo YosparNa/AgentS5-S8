@@ -29,6 +29,27 @@ import { FinalArtifact } from "./artifacts/FinalArtifact";
 import { PublishArtifact } from "./artifacts/PublishArtifact";
 import { AnalyticsArtifact } from "./artifacts/AnalyticsArtifact";
 
+// ── S5-S8 空状态提示 ──────────────────────────────────────────────────────
+
+const EMPTY_HINTS: Record<string, string> = {
+  topic: "请在配置页输入数据后点击「AI 生成选题」",
+  outline: "请先在 S5 生成选题",
+  script: "请先在 S6 生成大纲",
+  adversarial: "请先在 S7 生成脚本",
+};
+
+function EmptyHint({ kind }: { kind: string }) {
+  return (
+    <div className="p-4">
+      <div className="text-center py-12 text-gray-400">
+        <div className="text-3xl mb-3">📭</div>
+        <div className="text-[12px]">暂无产物</div>
+        <div className="text-[10px] mt-1">{EMPTY_HINTS[kind] || ""}</div>
+      </div>
+    </div>
+  );
+}
+
 // ── Loader sub-components (each calls hooks unconditionally) ──────────────────
 
 function BenchmarkArtifactLoader() {
@@ -79,25 +100,42 @@ export function OutputTab({ stage }: Props) {
 
     case "topic": {
       const { topics } = o as { topics: Parameters<typeof TopicArtifact>[0]["topics"] };
-      content = <TopicArtifact topics={topics ?? []} />;
+      if (!topics || topics.length === 0) {
+        content = <EmptyHint kind="topic" />;
+      } else {
+        content = <TopicArtifact topics={topics} />;
+      }
       break;
     }
 
     case "outline": {
       const { outline } = o as { outline: Parameters<typeof OutlineArtifact>[0]["outline"] };
-      content = <OutlineArtifact outline={outline ?? []} />;
+      if (!outline || outline.length === 0) {
+        content = <EmptyHint kind="outline" />;
+      } else {
+        content = <OutlineArtifact outline={outline} />;
+      }
       break;
     }
 
     case "script": {
-      const { excerpt } = o as { excerpt: string };
-      content = <ScriptArtifact excerpt={excerpt ?? ""} />;
+      const { excerpt, body_md } = o as { excerpt: string; body_md?: string };
+      const scriptText = body_md || excerpt;
+      if (!scriptText) {
+        content = <EmptyHint kind="script" />;
+      } else {
+        content = <ScriptArtifact excerpt={scriptText} editable={true} />;
+      }
       break;
     }
 
     case "adversarial": {
       const { roles } = o as { roles: Parameters<typeof AdversarialArtifact>[0]["roles"] };
-      content = <AdversarialArtifact roles={roles ?? []} />;
+      if (!roles || roles.length === 0) {
+        content = <EmptyHint kind="adversarial" />;
+      } else {
+        content = <AdversarialArtifact roles={roles} />;
+      }
       break;
     }
 
