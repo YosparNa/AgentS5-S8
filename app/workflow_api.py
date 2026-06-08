@@ -58,7 +58,15 @@ def _make_artifact(stage_code: str, slug: str, data) -> dict:
     elif stage_code == "S6":
         outline = data.get("outline", []) if isinstance(data, dict) else []
         base["outline"] = [
-            {"ch": f"第{ch.get('chapter', i+1)}章", "dur": ch.get("duration", ""), "tension": ch.get("tension", 5), "hook": ch.get("hook", ""), "crisis": ch.get("crisis", False)}
+            {
+                "ch": ch.get("title", f"第{ch.get('chapter', i+1)}章"),
+                "dur": ch.get("duration", ""),
+                "tension": ch.get("tension", 5),
+                "hook": ch.get("hook", ""),
+                "crisis": ch.get("crisis", False),
+                "description": ch.get("description", ""),
+                "purpose": ch.get("purpose", ""),
+            }
             for i, ch in enumerate(outline)
         ]
     elif stage_code == "S7":
@@ -351,11 +359,43 @@ async def reject_stage(wf_id: str, code: str, body: dict = None):
     stage = _get_stage(wf, code)
     if not stage:
         return {"detail": f"Stage {code} not found"}, 404
-    stage["status"] = "pending"
-    stage["artifact"] = None
-    stage["error"] = (body or {}).get("reason", "Rejected")
-    wf["status"] = "running"
-    wf["current_stage"] = code
+
+    rollback_to = (body or {}).get("rollback_to")
+
+    if rollback_to:
+        # 验证 rollback_to 只能是 S5/S6/S7
+        valid_targets = {"S5", "S6", "S7"}
+        if rollback_to not in valid_targets:
+            return {"detail": f"Invalid rollback_to: {rollback_to}. Must be one of S5, S6, S7"}, 400
+
+        # 回滚：清空目标阶段及之后所有阶段的 artifact
+        codes = [s["code"] for s in STAGE_DEFS]
+        start_idx = codes.index(rollback_to)
+        end_idx = codes.index(code)
+        for i in range(start_idx, end_idx + 1):
+            s = _get_stage(wf, codes[i])
+            if s:
+                s["status"] = "pending"
+                s["artifact"] = None
+                s["error"] = None
+                s["started_at"] = None
+                s["completed_at"] = None
+        # 将目标阶段设为 active
+        target_stage = _get_stage(wf, rollback_to)
+        if target_stage:
+            target_stage["status"] = "active"
+        wf["current_stage"] = rollback_to
+        wf["status"] = "running"
+    else:
+        # 普通驳回：只重置当前阶段
+        stage["status"] = "pending"
+        stage["artifact"] = None
+        stage["error"] = (body or {}).get("reason", "Rejected")
+        stage["started_at"] = None
+        stage["completed_at"] = None
+        wf["status"] = "running"
+        wf["current_stage"] = code
+
     return _make_workflow_view(wf)
 
 
