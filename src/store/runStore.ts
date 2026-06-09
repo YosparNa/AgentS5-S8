@@ -760,6 +760,85 @@ export const useRun = create<RunState>((set, get) => {
 
     // ===== 自动化工作流 =====
 
+    // 初始化阶段 checklist（工作台 AgentStream 渲染用）
+    _initStageChecklist(stageId: string) {
+      const STEPS: Record<string, { label: string; icon: string }[]> = {
+        s5: [
+          { label: "分析 S4 热点数据", icon: "🔍" },
+          { label: "生成候选选题", icon: "💡" },
+          { label: "多维评分排序", icon: "📊" },
+          { label: "锁定最优选题", icon: "🎯" },
+        ],
+        s6: [
+          { label: "读取选题数据", icon: "📖" },
+          { label: "分析频道定位", icon: "📡" },
+          { label: "生成章节结构", icon: "🏗️" },
+          { label: "标注危机钩子", icon: "⚠️" },
+          { label: "计算张力曲线", icon: "📈" },
+        ],
+        s7: [
+          { label: "读取大纲结构", icon: "📖" },
+          { label: "分析章节钩子", icon: "🪝" },
+          { label: "生成口播内容", icon: "🎙️" },
+          { label: "应用禁用词过滤", icon: "🚫" },
+          { label: "添加危机点转折", icon: "⚠️" },
+        ],
+        s8: [
+          { label: "加载审核脚本", icon: "📖" },
+          { label: "杠精逻辑压力测试", icon: "😤" },
+          { label: "同行专业审核", icon: "🧑‍💻" },
+          { label: "小白易懂性测试", icon: "😶" },
+          { label: "老粉人设校验", icon: "❤️" },
+          { label: "合规红线审查", icon: "⚖️" },
+        ],
+      };
+      const steps = STEPS[stageId] ?? [];
+      const checklist: ChecklistItem[] = steps.map(s => ({ label: `${s.icon} ${s.label}`, done: false }));
+      set((s) => ({
+        run: {
+          ...s.run,
+          nodes: {
+            ...s.run.nodes,
+            [stageId]: {
+              ...s.run.nodes[stageId],
+              status: "active" as RunStatus,
+              percent: 0,
+              checklist,
+              doneCount: 0,
+              totalCount: checklist.length,
+              currentItem: checklist[0]?.label ?? "",
+            },
+          },
+        },
+      }));
+    },
+
+    // 根据 progressPct 更新 checklist 完成状态
+    _updateChecklistProgress(stageId: string, pct: number) {
+      const node = get().run.nodes[stageId];
+      if (!node?.checklist || node.checklist.length === 0) return;
+      const total = node.checklist.length;
+      const doneCount = Math.min(Math.floor((pct / 100) * total), total);
+      const updated = node.checklist.map((item, i) => ({ ...item, done: i < doneCount }));
+      const currentItem = doneCount < total ? updated[doneCount].label : "";
+      set((s) => ({
+        run: {
+          ...s.run,
+          nodes: {
+            ...s.run.nodes,
+            [stageId]: {
+              ...s.run.nodes[stageId],
+              checklist: updated,
+              doneCount,
+              totalCount: total,
+              currentItem,
+              percent: pct,
+            },
+          },
+        },
+      }));
+    },
+
     async runFullWorkflow() {
       set({ autoMode: true, currentAutoStep: "s5" });
 
@@ -774,29 +853,34 @@ export const useRun = create<RunState>((set, get) => {
       // Step 2: 创建workflow + 运行S5
       const STAGE_TIMES: Record<string, number> = { s5: 37, s6: 40, s7: 90, s8: 75 };
       const startTime = Date.now();
-      const progressTimer = setInterval(() => {
-        const elapsed = (Date.now() - startTime) / 1000;
-        const total = STAGE_TIMES["s5"] || 37;
-        const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
-        const remaining = Math.max(0, Math.round(total - elapsed));
-        set({
-          progressPct: pct,
-          progressElapsed: elapsed < 60 ? Math.round(elapsed) + "s" : Math.floor(elapsed / 60) + "m" + Math.round(elapsed % 60) + "s",
-          progressRemaining: remaining > 0 ? remaining + "s" : "即将完成...",
-        });
-      }, 100);
 
       set({ simPhase: "running", runningStage: "s5", progressPct: 0, progressElapsed: "0s", progressRemaining: "" });
-      // 立即更新工作台 S5 节点为 active
-      set((s) => ({ run: { ...s.run, nodes: { ...s.run.nodes, s5: { ...s.run.nodes.s5, status: "active" as RunStatus, percent: 0 } } } }));
+      // 初始化 checklist 并更新工作台 S5 节点为 active
+      get()._initStageChecklist("s5");
 
       try {
         const wfId = await dataProvider.createWorkflowOnly(userData, channelDesc);
         set({ wfId });
         const s5Config = useConfig.getState().getS5Config();
+
+        // 进度更新（含 checklist 同步）
+        const progressTimer = setInterval(() => {
+          const elapsed = (Date.now() - startTime) / 1000;
+          const total = STAGE_TIMES["s5"] || 37;
+          const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
+          const remaining = Math.max(0, Math.round(total - elapsed));
+          set({
+            progressPct: pct,
+            progressElapsed: elapsed < 60 ? Math.round(elapsed) + "s" : Math.floor(elapsed / 60) + "m" + Math.round(elapsed % 60) + "s",
+            progressRemaining: remaining > 0 ? remaining + "s" : "即将完成...",
+          });
+          get()._updateChecklistProgress("s5", pct);
+        }, 100);
+
         const wfv5 = await dataProvider.runS5(wfId, s5Config);
         clearInterval(progressTimer);
         set({ progressPct: 100, progressElapsed: Math.round((Date.now() - startTime) / 1000) + "s", progressRemaining: "已完成" });
+        get()._updateChecklistProgress("s5", 100);
         _syncStagesToRun(wfv5, set, get);
 
         // Step 3: 自动锁定最高分选题
@@ -810,19 +894,18 @@ export const useRun = create<RunState>((set, get) => {
         const s6StartTime = Date.now();
         const s6Total = STAGE_TIMES["s6"] || 40;
         set({ currentAutoStep: "s6", runningStage: "s6", progressPct: 0 });
-        // S5 done → S6 active
+        // S5 done → S6 active + checklist
         set((s) => ({
           run: {
             ...s.run,
             nodes: {
               ...s.run.nodes,
               s5: { ...s.run.nodes.s5, status: "done" as RunStatus, percent: 100 },
-              s6: { ...s.run.nodes.s6, status: "active" as RunStatus, percent: 0 },
             },
           },
         }));
+        get()._initStageChecklist("s6");
         get().loadStages();
-        // 延迟 500ms 确保 UI 刷新显示 S5→S6 过渡
         await new Promise(resolve => setTimeout(resolve, 500));
 
         const s6ProgressTimer = setInterval(() => {
@@ -830,12 +913,14 @@ export const useRun = create<RunState>((set, get) => {
           const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (s6Total - 1)) * 92), 95);
           const remaining = Math.max(0, Math.round(s6Total - elapsed));
           set({ progressPct: pct, progressElapsed: Math.round(elapsed) + "s", progressRemaining: remaining + "s" });
+          get()._updateChecklistProgress("s6", pct);
         }, 100);
 
         const s6Config = useConfig.getState().getS6Config();
         const wfv6 = await dataProvider.runS6(wfId, s6Config);
         clearInterval(s6ProgressTimer);
         set({ progressPct: 100, progressElapsed: Math.round((Date.now() - s6StartTime) / 1000) + "s", progressRemaining: "已完成" });
+        get()._updateChecklistProgress("s6", 100);
         _syncStagesToRun(wfv6, set, get);
 
         // Step 5: S6等待审核
@@ -857,39 +942,37 @@ export const useRun = create<RunState>((set, get) => {
       try {
         if (currentAutoStep === "s6_review") {
           await dataProvider.approveStage(wfId, "S6");
-          // S6 completed → S7 active
+          // S6 completed → S7 active + checklist
           set((s) => ({
             run: {
               ...s.run,
               nodes: {
                 ...s.run.nodes,
                 s6: { ...s.run.nodes.s6, status: "done" as RunStatus, percent: 100 },
-                s7: { ...s.run.nodes.s7, status: "active" as RunStatus, percent: 0 },
               },
             },
           }));
+          get()._initStageChecklist("s7");
           get().loadStages();
-          // 延迟 500ms 确保 UI 刷新
           await new Promise(resolve => setTimeout(resolve, 500));
 
-          // 运行 S7 带进度
+          // 运行 S7 带进度 + checklist
           const startTime = Date.now();
           const total = STAGE_TIMES["s7"] || 90;
           set({ currentAutoStep: "s7", simPhase: "running", runningStage: "s7", progressPct: 0 });
-          // S7 → active in workbench
-          set((s) => ({ run: { ...s.run, nodes: { ...s.run.nodes, s7: { ...s.run.nodes.s7, status: "active" as RunStatus, percent: 0 } } } }));
-          get().loadStages();
           const progressTimer = setInterval(() => {
             const elapsed = (Date.now() - startTime) / 1000;
             const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
             const remaining = Math.max(0, Math.round(total - elapsed));
             set({ progressPct: pct, progressElapsed: Math.round(elapsed) + "s", progressRemaining: remaining + "s" });
+            get()._updateChecklistProgress("s7", pct);
           }, 100);
 
           const s7Config = useConfig.getState().getS7Config();
           const wfv7 = await dataProvider.runS7(wfId, s7Config);
           clearInterval(progressTimer);
           set({ progressPct: 100, progressElapsed: Math.round((Date.now() - startTime) / 1000) + "s", progressRemaining: "已完成" });
+          get()._updateChecklistProgress("s7", 100);
 
           // S7 完成后，手动设置 S7=done, S8=pending（不使用 _syncStagesToRun，
           // 因为后端返回的 workflow 会把 S8 标记为 active，跳过用户确认阶段）
@@ -911,35 +994,35 @@ export const useRun = create<RunState>((set, get) => {
           await new Promise(resolve => setTimeout(resolve, 1000));
 
         } else if (currentAutoStep === "s7_edit") {
-          // S7 确认 → 等待 UI 刷新 → 运行 S8 带进度
+          // S7 确认 → 运行 S8 带进度 + checklist
           const startTime = Date.now();
           const total = STAGE_TIMES["s8"] || 75;
           set({ currentAutoStep: "s8", simPhase: "running", runningStage: "s8", progressPct: 0 });
-          // S7 done → S8 active in workbench
           set((s) => ({
             run: {
               ...s.run,
               nodes: {
                 ...s.run.nodes,
                 s7: { ...s.run.nodes.s7, status: "done" as RunStatus, percent: 100 },
-                s8: { ...s.run.nodes.s8, status: "active" as RunStatus, percent: 0 },
               },
             },
           }));
+          get()._initStageChecklist("s8");
           get().loadStages();
-          // 延迟 500ms 确保 UI 刷新
           await new Promise(resolve => setTimeout(resolve, 500));
           const progressTimer = setInterval(() => {
             const elapsed = (Date.now() - startTime) / 1000;
             const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
             const remaining = Math.max(0, Math.round(total - elapsed));
             set({ progressPct: pct, progressElapsed: Math.round(elapsed) + "s", progressRemaining: remaining + "s" });
+            get()._updateChecklistProgress("s8", pct);
           }, 100);
 
           const s8Config = useConfig.getState().getS8Config();
           const wfv8 = await dataProvider.runS8(wfId, s8Config);
           clearInterval(progressTimer);
           set({ progressPct: 100, progressElapsed: Math.round((Date.now() - startTime) / 1000) + "s", progressRemaining: "已完成" });
+          get()._updateChecklistProgress("s8", 100);
 
           // 不用 _syncStagesToRun（后端会标 S8=completed 导致跳过审核）
           // 手动设 S8=awaiting_review，等待用户审核
