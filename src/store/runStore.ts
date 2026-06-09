@@ -115,6 +115,7 @@ interface RunState {
   rejectAndRollback(target: string): Promise<void>;
   _initStageChecklist(stageId: string): void;
   _updateChecklistProgress(stageId: string, pct: number): void;
+  _forceLoadStages(): void;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -449,6 +450,9 @@ export const useRun = create<RunState>((set, get) => {
     stageCurrentHist: {},
 
     loadStages() {
+      dataProvider.getStages().then((s) => set({ stages: s }));
+    },
+    _forceLoadStages() {
       dataProvider.getStages().then((s) => set({ stages: s }));
     },
 
@@ -1005,7 +1009,7 @@ export const useRun = create<RunState>((set, get) => {
 
         // Step 5: S6等待审核
         set({ currentAutoStep: "s6_review", simPhase: "idle", runningStage: null });
-        get().loadStages();
+        get()._forceLoadStages();
       } catch (e) {
         if (progressTimer) clearInterval(progressTimer);
         console.error("runFullWorkflow failed:", e);
