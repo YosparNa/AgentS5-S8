@@ -109,6 +109,8 @@ interface RunState {
   runFullWorkflow(): Promise<void>;
   approveAndContinue(): Promise<void>;
   rejectAndRollback(target: string): Promise<void>;
+  _initStageChecklist(stageId: string): void;
+  _updateChecklistProgress(stageId: string, pct: number): void;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -906,13 +908,14 @@ export const useRun = create<RunState>((set, get) => {
       // 初始化 checklist 并更新工作台 S5 节点为 active
       get()._initStageChecklist("s5");
 
+      let progressTimer: ReturnType<typeof setInterval> | undefined;
       try {
         const wfId = await dataProvider.createWorkflowOnly(userData, channelDesc);
         set({ wfId });
         const s5Config = useConfig.getState().getS5Config();
 
         // 进度更新（含 checklist 同步）
-        const progressTimer = setInterval(() => {
+        progressTimer = setInterval(() => {
           const elapsed = (Date.now() - startTime) / 1000;
           const total = STAGE_TIMES["s5"] || 47;
           const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
@@ -983,7 +986,7 @@ export const useRun = create<RunState>((set, get) => {
         set({ currentAutoStep: "s6_review", simPhase: "idle", runningStage: null });
         get().loadStages();
       } catch (e) {
-        clearInterval(progressTimer);
+        if (progressTimer) clearInterval(progressTimer);
         console.error("runFullWorkflow failed:", e);
         set({ autoMode: false, currentAutoStep: "idle", simPhase: "idle", runningStage: null, progressPct: 0 });
       }

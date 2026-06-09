@@ -364,42 +364,9 @@ function ProductCardItem({
     return `待 ${effectiveStageId.toUpperCase()}`;
   }
 
-  // 从所有关联阶段的产物中提取文件标签
-  function dynamicFiles(): string[] {
-    if (!isS5S8) return card.files ?? [];
-    const labels: string[] = [];
-    for (const sid of linkedStages) {
-      const sd = allStageData[sid];
-      const output = sd?.output as Record<string, unknown> | undefined;
-      if (!output || Object.keys(output).length === 0) {
-        // 无产物时显示"待 XX"
-        labels.push(`待 ${sid.toUpperCase()}`);
-        continue;
-      }
-      const kind = sd?.config.kind;
-      if (kind === "topic") {
-        const topics = (output.topics ?? []) as Array<{ score: number }>;
-        const best = topics.length > 0 ? Math.max(...topics.map(t => t.score)) : 0;
-        labels.push(`选题卡 · ${best} 分`);
-      } else if (kind === "outline") {
-        const outline = (output.outline ?? []) as Array<unknown>;
-        labels.push(`大纲 · ${outline.length} 章`);
-      } else if (kind === "script") {
-        const wc = (output.word_count as number) ?? 0;
-        labels.push(`脚本 · ${wc.toLocaleString()} 字`);
-      } else if (kind === "adversarial") {
-        const roles = (output.roles ?? []) as Array<unknown>;
-        labels.push(`${roles.length} 角色质疑`);
-      }
-    }
-    return labels.length > 0 ? labels : card.files ?? [];
-  }
-
   const cls = cardClasses(card.color, effectiveStatus);
 
-  // 展开时显示哪个阶段的数据（优先显示有产物的最后阶段）
-  const expandStageId = [...linkedStages].reverse().find(sid => {
-    const output = allStageData[sid]?.output as Record<string, unknown> | undefined;
+  // 每个关联阶段的独立信息
     return output && Object.keys(output).length > 0;
   }) ?? effectiveStageId;
 
