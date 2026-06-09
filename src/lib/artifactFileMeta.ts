@@ -66,7 +66,13 @@ function rawFiles(stage: StageDef): RawFile[] {
     case "topic":         return [r("选题卡.md", "md", "8.6 分")];
     case "outline":       return [r("大纲_V2.md", "md", "11 章")];
     case "script":        return [r("脚本_V3.md", "md", "4,820 字")];
-    case "adversarial":   return [r("对抗质疑.md", "md", "5 质疑")];
+    case "adversarial": {
+      const roles = (stage.output?.roles ?? []) as Array<Record<string, unknown>>;
+      const avg = stage.output?.average_score as number | undefined;
+      const count = roles.length;
+      const scoreStr = avg ? ` · ${avg}分` : "";
+      return [r("对抗质疑.md", "md", `${count} 角色${scoreStr}`)];
+    }
     case "storyboard":    return [r("分镜表_38.csv", "csv", "38 镜 · 图像待 S10")];
     case "image":         return [r("分镜图_×38.zip", "zip", "图像库")];
     case "voice":         return [r("配音_zh.mp3", "mp3", "音轨")];

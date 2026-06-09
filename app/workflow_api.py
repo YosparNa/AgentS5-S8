@@ -78,10 +78,21 @@ def _make_artifact(stage_code: str, slug: str, data) -> dict:
         roles_raw = data.get("roles", []) if isinstance(data, dict) else []
         role_key_map = {"杠精": "nitpicker", "同行": "peer", "小白": "novice", "老粉": "fan", "合规": "compliance"}
         base["roles"] = [
-            {"role_key": role_key_map.get(r.get("name", ""), r.get("name", "")), "name": r.get("name", ""), "issues": len(r.get("issues", [])), "note": r.get("summary", "")[:100], "avatar": r.get("emoji", "")}
+            {
+                "role_key": role_key_map.get(r.get("name", ""), r.get("name", "")),
+                "name": r.get("name", ""),
+                "avatar": r.get("emoji", ""),
+                "score": r.get("score", 0),
+                "focus": r.get("focus", ""),
+                "issues": r.get("issues", []),
+                "suggestions": r.get("suggestions", []),
+                "highlights": r.get("highlights", []),
+                "summary": r.get("summary", ""),
+            }
             for r in roles_raw
         ]
         base["average_score"] = data.get("average_score", 0)
+        base["synthesis"] = data.get("synthesis", {})
     return base
 
 

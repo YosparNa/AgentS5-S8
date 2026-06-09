@@ -130,11 +130,15 @@ export function OutputTab({ stage }: Props) {
     }
 
     case "adversarial": {
-      const { roles } = o as { roles: Parameters<typeof AdversarialArtifact>[0]["roles"] };
+      const { roles, synthesis, average_score } = o as {
+        roles: Parameters<typeof AdversarialArtifact>[0]["roles"];
+        synthesis?: Parameters<typeof AdversarialArtifact>[0]["synthesis"];
+        average_score?: number;
+      };
       if (!roles || roles.length === 0) {
         content = <EmptyHint kind="adversarial" />;
       } else {
-        content = <AdversarialArtifact roles={roles} />;
+        content = <AdversarialArtifact roles={roles} synthesis={synthesis} averageScore={average_score} />;
       }
       break;
     }

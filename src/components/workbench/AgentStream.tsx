@@ -260,46 +260,50 @@ export function AgentStream({ extraUserBubbles = [] }: Props) {
                 </div>
               )}
 
-              {/* S8 awaiting_review → review card */}
-              {node.nodeId === "s8" && status === "awaiting_review" && pendingNodeId === "s8" && (
-                <div className="space-y-1">
-                  <div className="text-[10px] text-emerald-600 mono">
-                    ✓ {stage.code} 完成
-                  </div>
-                  <ChatArtifactCard stageId={node.stageId} />
-                  <div className="mt-2 max-w-[95%] border border-amber-200 bg-amber-50 rounded-xl p-3 shadow-sm">
-                    <div className="text-[11px] font-bold text-amber-800 mb-2">
-                      对抗审核完成 · 请确认结果
+              {/* S8 awaiting_review → review card with results */}
+              {node.nodeId === "s8" && status === "awaiting_review" && pendingNodeId === "s8" && (() => {
+                const s8Output = stages["s8"]?.output as Record<string, unknown> | undefined;
+                const s8Roles = (s8Output?.roles ?? []) as Array<Record<string, unknown>>;
+                const s8Avg = (s8Output?.average_score as number) ?? 0;
+                return (
+                  <div className="space-y-1">
+                    <div className="text-[10px] text-emerald-600 mono">
+                      ✓ {stage.code} 完成
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => rejectAndRollback("s7")}
-                        className="text-[11px] border border-red-300 text-red-600 px-2.5 py-1 rounded hover:bg-red-50"
-                      >
-                        驳回(S7)
-                      </button>
-                      <button
-                        onClick={() => rejectAndRollback("s6")}
-                        className="text-[11px] border border-red-300 text-red-600 px-2.5 py-1 rounded hover:bg-red-50"
-                      >
-                        驳回(S6)
-                      </button>
-                      <button
-                        onClick={() => rejectAndRollback("s5")}
-                        className="text-[11px] border border-red-300 text-red-600 px-2.5 py-1 rounded hover:bg-red-50"
-                      >
-                        驳回(S5)
-                      </button>
-                      <button
-                        onClick={() => approveAndContinue()}
-                        className="text-[11px] bg-emerald-600 text-white px-2.5 py-1 rounded hover:bg-emerald-700"
-                      >
-                        通过
-                      </button>
+                    <ChatArtifactCard stageId={node.stageId} />
+                    {/* 审核结果摘要 */}
+                    <div className="mt-2 max-w-[95%] bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-[12px] font-bold text-gray-800">综合评分</span>
+                        <span className="text-[14px] font-bold text-amber-700">{s8Avg}</span>
+                        <span className="text-[11px] text-gray-500">/ 10</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {s8Roles.map((r, i) => (
+                          <div key={i} className="flex items-center gap-2 text-[11px]">
+                            <span>{String(r.avatar ?? "")}</span>
+                            <span className="font-medium">{String(r.name ?? "")}</span>
+                            {r.score != null && <span className="text-gray-500">{r.score}/10</span>}
+                            <span className="text-gray-400 flex-1 truncate">{String(r.summary ?? r.note ?? "")}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {/* 审核按钮 */}
+                    <div className="mt-2 max-w-[95%] border border-amber-200 bg-amber-50 rounded-xl p-3 shadow-sm">
+                      <div className="text-[11px] font-bold text-amber-800 mb-2">
+                        请确认审核结果
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => rejectAndRollback("s7")} className="text-[11px] border border-red-300 text-red-600 px-2.5 py-1 rounded hover:bg-red-50">驳回(S7)</button>
+                        <button onClick={() => rejectAndRollback("s6")} className="text-[11px] border border-red-300 text-red-600 px-2.5 py-1 rounded hover:bg-red-50">驳回(S6)</button>
+                        <button onClick={() => rejectAndRollback("s5")} className="text-[11px] border border-red-300 text-red-600 px-2.5 py-1 rounded hover:bg-red-50">驳回(S5)</button>
+                        <button onClick={() => approveAndContinue()} className="text-[11px] bg-emerald-600 text-white px-2.5 py-1 rounded hover:bg-emerald-700">通过</button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Rejected → red notice */}
               {status === "rejected" && (
