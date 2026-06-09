@@ -70,22 +70,6 @@ export function OutlineArtifact({ outline, totalDuration, crisisPoints, climaxPo
               {c.description && <div className="text-[10px] text-gray-600">{c.description}</div>}
               {c.purpose && <div className="text-[10px] text-indigo-600"><b>目的：</b>{c.purpose}</div>}
               {c.transition_to_next && <div className="text-[10px] text-gray-500"><b>过渡：</b>{c.transition_to_next}</div>}
-              {c.pros && c.pros.length > 0 && (
-                <div className="text-[10px] text-emerald-600">
-                  <b>优势：</b>
-                  <ul className="ml-2 mt-0.5">
-                    {c.pros.map((p, j) => <li key={j}>• {p}</li>)}
-                  </ul>
-                </div>
-              )}
-              {c.cons && c.cons.length > 0 && (
-                <div className="text-[10px] text-red-500">
-                  <b>不足：</b>
-                  <ul className="ml-2 mt-0.5">
-                    {c.cons.map((p, j) => <li key={j}>• {p}</li>)}
-                  </ul>
-                </div>
-              )}
             </div>
           )}
         </div>

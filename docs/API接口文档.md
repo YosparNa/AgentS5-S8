@@ -263,8 +263,22 @@ pending → active → running → completed
     {
       "rank": 1,
       "title": "选题标题",
+      "angle": "切入角度描述",
       "score": 8.5,
+      "scores": {
+        "hotness": 9,
+        "relevance": 8,
+        "videoability": 9,
+        "differentiation": 8,
+        "risk": 9,
+        "opportunity": 8
+      },
       "unique": "差异化角度",
+      "keywords": ["关键词1", "关键词2"],
+      "hook_idea": "开头5秒钩子创意",
+      "competitors_covered": ["竞品A"],
+      "predicted_views": "预估播放量区间",
+      "risk_notes": ["风险提示1"],
       "locked": false
     }
   ]
@@ -278,15 +292,20 @@ pending → active → running → completed
   "artifact_type": "outline",
   "outline": [
     {
+      "chapter": 1,
       "ch": "第1章标题",
       "dur": "30s",
       "tension": 7,
       "hook": "开头钩子文本",
       "crisis": false,
       "description": "章节描述",
-      "purpose": "章节目的"
+      "purpose": "章节目的",
+      "transition_to_next": "过渡到下一章的衔接句"
     }
-  ]
+  ],
+  "total_duration": "5min",
+  "crisis_points": [3, 6],
+  "climax_position": "78%"
 }
 ```
 
@@ -307,13 +326,22 @@ pending → active → running → completed
 {
   "artifact_type": "adversarial_review",
   "average_score": 7.2,
+  "synthesis": {
+    "top_issues": ["重点问题1"],
+    "all_highlights": ["共同亮点1"],
+    "issue_count": { "high": 2, "medium": 3, "low": 1 }
+  },
   "roles": [
     {
       "role_key": "nitpicker",
       "name": "杠精",
-      "issues": 3,
-      "note": "存在2个事实错误...",
-      "avatar": "f624"
+      "avatar": "emoji",
+      "score": 7,
+      "focus": "关注领域",
+      "issues": ["问题1", "问题2"],
+      "suggestions": ["建议1"],
+      "highlights": ["亮点1"],
+      "summary": "总结"
     }
   ]
 }
