@@ -1072,19 +1072,27 @@ export const useRun = create<RunState>((set, get) => {
       if (targetIdx < 0) return;
 
       try {
-        // 1. 保存当前产物到历史记录（供回滚查看）
-        const currentNodes = get().run.nodes;
+        // 1. 保存当前产物快照到历史记录（含实际 artifact 数据）
         for (const sid of ROLLBACK_STAGES.slice(targetIdx)) {
-          const node = currentNodes[sid];
+          const node = get().run.nodes[sid];
           if (node?.status === "done") {
-            get().agentSaveHistory(sid, `驳回前 ${sid} 产物快照`, null);
+            const stageDef = await dataProvider.getStage(sid);
+            get().agentSaveHistory(sid, `驳回前 ${sid.toUpperCase()} 产物`, stageDef?.output ?? null);
           }
         }
 
         // 2. 调用后端驳回
         await dataProvider.rejectStage(wfId, "S8", `回滚到${target}`, target.toUpperCase());
 
-        // 3. 重置目标阶段到 S8 的工作台节点为 pending
+        // 3. 清理被回滚阶段的 STAGES artifact 数据（避免 StudioPanel/抽屉显示旧产物）
+        for (const sid of ROLLBACK_STAGES.slice(targetIdx)) {
+          const stageDef = await dataProvider.getStage(sid);
+          if (stageDef) {
+            stageDef.output = {};
+          }
+        }
+
+        // 4. 重置目标阶段到 S8 的工作台节点为 pending
         set((s) => {
           const nodes = { ...s.run.nodes };
           for (const sid of ROLLBACK_STAGES.slice(targetIdx)) {
@@ -1101,11 +1109,12 @@ export const useRun = create<RunState>((set, get) => {
           return { run: { ...s.run, nodes } };
         });
 
-        // 4. 初始化目标阶段 checklist + 设置为 active
+        // 5. 初始化目标阶段 checklist + 设置为 active
         get()._initStageChecklist(target);
         set({ rollbackTarget: target, currentAutoStep: target, simPhase: "running", runningStage: target, progressPct: 0, progressElapsed: "0s", progressRemaining: "" });
+        get().loadStages();
 
-        // 5. 带进度运行目标阶段
+        // 6. 带进度运行目标阶段
         const startTime = Date.now();
         const total = STAGE_TIMES[target] || 40;
         const progressTimer = setInterval(() => {
@@ -1140,7 +1149,7 @@ export const useRun = create<RunState>((set, get) => {
           _syncStagesToRun(wfv, set, get);
         }
 
-        // 6. 设置下一步状态
+        // 7. 设置下一步状态（和 runFullWorkflow 完全一致的模式）
         if (target === "s5") {
           const topics = (wfv?.stages.find(s => s.stage_code === "S5")?.output_artifact?.topics ?? []) as Array<{ score: number }>;
           if (topics.length > 0) {
