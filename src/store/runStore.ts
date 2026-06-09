@@ -128,6 +128,31 @@ function isEnabled(nodeId: string, nodes: WorkflowNode[]): boolean {
   return node?.enabled !== false;
 }
 
+/** 生成历史记录摘要 */
+function _historySummary(stageId: string, output: Record<string, unknown> | null | undefined): string {
+  if (!output || Object.keys(output).length === 0) return `${stageId.toUpperCase()} 完成`;
+  if (stageId === "s5") {
+    const topics = (output.topics ?? []) as Array<{ score: number; title: string }>;
+    const best = topics.length > 0 ? Math.max(...topics.map(t => t.score)) : 0;
+    return `生成 ${topics.length} 个选题，最高 ${best} 分`;
+  }
+  if (stageId === "s6") {
+    const outline = (output.outline ?? []) as Array<unknown>;
+    const dur = output.total_duration as string | undefined;
+    return `大纲 ${outline.length} 章${dur ? `，${dur}` : ""}`;
+  }
+  if (stageId === "s7") {
+    const wc = (output.word_count as number) ?? 0;
+    return `脚本 ${wc.toLocaleString()} 字`;
+  }
+  if (stageId === "s8") {
+    const roles = (output.roles ?? []) as Array<unknown>;
+    const avg = output.average_score as number | undefined;
+    return `${roles.length} 角色审核，综合 ${avg ?? "?"} 分`;
+  }
+  return `${stageId.toUpperCase()} 完成`;
+}
+
 /** S8 预计时间：每个启用角色 20s */
 function _s8Time(): number {
   const cfg = useConfig.getState().getS8Config();
@@ -898,7 +923,7 @@ export const useRun = create<RunState>((set, get) => {
 
         // 保存 S5 产物到历史记录
         const s5Stage = await dataProvider.getStage("s5");
-        get().agentSaveHistory("s5", "S5 选题生成完成", s5Stage?.output ?? null);
+        get().agentSaveHistory("s5", _historySummary("s5", s5Stage?.output), s5Stage?.output ?? null);
 
         // Step 3: 自动锁定最高分选题
         const topics = (wfv5.stages.find(s => s.stage_code === "S5")?.output_artifact?.topics ?? []) as Array<{ score: number }>;
@@ -942,7 +967,7 @@ export const useRun = create<RunState>((set, get) => {
 
         // 保存 S6 产物到历史记录
         const s6Stage = await dataProvider.getStage("s6");
-        get().agentSaveHistory("s6", "S6 大纲生成完成", s6Stage?.output ?? null);
+        get().agentSaveHistory("s6", _historySummary("s6", s6Stage?.output), s6Stage?.output ?? null);
 
         // Step 5: S6等待审核
         set({ currentAutoStep: "s6_review", simPhase: "idle", runningStage: null });
@@ -997,7 +1022,7 @@ export const useRun = create<RunState>((set, get) => {
 
           // 保存 S7 产物到历史记录
           const s7Stage = await dataProvider.getStage("s7");
-          get().agentSaveHistory("s7", "S7 脚本生成完成", s7Stage?.output ?? null);
+          get().agentSaveHistory("s7", _historySummary("s7", s7Stage?.output), s7Stage?.output ?? null);
 
           // S7 完成后，手动设置 S7=done, S8=pending（不使用 _syncStagesToRun，
           // 因为后端返回的 workflow 会把 S8 标记为 active，跳过用户确认阶段）
@@ -1051,7 +1076,7 @@ export const useRun = create<RunState>((set, get) => {
 
           // 保存 S8 产物到历史记录
           const s8Stage = await dataProvider.getStage("s8");
-          get().agentSaveHistory("s8", "S8 对抗审核完成", s8Stage?.output ?? null);
+          get().agentSaveHistory("s8", _historySummary("s8", s8Stage?.output), s8Stage?.output ?? null);
 
           // 不用 _syncStagesToRun（后端会标 S8=completed 导致跳过审核）
           // 手动设 S8=awaiting_review，等待用户审核
@@ -1070,18 +1095,15 @@ export const useRun = create<RunState>((set, get) => {
 
         } else if (currentAutoStep === "s8_review") {
           await dataProvider.approveStage(wfId, "S8");
-          // S8 完成 → 跳转到 S9（S9 未实现，只做导航）
+          // S8 完成，不跳转 S9（S9 未实现）
           set((s) => ({
             run: {
               ...s.run,
-              currentNodeId: "s9",
               nodes: {
                 ...s.run.nodes,
                 s8: { ...s.run.nodes.s8, status: "done" as RunStatus, percent: 100 },
-                s9: { ...s.run.nodes.s9, status: "active" as RunStatus, percent: 0 },
               },
             },
-            currentNodeId: "s9",
             currentAutoStep: "done",
             autoMode: false,
             simPhase: "idle",

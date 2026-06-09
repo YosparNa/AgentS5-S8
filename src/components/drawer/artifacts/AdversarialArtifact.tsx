@@ -101,7 +101,7 @@ export function AdversarialArtifact({ roles, synthesis, averageScore }: Props) {
                 {r.suggestions.map((s, j) => (
                   <li key={j} className="text-[11px] text-gray-700 flex items-start gap-1">
                     <span className="text-indigo-400 shrink-0">→</span>
-                    <span>{s}</span>
+                    <span>{typeof s === "string" ? s : (s as Record<string, unknown>).description as string || JSON.stringify(s)}</span>
                   </li>
                 ))}
               </ul>
@@ -116,7 +116,7 @@ export function AdversarialArtifact({ roles, synthesis, averageScore }: Props) {
                 {r.highlights.map((h, j) => (
                   <li key={j} className="text-[11px] text-gray-700 flex items-start gap-1">
                     <span className="text-emerald-400 shrink-0">✓</span>
-                    <span>{h}</span>
+                    <span>{typeof h === "string" ? h : (h as Record<string, unknown>).description as string || JSON.stringify(h)}</span>
                   </li>
                 ))}
               </ul>
@@ -140,7 +140,7 @@ export function AdversarialArtifact({ roles, synthesis, averageScore }: Props) {
           <div className="text-[11px] font-bold text-red-700 mb-1">重点问题</div>
           <ul className="space-y-1">
             {synthesis.top_issues.map((issue, i) => (
-              <li key={i} className="text-[11px] text-red-800">{issue}</li>
+              <li key={i} className="text-[11px] text-red-800">{typeof issue === "string" ? issue : JSON.stringify(issue)}</li>
             ))}
           </ul>
         </div>

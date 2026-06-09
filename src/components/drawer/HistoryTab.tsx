@@ -9,11 +9,13 @@ export function HistoryTab() {
   const stageHistory = useRun((s) => s.agentHistory.filter((h) => h.stage === stageId));
   const currentHistId = useRun((s) => s.stageCurrentHist[stageId || ""]);
   const runningStage = useRun((s) => s.runningStage);
-  const isRunning = !!runningStage;
+  const autoMode = useRun((s) => s.autoMode);
+  const currentAutoStep = useRun((s) => s.currentAutoStep);
+  const isRunning = !!runningStage || autoMode || (currentAutoStep !== "done" && currentAutoStep !== "idle");
 
-  // 优先显示当前阶段历史，无则显示全部历史
-  const displayHistory = stageHistory.length > 0 ? stageHistory : history;
-  const filterLabel = stageHistory.length > 0 ? stageId?.toUpperCase() : "全部";
+  // 运行中显示全部历史，完成后只显示当前阶段历史
+  const displayHistory = isRunning ? history : (stageHistory.length > 0 ? stageHistory : history);
+  const filterLabel = isRunning ? "全部" : (stageId?.toUpperCase() ?? "全部");
 
   if (!displayHistory.length) {
     return (

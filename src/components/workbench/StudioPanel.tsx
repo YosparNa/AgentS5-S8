@@ -446,6 +446,10 @@ function ProductCardItem({
 
   const lines = stageLines();
 
+  function handleExpand() {
+    setExpanded(prev => !prev);
+  }
+
   return (
     <div className="mb-1.5">
       <button onClick={() => { handleExpand(); }} className={cls.wrapper}>
