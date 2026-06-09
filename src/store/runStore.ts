@@ -1034,19 +1034,25 @@ export const useRun = create<RunState>((set, get) => {
           }));
           get()._initStageChecklist("s7");
           get().loadStages();
-          await new Promise(resolve => setTimeout(resolve, 500));
+          if (!MOCK_MODE) await new Promise(resolve => setTimeout(resolve, 500));
 
           // 运行 S7 带进度 + checklist
           const startTime = Date.now();
           const total = STAGE_TIMES["s7"] || 120;
           set({ currentAutoStep: "s7", simPhase: "running", runningStage: "s7", progressPct: 0 });
-          const progressTimer = setInterval(() => {
-            const elapsed = (Date.now() - startTime) / 1000;
-            const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
-            const remaining = Math.max(0, Math.round(total - elapsed));
-            set({ progressPct: pct, progressElapsed: Math.round(elapsed) + "s", progressRemaining: remaining + "s" });
-            get()._updateChecklistProgress("s7", pct);
-          }, 100);
+          let progressTimer: ReturnType<typeof setInterval> | undefined;
+          if (MOCK_MODE) {
+            set({ progressPct: 50, progressElapsed: "0s", progressRemaining: "..." });
+            get()._updateChecklistProgress("s7", 50);
+          } else {
+            progressTimer = setInterval(() => {
+              const elapsed = (Date.now() - startTime) / 1000;
+              const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
+              const remaining = Math.max(0, Math.round(total - elapsed));
+              set({ progressPct: pct, progressElapsed: Math.round(elapsed) + "s", progressRemaining: remaining + "s" });
+              get()._updateChecklistProgress("s7", pct);
+            }, 100);
+          }
 
           const s7Config = useConfig.getState().getS7Config();
           const wfv7 = await dataProvider.runS7(wfId, s7Config);
@@ -1093,18 +1099,24 @@ export const useRun = create<RunState>((set, get) => {
           }));
           get()._initStageChecklist("s8");
           get().loadStages();
-          await new Promise(resolve => setTimeout(resolve, 500));
-          const progressTimer = setInterval(() => {
-            const elapsed = (Date.now() - startTime) / 1000;
-            const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
-            const remaining = Math.max(0, Math.round(total - elapsed));
-            set({ progressPct: pct, progressElapsed: Math.round(elapsed) + "s", progressRemaining: remaining + "s" });
-            get()._updateChecklistProgress("s8", pct);
-          }, 100);
+          if (!MOCK_MODE) await new Promise(resolve => setTimeout(resolve, 500));
+          let s8ProgressTimer: ReturnType<typeof setInterval> | undefined;
+          if (MOCK_MODE) {
+            set({ progressPct: 50, progressElapsed: "0s", progressRemaining: "..." });
+            get()._updateChecklistProgress("s8", 50);
+          } else {
+            s8ProgressTimer = setInterval(() => {
+              const elapsed = (Date.now() - startTime) / 1000;
+              const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
+              const remaining = Math.max(0, Math.round(total - elapsed));
+              set({ progressPct: pct, progressElapsed: Math.round(elapsed) + "s", progressRemaining: remaining + "s" });
+              get()._updateChecklistProgress("s8", pct);
+            }, 100);
+          }
 
           const s8Config = useConfig.getState().getS8Config();
           const wfv8 = await dataProvider.runS8(wfId, s8Config);
-          clearInterval(progressTimer);
+          if (s8ProgressTimer) clearInterval(s8ProgressTimer);
           set({ progressPct: 100, progressElapsed: Math.round((Date.now() - startTime) / 1000) + "s", progressRemaining: "已完成" });
           get()._updateChecklistProgress("s8", 100);
 
@@ -1208,17 +1220,23 @@ export const useRun = create<RunState>((set, get) => {
         // 6. 带进度运行目标阶段
         const startTime = Date.now();
         const total = target === "s8" ? _s8Time() : (STAGE_TIMES[target] || 40);
-        const progressTimer = setInterval(() => {
-          const elapsed = (Date.now() - startTime) / 1000;
-          const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
-          const remaining = Math.max(0, Math.round(total - elapsed));
-          set({
+        let progressTimer: ReturnType<typeof setInterval> | undefined;
+        if (MOCK_MODE) {
+          set({ progressPct: 50, progressElapsed: "0s", progressRemaining: "..." });
+          get()._updateChecklistProgress(target, 50);
+        } else {
+          progressTimer = setInterval(() => {
+            const elapsed = (Date.now() - startTime) / 1000;
+            const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
+            const remaining = Math.max(0, Math.round(total - elapsed));
+            set({
             progressPct: pct,
             progressElapsed: Math.round(elapsed) + "s",
             progressRemaining: remaining + "s",
           });
           get()._updateChecklistProgress(target, pct);
         }, 100);
+        }
 
         let wfv;
         if (target === "s5") {
@@ -1267,7 +1285,7 @@ export const useRun = create<RunState>((set, get) => {
           }));
           get()._initStageChecklist("s6");
           get().loadStages();
-          await new Promise(resolve => setTimeout(resolve, 500));
+          if (!MOCK_MODE) await new Promise(resolve => setTimeout(resolve, 500));
 
           const s6ProgressTimer = setInterval(() => {
             const elapsed = (Date.now() - s6StartTime) / 1000;
