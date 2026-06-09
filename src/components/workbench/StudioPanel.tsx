@@ -22,6 +22,8 @@ interface ProductCard {
   gate: string;
   label: string;
   stageId: string;
+  /** 关联的多个阶段（按顺序，取第一个未完成阶段的状态显示） */
+  linkedStages?: string[];
   files?: string[];
   color: CardColor;
   /** Show 76% progress bar when active (分镜+图像 card) */
@@ -33,14 +35,14 @@ const PRODUCT_CARDS: ProductCard[] = [
     gate: "②",
     label: "选题 + 大纲",
     stageId: "s6",
-    files: ["选题卡 · 8.6 分", "大纲 V2 · 11 章"],
+    linkedStages: ["s5", "s6"],
     color: "emerald",
   },
   {
     gate: "③",
     label: "脚本 + 对抗",
     stageId: "s8",
-    files: ["脚本 V3 · 4,820 字", "5 角色质疑"],
+    linkedStages: ["s7", "s8"],
     color: "emerald",
   },
   {
@@ -314,75 +316,91 @@ function ProductCardItem({
 }: {
   card: ProductCard;
 }) {
-  const status = useRun((s) => s.nodeStatus(card.stageId));
-  const percent = useRun((s) => s.run.nodes[card.stageId]?.percent ?? 0);
-  const cls = cardClasses(card.color, status);
-  const [expanded, setExpanded] = useState(false);
-  const [stageData, setStageData] = useState<StageDef | undefined>(undefined);
+  const nodeStatuses = useRun((s) => s.run.nodes);
   const stageVersion = useRun((s) => s.stageVersion);
   const expandedStudioCard = useUi((s) => s.expandedStudioCard);
   const setExpandedStudioCard = useUi((s) => s.setExpandedStudioCard);
 
-  const isS5S8 = ["s5", "s6", "s7", "s8"].includes(card.stageId);
+  const [expanded, setExpanded] = useState(false);
+  const [allStageData, setAllStageData] = useState<Record<string, StageDef>>({});
 
-  // Auto-expand when expandedStudioCard matches this card
+  const linkedStages = card.linkedStages ?? [card.stageId];
+  const isS5S8 = linkedStages.some(s => ["s5", "s6", "s7", "s8"].includes(s));
+
+  // 找到第一个未完成的阶段（用于状态显示）
+  const effectiveStageId = linkedStages.find(sid => {
+    const st = nodeStatuses[sid]?.status;
+    return st !== "done" && st !== "completed";
+  }) ?? linkedStages[linkedStages.length - 1];
+
+  const effectiveStatus = nodeStatuses[effectiveStageId]?.status ?? "pending";
+  const effectivePercent = nodeStatuses[effectiveStageId]?.percent ?? 0;
+
+  // Auto-expand when expandedStudioCard matches
   useEffect(() => {
-    if (expandedStudioCard === card.stageId) {
+    if (linkedStages.includes(expandedStudioCard ?? "")) {
       setExpanded(true);
-      setExpandedStudioCard(null); // consume the signal
+      setExpandedStudioCard(null);
     }
-  }, [expandedStudioCard, card.stageId, setExpandedStudioCard]);
+  }, [expandedStudioCard, linkedStages, setExpandedStudioCard]);
 
-  // Refresh stage data when version changes (artifact updated)
+  // Load all linked stage data
   useEffect(() => {
     if (isS5S8) {
-      dataProvider.getStage(card.stageId).then(setStageData);
+      Promise.all(linkedStages.map(sid => dataProvider.getStage(sid))).then(results => {
+        const map: Record<string, StageDef> = {};
+        results.forEach(sd => { if (sd) map[sd.code.toLowerCase()] = sd; });
+        setAllStageData(map);
+      });
     }
-  }, [card.stageId, stageVersion, isS5S8]);
+  }, [stageVersion, isS5S8, linkedStages]);
 
   function statusLabel(): string {
-    if (status === "done") return "已通过";
-    if (status === "awaiting_review") return "待审核";
-    if (status === "active") return `${percent}%`;
-    if (status === "skipped") return "已跳过";
-    if (status === "rejected") return "已驳回";
-    return `待 ${card.stageId.toUpperCase()}`;
+    if (effectiveStatus === "done") return "已通过";
+    if (effectiveStatus === "awaiting_review") return "待审核";
+    if (effectiveStatus === "active") return `${effectivePercent}%`;
+    if (effectiveStatus === "skipped") return "已跳过";
+    if (effectiveStatus === "rejected") return "已驳回";
+    return `待 ${effectiveStageId.toUpperCase()}`;
   }
 
-  // S5-S8: dynamic file labels from artifact data
+  // 从所有关联阶段的产物中提取文件标签
   function dynamicFiles(): string[] {
     if (!isS5S8) return card.files ?? [];
-    const output = stageData?.output as Record<string, unknown> | undefined;
-    if (!output) return card.files ?? [];
-    const kind = stageData?.config.kind;
-    if (kind === "topic") {
-      const topics = (output.topics ?? []) as Array<{ score: number }>;
-      const best = topics.length > 0 ? Math.max(...topics.map(t => t.score)) : 0;
-      return [`${topics.length} 选题 · ${best} 分`];
+    const labels: string[] = [];
+    for (const sid of linkedStages) {
+      const sd = allStageData[sid];
+      const output = sd?.output as Record<string, unknown> | undefined;
+      if (!output || Object.keys(output).length === 0) continue;
+      const kind = sd?.config.kind;
+      if (kind === "topic") {
+        const topics = (output.topics ?? []) as Array<{ score: number }>;
+        const best = topics.length > 0 ? Math.max(...topics.map(t => t.score)) : 0;
+        labels.push(`${topics.length} 选题 · ${best} 分`);
+      } else if (kind === "outline") {
+        const outline = (output.outline ?? []) as Array<unknown>;
+        const dur = output.total_duration as string | undefined;
+        labels.push(dur ? `${outline.length} 章 · ${dur}` : `${outline.length} 章`);
+      } else if (kind === "script") {
+        const wc = (output.word_count as number) ?? 0;
+        labels.push(`${wc.toLocaleString()} 字`);
+      } else if (kind === "adversarial") {
+        const roles = (output.roles ?? []) as Array<unknown>;
+        const avg = output.average_score as number | undefined;
+        labels.push(`${roles.length} 角色${avg ? ` · ${avg}分` : ""}`);
+      }
     }
-    if (kind === "outline") {
-      const outline = (output.outline ?? []) as Array<unknown>;
-      const dur = output.total_duration as string | undefined;
-      return [dur ? `${outline.length} 章 · ${dur}` : `${outline.length} 章`];
-    }
-    if (kind === "script") {
-      const wc = (output.word_count as number) ?? 0;
-      return [`${wc.toLocaleString()} 字`];
-    }
-    if (kind === "adversarial") {
-      const roles = (output.roles ?? []) as Array<unknown>;
-      const avg = output.average_score as number | undefined;
-      return [`${roles.length} 角色${avg ? ` · ${avg}分` : ""}`];
-    }
-    return card.files ?? [];
+    return labels.length > 0 ? labels : card.files ?? [];
   }
 
-  // Toggle expand
-  function handleExpand() {
-    setExpanded(prev => !prev);
-  }
-
+  const cls = cardClasses(card.color, effectiveStatus);
   const files = dynamicFiles();
+
+  // 展开时显示哪个阶段的数据（优先显示有产物的最后阶段）
+  const expandStageId = [...linkedStages].reverse().find(sid => {
+    const output = allStageData[sid]?.output as Record<string, unknown> | undefined;
+    return output && Object.keys(output).length > 0;
+  }) ?? effectiveStageId;
 
   return (
     <div className="mb-1.5">
@@ -395,7 +413,7 @@ function ProductCardItem({
           </div>
           <div className="flex items-center gap-1.5">
             <span className={cls.statusText}>{statusLabel()}</span>
-            {isS5S8 && status === "done" && (
+            {isS5S8 && effectiveStatus === "done" && (
               <Icon.ChevronDown size={10} className={cn("text-gray-400 transition-transform", expanded && "rotate-180")} />
             )}
           </div>
@@ -411,7 +429,7 @@ function ProductCardItem({
                     <FileIcon label={f} cls={cls.fileIcon} />
                     <span className="flex-1">{f}</span>
                     <div className="w-12 h-1 bg-gray-100 rounded-full">
-                      <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${percent || 76}%` }} />
+                      <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${effectivePercent || 76}%` }} />
                     </div>
                   </div>
                 );
@@ -428,44 +446,36 @@ function ProductCardItem({
       </button>
 
       {/* Inline artifact expansion */}
-      {expanded && isS5S8 && stageData?.output && (
-        <div className="border border-gray-200 border-t-0 rounded-b-lg bg-white px-2 pb-2 max-h-[300px] overflow-y-auto">
-          {(() => {
-            const kind = stageData.config.kind;
-            const o = stageData.output as Record<string, unknown>;
-            if (kind === "topic") {
+      {expanded && isS5S8 && (() => {
+        const expandData = allStageData[expandStageId];
+        if (!expandData?.output || Object.keys(expandData.output).length === 0) return null;
+        const kind = expandData.config.kind;
+        const o = expandData.output as Record<string, unknown>;
+        return (
+          <div className="border border-gray-200 border-t-0 rounded-b-lg bg-white px-2 pb-2 max-h-[300px] overflow-y-auto">
+            {kind === "topic" && (() => {
               const topics = o.topics as Parameters<typeof TopicArtifact>[0]["topics"];
               return topics?.length ? <TopicArtifact topics={topics} /> : null;
-            }
-            if (kind === "outline") {
+            })()}
+            {kind === "outline" && (() => {
               const outline = o.outline as Parameters<typeof OutlineArtifact>[0]["outline"];
               return outline?.length ? (
-                <OutlineArtifact
-                  outline={outline}
-                  totalDuration={o.total_duration as string}
-                  crisisPoints={o.crisis_points as number[]}
-                  climaxPosition={o.climax_position as string}
-                />
+                <OutlineArtifact outline={outline} totalDuration={o.total_duration as string} crisisPoints={o.crisis_points as number[]} climaxPosition={o.climax_position as string} />
               ) : null;
-            }
-            if (kind === "script") {
+            })()}
+            {kind === "script" && (() => {
               const body = (o.body_md || o.excerpt) as string;
               return body ? <ScriptArtifact excerpt={body} editable={true} wordCount={o.word_count as number} /> : null;
-            }
-            if (kind === "adversarial") {
+            })()}
+            {kind === "adversarial" && (() => {
               const roles = o.roles as Parameters<typeof AdversarialArtifact>[0]["roles"];
               return roles?.length ? (
-                <AdversarialArtifact
-                  roles={roles}
-                  synthesis={o.synthesis as Parameters<typeof AdversarialArtifact>[0]["synthesis"]}
-                  averageScore={o.average_score as number}
-                />
+                <AdversarialArtifact roles={roles} synthesis={o.synthesis as Parameters<typeof AdversarialArtifact>[0]["synthesis"]} averageScore={o.average_score as number} />
               ) : null;
-            }
-            return null;
-          })()}
-        </div>
-      )}
+            })()}
+          </div>
+        );
+      })()}
     </div>
   );
 }
