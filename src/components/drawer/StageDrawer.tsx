@@ -458,11 +458,13 @@ export function StageDrawer() {
   }, [stageId, stageVersion]);
 
   const status = useRun((s) => (stageId ? s.nodeStatus(stageId) : "pending"));
+  const runningStage = useRun((s) => s.runningStage);
+  const isStageRunning = runningStage === stageId;
 
   const navigate = useNavigate();
 
-  // Effective tab: if tab===live but not active, fall back to output
-  const effectiveTab = tab === "live" && status !== "active" ? "output" : tab;
+  // Effective tab: if tab===live but not active and not running, fall back to output
+  const effectiveTab = tab === "live" && status !== "active" && !isStageRunning ? "output" : tab;
 
   return (
     <>
@@ -523,8 +525,8 @@ export function StageDrawer() {
             <div className="px-5 pt-3 border-b border-gray-200 bg-white shrink-0">
               <div className="flex gap-4 text-[12px] -mb-px">
                 {TAB_DEFS.map(({ key, label }) => {
-                  // Live tab: hidden when not active
-                  if (key === "live" && status !== "active") return null;
+                  // Live tab: hidden when not active and not running
+                  if (key === "live" && status !== "active" && !isStageRunning) return null;
                   return (
                     <button
                       key={key}
