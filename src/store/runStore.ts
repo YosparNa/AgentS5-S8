@@ -631,6 +631,7 @@ export const useRun = create<RunState>((set, get) => {
         });
       }, 100);
       set({ simPhase: "running", runningStage: "s5", progressPct: 0, progressElapsed: "0s", progressRemaining: "" });
+      get()._initStageChecklist("s5");
       try {
         const wfId = await dataProvider.createWorkflowOnly(userData, channelDesc);
         set({ wfId });
@@ -679,6 +680,7 @@ export const useRun = create<RunState>((set, get) => {
         });
       }, 100);
       set({ simPhase: "running", runningStage: key, progressPct: 0, progressElapsed: "0s", progressRemaining: "" });
+      get()._initStageChecklist(key);
       try {
         // 从 configStore 读取配置
         const cfg = useConfig.getState();

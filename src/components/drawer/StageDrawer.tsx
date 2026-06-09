@@ -202,7 +202,6 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
               disabled={isRunning}
               onClick={async () => {
                 if (checkRunning()) return;
-                runStore._initStageChecklist("s5");
                 await runStore.createAndRunS5FromS4();
                 closeDrawer();
               }}
@@ -220,7 +219,7 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
           <>
             <div className="flex gap-2 items-center">
               <button className="text-[11px] border border-gray-200 px-2.5 py-1.5 rounded hover:bg-gray-50 flex items-center gap-1"
-                onClick={async () => { if (checkRunning()) return; runStore._initStageChecklist("s5"); await runStore.runStage("S5"); closeDrawer(); }}>
+                onClick={async () => { if (checkRunning()) return; await runStore.runStage("S5"); closeDrawer(); }}>
                 <Icon.Rotate size={10} /> 重跑
               </button>
               <button className="text-[11px] border border-gray-200 px-2.5 py-1.5 rounded hover:bg-gray-50 flex items-center gap-1"
@@ -263,7 +262,6 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
               onClick={async () => {
                 if (checkRunning()) return;
                 if (!stages["s5"]?.output?.topics || (stages["s5"].output.topics as unknown[]).length === 0) { alert("请先完成 S5 选题"); return; }
-                runStore._initStageChecklist("s6");
                 await runStore.runStage("S6"); closeDrawer();
               }}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
@@ -279,7 +277,7 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
           <>
             <div className="flex gap-2 items-center flex-wrap">
               <button className="text-[11px] border border-gray-200 px-2.5 py-1.5 rounded hover:bg-gray-50 flex items-center gap-1"
-                onClick={async () => { if (checkRunning()) return; runStore._initStageChecklist("s6"); await runStore.runStage("S6"); closeDrawer(); }}>
+                onClick={async () => { if (checkRunning()) return; await runStore.runStage("S6"); closeDrawer(); }}>
                 <Icon.Rotate size={10} /> 重新生成大纲
               </button>
               <button className="text-[11px] border border-amber-300 text-amber-600 px-2.5 py-1.5 rounded hover:bg-amber-50"
@@ -311,7 +309,6 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
               onClick={async () => {
                 if (checkRunning()) return;
                 if (!stages["s6"]?.output?.outline || (stages["s6"].output.outline as unknown[]).length === 0) { alert("请先完成 S6 大纲"); return; }
-                runStore._initStageChecklist("s7");
                 await runStore.runStage("S7"); closeDrawer();
               }}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
@@ -327,7 +324,7 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
           <>
             <div className="flex gap-2 items-center">
               <button className="text-[11px] border border-gray-200 px-2.5 py-1.5 rounded hover:bg-gray-50 flex items-center gap-1"
-                onClick={async () => { if (checkRunning()) return; runStore._initStageChecklist("s7"); await runStore.runStage("S7"); closeDrawer(); }}>
+                onClick={async () => { if (checkRunning()) return; await runStore.runStage("S7"); closeDrawer(); }}>
                 <Icon.Rotate size={10} /> 重跑
               </button>
               <button className="text-[11px] border border-gray-200 px-2.5 py-1.5 rounded hover:bg-gray-50 flex items-center gap-1"
@@ -363,7 +360,6 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
               onClick={async () => {
                 if (checkRunning()) return;
                 if (!stages["s7"]?.output?.body_md) { alert("请先完成 S7 脚本"); return; }
-                runStore._initStageChecklist("s8");
                 await runStore.runStage("S8"); closeDrawer();
               }}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
@@ -410,7 +406,7 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
         return (
           <>
             <button className="text-[11px] border border-gray-200 px-2.5 py-1.5 rounded hover:bg-gray-50 flex items-center gap-1"
-              onClick={async () => { if (checkRunning()) return; runStore._initStageChecklist("s8"); await runStore.runStage("S8"); closeDrawer(); }}>
+              onClick={async () => { if (checkRunning()) return; await runStore.runStage("S8"); closeDrawer(); }}>
               <Icon.Rotate size={10} /> 重跑
             </button>
             <button className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
