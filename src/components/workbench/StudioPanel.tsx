@@ -2,11 +2,17 @@
 // C3b: Studio 产物 panel
 // PROTO lines 2969–3047
 
+import { useState, useEffect } from "react";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/cn";
 import { useUi } from "@/store/uiStore";
 import { useRun } from "@/store/runStore";
-import type { RunStatus } from "@/types";
+import { dataProvider } from "@/services/dataProvider";
+import type { RunStatus, StageDef } from "@/types";
+import { TopicArtifact } from "@/components/drawer/artifacts/TopicArtifact";
+import { OutlineArtifact } from "@/components/drawer/artifacts/OutlineArtifact";
+import { ScriptArtifact } from "@/components/drawer/artifacts/ScriptArtifact";
+import { AdversarialArtifact } from "@/components/drawer/artifacts/AdversarialArtifact";
 
 // ── Product card config ────────────────────────────────────────────────────
 
@@ -313,6 +319,18 @@ function ProductCardItem({
   const status = useRun((s) => s.nodeStatus(card.stageId));
   const percent = useRun((s) => s.run.nodes[card.stageId]?.percent ?? 0);
   const cls = cardClasses(card.color, status);
+  const [expanded, setExpanded] = useState(false);
+  const [stageData, setStageData] = useState<StageDef | undefined>(undefined);
+  const stageVersion = useRun((s) => s.stageVersion);
+
+  const isS5S8 = ["s5", "s6", "s7", "s8"].includes(card.stageId);
+
+  // Refresh stage data when version changes (artifact updated)
+  useEffect(() => {
+    if (isS5S8) {
+      dataProvider.getStage(card.stageId).then(setStageData);
+    }
+  }, [card.stageId, stageVersion, isS5S8]);
 
   function statusLabel(): string {
     if (status === "done") return "已通过";
@@ -320,69 +338,133 @@ function ProductCardItem({
     if (status === "active") return `${percent}%`;
     if (status === "skipped") return "已跳过";
     if (status === "rejected") return "已驳回";
-    // pending / locked / default
     return `待 ${card.stageId.toUpperCase()}`;
   }
 
-  return (
-    <button onClick={() => openStage(card.stageId)} className={cls.wrapper}>
-      {/* Header */}
-      <div className={cls.header}>
-        <div className="flex items-center gap-1.5">
-          <span className={cls.gateBg}>{card.gate}</span>
-          <span className={cls.labelText}>{card.label}</span>
-        </div>
-        <span className={cls.statusText}>{statusLabel()}</span>
-      </div>
+  // S5-S8: dynamic file labels from artifact data
+  function dynamicFiles(): string[] {
+    if (!isS5S8) return card.files ?? [];
+    const output = stageData?.output as Record<string, unknown> | undefined;
+    if (!output) return card.files ?? [];
+    const kind = stageData?.config.kind;
+    if (kind === "topic") {
+      const topics = (output.topics ?? []) as Array<{ score: number }>;
+      const best = topics.length > 0 ? Math.max(...topics.map(t => t.score)) : 0;
+      return [`${topics.length} 选题 · ${best} 分`];
+    }
+    if (kind === "outline") {
+      const outline = (output.outline ?? []) as Array<unknown>;
+      const dur = output.total_duration as string | undefined;
+      return [dur ? `${outline.length} 章 · ${dur}` : `${outline.length} 章`];
+    }
+    if (kind === "script") {
+      const wc = (output.word_count as number) ?? 0;
+      return [`${wc.toLocaleString()} 字`];
+    }
+    if (kind === "adversarial") {
+      const roles = (output.roles ?? []) as Array<unknown>;
+      const avg = output.average_score as number | undefined;
+      return [`${roles.length} 角色${avg ? ` · ${avg}分` : ""}`];
+    }
+    return card.files ?? [];
+  }
 
-      {/* Body: file lines (when files defined) + progress bar for active indigo progress card */}
-      {(card.files || (status === "active" && card.progress)) && (
-        <div className={cn("p-2", card.progress && status === "active" ? "space-y-1" : "text-[10px] space-y-0.5")}>
-          {card.files && card.files.map((f, i) => {
-            if (card.progress && status === "active" && i === 0) {
-              // progress row
-              return (
-                <div key={i} className="flex items-center gap-1.5 text-[10px]">
-                  <FileIcon label={f} cls={cls.fileIcon} />
-                  <span className="flex-1">{f}</span>
-                  <div className="w-12 h-1 bg-gray-100 rounded-full">
-                    <div
-                      className="h-full bg-indigo-500 rounded-full"
-                      style={{ width: `${percent || 76}%` }}
-                    />
+  // Toggle expand
+  function handleExpand() {
+    setExpanded(prev => !prev);
+  }
+
+  const files = dynamicFiles();
+
+  return (
+    <div className="mb-1.5">
+      <button onClick={() => { handleExpand(); }} className={cls.wrapper}>
+        {/* Header */}
+        <div className={cls.header}>
+          <div className="flex items-center gap-1.5">
+            <span className={cls.gateBg}>{card.gate}</span>
+            <span className={cls.labelText}>{card.label}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className={cls.statusText}>{statusLabel()}</span>
+            {isS5S8 && status === "done" && (
+              <Icon.ChevronDown size={10} className={cn("text-gray-400 transition-transform", expanded && "rotate-180")} />
+            )}
+          </div>
+        </div>
+
+        {/* Body: file lines */}
+        {files.length > 0 && (
+          <div className={cn("p-2", card.progress && status === "active" ? "space-y-1" : "text-[10px] space-y-0.5")}>
+            {files.map((f, i) => {
+              if (card.progress && status === "active" && i === 0) {
+                return (
+                  <div key={i} className="flex items-center gap-1.5 text-[10px]">
+                    <FileIcon label={f} cls={cls.fileIcon} />
+                    <span className="flex-1">{f}</span>
+                    <div className="w-12 h-1 bg-gray-100 rounded-full">
+                      <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${percent || 76}%` }} />
+                    </div>
                   </div>
+                );
+              }
+              return (
+                <div key={i} className="text-[10px]">
+                  <FileIcon label={f} cls={cls.fileIcon} />
+                  <span className="ml-1">{f}</span>
                 </div>
               );
+            })}
+          </div>
+        )}
+      </button>
+
+      {/* Inline artifact expansion */}
+      {expanded && isS5S8 && stageData?.output && (
+        <div className="border border-gray-200 border-t-0 rounded-b-lg bg-white px-2 pb-2 max-h-[300px] overflow-y-auto">
+          {(() => {
+            const kind = stageData.config.kind;
+            const o = stageData.output as Record<string, unknown>;
+            if (kind === "topic") {
+              const topics = o.topics as Parameters<typeof TopicArtifact>[0]["topics"];
+              return topics?.length ? <TopicArtifact topics={topics} /> : null;
             }
-            return (
-              <div key={i} className="text-[10px]">
-                <FileIcon label={f} cls={cls.fileIcon} />
-                <span className="ml-1">{f}</span>
-              </div>
-            );
-          })}
-          {/* non-file body slots for pending special cards */}
-          {!card.files && status !== "active" && card.stageId === "s17" && (
-            <div className="space-y-1 text-[10px]">
-              <div className="grid grid-cols-3 gap-1 text-center">
-                <div className="bg-gray-50 rounded p-1">
-                  <div className="font-bold text-gray-400">--</div>
-                  <div className="text-[8px] text-gray-400">CTR</div>
-                </div>
-                <div className="bg-gray-50 rounded p-1">
-                  <div className="font-bold text-gray-400">--</div>
-                  <div className="text-[8px] text-gray-400">完播</div>
-                </div>
-                <div className="bg-gray-50 rounded p-1">
-                  <div className="font-bold text-gray-400">--</div>
-                  <div className="text-[8px] text-gray-400">互动</div>
-                </div>
-              </div>
-            </div>
-          )}
+            if (kind === "outline") {
+              const outline = o.outline as Parameters<typeof OutlineArtifact>[0]["outline"];
+              return outline?.length ? (
+                <OutlineArtifact
+                  outline={outline}
+                  totalDuration={o.total_duration as string}
+                  crisisPoints={o.crisis_points as number[]}
+                  climaxPosition={o.climax_position as string}
+                />
+              ) : null;
+            }
+            if (kind === "script") {
+              const body = (o.body_md || o.excerpt) as string;
+              return body ? <ScriptArtifact excerpt={body} editable={false} wordCount={o.word_count as number} /> : null;
+            }
+            if (kind === "adversarial") {
+              const roles = o.roles as Parameters<typeof AdversarialArtifact>[0]["roles"];
+              return roles?.length ? (
+                <AdversarialArtifact
+                  roles={roles}
+                  synthesis={o.synthesis as Parameters<typeof AdversarialArtifact>[0]["synthesis"]}
+                  averageScore={o.average_score as number}
+                />
+              ) : null;
+            }
+            return null;
+          })()}
+          <button
+            onClick={(e) => { e.stopPropagation(); openStage(card.stageId); }}
+            className="w-full mt-2 text-[10px] text-indigo-600 hover:text-indigo-800 border border-indigo-200 rounded py-1 hover:bg-indigo-50 transition"
+          >
+            打开抽屉编辑
+          </button>
         </div>
       )}
-    </button>
+    </div>
   );
 }
 

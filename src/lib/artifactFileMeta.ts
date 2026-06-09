@@ -63,9 +63,27 @@ function rawFiles(stage: StageDef): RawFile[] {
     case "benchmark-pro": return [r("对标矩阵_12账号.csv", "csv", "核心 3 · 候选 9")];
     case "viral-hub":     return [r("爆款解构_6样本.json", "json", "6 样本 · 4 规则")];
     case "hot-pro":       return [r("今日热点_5条.json", "json", "推荐 2 · 待审 3")];
-    case "topic":         return [r("选题卡.md", "md", "8.6 分")];
-    case "outline":       return [r("大纲_V2.md", "md", "11 章")];
-    case "script":        return [r("脚本_V3.md", "md", "4,820 字")];
+    case "topic": {
+      const topics = (stage.output?.topics ?? []) as Array<Record<string, unknown>>;
+      const best = topics.length > 0 ? topics.reduce((max, t) => ((t.score as number) > (max.score as number) ? t : max), topics[0]) : null;
+      const scoreStr = best ? `${best.score} 分` : "待生成";
+      const countStr = topics.length > 0 ? `${topics.length} 选题` : "";
+      return [r("选题卡.md", "md", countStr ? `${countStr} · ${scoreStr}` : scoreStr)];
+    }
+    case "outline": {
+      const outline = (stage.output?.outline ?? []) as Array<Record<string, unknown>>;
+      const totalDur = stage.output?.total_duration as string | undefined;
+      const chCount = outline.length;
+      const metaStr = chCount > 0 ? `${chCount} 章` : "待生成";
+      return [r("大纲.md", "md", totalDur ? `${metaStr} · ${totalDur}` : metaStr)];
+    }
+    case "script": {
+      const wc = stage.output?.word_count as number | undefined;
+      const body = stage.output?.body_md as string | undefined;
+      const count = wc ?? (body ? body.length : 0);
+      const metaStr = count > 0 ? `${count.toLocaleString()} 字` : "待生成";
+      return [r("脚本.md", "md", metaStr)];
+    }
     case "adversarial": {
       const roles = (stage.output?.roles ?? []) as Array<Record<string, unknown>>;
       const avg = stage.output?.average_score as number | undefined;

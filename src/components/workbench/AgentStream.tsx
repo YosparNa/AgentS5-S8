@@ -96,7 +96,7 @@ export function AgentStream({ extraUserBubbles = [] }: Props) {
                     </div>
                     <span className="font-bold text-[12px]">{stage.title} Agent · L{layerNum}</span>
                     <span className="bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded text-[9px] mono">
-                      {stage.code} RUNNING
+                      {stage.code} {nodeRun?.doneCount !== undefined ? `${nodeRun.doneCount}/${nodeRun.totalCount}` : "RUNNING"}
                     </span>
                     <button
                       onClick={() => openStage(node.stageId, true)}
@@ -162,12 +162,6 @@ export function AgentStream({ extraUserBubbles = [] }: Props) {
                                     <div className="text-[12px] font-medium text-indigo-700">
                                       {item.label}
                                     </div>
-                                    {(nodeRun.doneCount !== undefined || nodeRun.currentItem) && (
-                                      <div className="text-[10px] text-gray-500">
-                                        {nodeRun.doneCount}/{nodeRun.totalCount}
-                                        {nodeRun.currentItem ? ` · 当前 ${nodeRun.currentItem}` : ""}
-                                      </div>
-                                    )}
                                   </div>
                                 </div>
                               );
