@@ -144,11 +144,20 @@ def _review_single(role: dict, script: str) -> dict:
 async def run_async(state: PipelineState) -> dict:
     """异步并行执行 5 个角色审核。返回 {roles: [...], average_score, verdict}。"""
     script = state.script_data
-    config = getattr(state, 'stage_config', {}) or {}
 
-    # 根据配置过滤启用的角色
-    enabled_roles = config.get("enabled_roles", {})
-    active_roles = [r for r in ROLES if enabled_roles.get(r["name"], True)]
+    # 根据配置过滤启用的角色（支持两种格式）
+    cfg = getattr(state, 'stage_config', {}) or {}
+    enabled_roles = cfg.get("enabled_roles", {})
+    ROLE_KEY_MAP = {"nitpicker": "杠精", "peer": "同行", "novice": "小白", "fan": "老粉", "compliance": "合规"}
+    active_roles = []
+    for r in ROLES:
+        role_key = {v: k for k, v in ROLE_KEY_MAP.items()}.get(r["name"], "")
+        # 优先使用 MD 规范 key（nitpicker/peer/...），回退到 enabled_roles 中文名
+        if role_key and cfg.get(role_key) is not None:
+            if cfg[role_key]:
+                active_roles.append(r)
+        elif enabled_roles.get(r["name"], True):
+            active_roles.append(r)
 
     # 用 asyncio.to_thread 包装同步调用
     tasks = [asyncio.to_thread(_review_single, role, script) for role in active_roles]

@@ -271,7 +271,14 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
               </button>
             </div>
             <button className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
-              onClick={async () => { await runStore.approveBackend("S6"); closeDrawer(); }}>
+              onClick={async () => {
+                if (runStore.autoMode) {
+                  await runStore.approveAndContinue();
+                } else {
+                  await runStore.approveBackend("S6");
+                }
+                closeDrawer();
+              }}>
               <Icon.Check size={10} /> 审核通过
             </button>
           </>
@@ -304,7 +311,14 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
               <Icon.Rotate size={10} /> 重跑
             </button>
             <button className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
-              onClick={() => { closeDrawer(); runStore.navigateStage(1); }}>
+              onClick={async () => {
+                closeDrawer();
+                if (runStore.autoMode && runStore.currentAutoStep === "s7_edit") {
+                  await runStore.approveAndContinue();
+                } else {
+                  await runStore.runStage("S8");
+                }
+              }}>
               <Icon.ArrowRight size={10} /> 确认并进入S8
             </button>
           </>
@@ -347,7 +361,14 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
               </button>
             </div>
             <button className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
-              onClick={async () => { await runStore.approveBackend("S8"); closeDrawer(); }}>
+              onClick={async () => {
+                if (runStore.autoMode) {
+                  await runStore.approveAndContinue();
+                } else {
+                  await runStore.approveBackend("S8");
+                }
+                closeDrawer();
+              }}>
               <Icon.Check size={10} /> 审核通过
             </button>
           </>

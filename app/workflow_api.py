@@ -175,7 +175,14 @@ async def create_workflow(req: CreateWorkflowRequest):
         "status": "running",
         "current_stage": "S5",
         "kind": req.kind or "video_production",
-        "input": {"user_data": req.user_data or "", "channel_desc": req.channel_desc or ""},
+        "input": {
+            "user_data": req.user_data or "",
+            "channel_desc": req.channel_desc or "",
+            "seed_keywords": req.seed_keywords or [],
+            "platform": req.platform or "",
+            "language": req.language or "",
+            "title": req.title or "",
+        },
         "created_at": _now_iso(),
         "stages": stages,
         "_state": None,  # PipelineState 实例，运行时创建

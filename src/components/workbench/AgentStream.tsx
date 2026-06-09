@@ -42,8 +42,9 @@ export function AgentStream({ extraUserBubbles = [] }: Props) {
   const stages = useRun((s) => s.stages);
   const simPhase = useRun((s) => s.simPhase);
   const pendingNodeId = useRun((s) => s.pendingNodeId);
-  const approveReview = useRun((s) => s.approveReview);
-  const rejectReview = useRun((s) => s.rejectReview);
+  const approveAndContinue = useRun((s) => s.approveAndContinue);
+  const rejectAndRollback = useRun((s) => s.rejectAndRollback);
+  const currentAutoStep = useRun((s) => s.currentAutoStep);
   const openStage = useUi((s) => s.openStage);
 
   // Sort nodes by order; fall back to empty array
@@ -202,13 +203,13 @@ export function AgentStream({ extraUserBubbles = [] }: Props) {
                       </div>
                       <div className="flex gap-2">
                         <button
-                          onClick={approveReview}
+                          onClick={() => approveAndContinue()}
                           className="text-[11px] bg-emerald-600 text-white px-3 py-1 rounded hover:bg-emerald-700"
                         >
                           通过
                         </button>
                         <button
-                          onClick={rejectReview}
+                          onClick={() => rejectAndRollback("s5")}
                           className="text-[11px] bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
                         >
                           驳回
@@ -226,6 +227,28 @@ export function AgentStream({ extraUserBubbles = [] }: Props) {
                     ✓ {stage.code} 完成
                   </div>
                   <ChatArtifactCard stageId={node.stageId} />
+                  {/* S7 done + s7_edit → confirm edit card */}
+                  {node.nodeId === "s7" && currentAutoStep === "s7_edit" && (
+                    <div className="mt-2 w-full border border-indigo-200 bg-indigo-50 rounded-xl p-3 shadow-sm">
+                      <div className="text-[11px] font-bold text-indigo-800 mb-2">
+                        脚本已生成，请编辑确认后进入 S8
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => { openStage("s7"); }}
+                          className="text-[11px] border border-indigo-300 text-indigo-600 px-3 py-1 rounded hover:bg-indigo-100"
+                        >
+                          编辑脚本
+                        </button>
+                        <button
+                          onClick={() => approveAndContinue()}
+                          className="text-[11px] bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700"
+                        >
+                          确认并进入S8
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

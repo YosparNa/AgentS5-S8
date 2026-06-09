@@ -1,10 +1,10 @@
-"""FastAPI 主入口：路由 + WebSocket 实时推送"""
+"""FastAPI 主入口：API 路由 + WebSocket 实时推送"""
 
 import json
 import asyncio
+from datetime import datetime, timezone
+from typing import Any
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -15,26 +15,13 @@ from app.workflow_api import router as workflow_router
 app = FastAPI(title="视频剪辑流 Agent")
 
 # CORS：允许前端访问（动态 origin，支持 credentials）
-from starlette.middleware.cors import CORSMiddleware as StarletteCORSMiddleware
 app.add_middleware(
-    StarletteCORSMiddleware,
+    CORSMiddleware,
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
-
-# 动态 CORS：允许 credentials 时回显 Origin
-@app.middleware("http")
-async def cors_credentials_middleware(request, call_next):
-    response = await call_next(request)
-    origin = request.headers.get("origin")
-    if origin:
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-    return response
-
-# 静态文件
-app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 
 # 注册 CreatorOS 前端 API 路由
 app.include_router(workflow_router)
@@ -57,21 +44,6 @@ async def broadcast(msg: dict):
             dead.append(ws)
     for ws in dead:
         ws_connections.remove(ws)
-
-
-# ===== 页面路由 =====
-
-@app.get("/")
-async def index():
-    return FileResponse("frontend/static/index.html")
-
-@app.get("/09index.html")
-async def index09():
-    import glob
-    files = glob.glob("frontend/09index*.html")
-    if files:
-        return FileResponse(files[0], media_type="text/html")
-    return FileResponse("frontend/static/index.html")
 
 
 # ===== API 路由 =====

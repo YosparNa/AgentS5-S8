@@ -22,14 +22,6 @@ class PipelineStatus(str, Enum):
 
 
 @dataclass
-class StageResult:
-    stage: Stage
-    data: dict  # 各阶段的输出数据
-    version: int = 1
-    timestamp: float = field(default_factory=time.time)
-
-
-@dataclass
 class RollbackEvent:
     from_stage: Stage
     to_stage: Stage
