@@ -926,8 +926,8 @@ export const useRun = create<RunState>((set, get) => {
 
         // 进度更新（含 checklist 同步）
         if (MOCK_MODE) {
-          set({ progressPct: 50, progressElapsed: "0s", progressRemaining: "..." });
-          get()._updateChecklistProgress("s5", 50);
+          set({ progressPct: 0, progressElapsed: "", progressRemaining: "" });
+          // mock模式：API返回后直接设100
         } else {
           progressTimer = setInterval(() => {
             const elapsed = (Date.now() - startTime) / 1000;
@@ -980,8 +980,8 @@ export const useRun = create<RunState>((set, get) => {
 
         let s6ProgressTimer: ReturnType<typeof setInterval> | undefined;
         if (MOCK_MODE) {
-          set({ progressPct: 50, progressElapsed: "0s", progressRemaining: "..." });
-          get()._updateChecklistProgress("s6", 50);
+          set({ progressPct: 0, progressElapsed: "", progressRemaining: "" });
+          // mock模式：API返回后直接设100
         } else {
           s6ProgressTimer = setInterval(() => {
             const elapsed = (Date.now() - s6StartTime) / 1000;
@@ -1042,8 +1042,8 @@ export const useRun = create<RunState>((set, get) => {
           set({ currentAutoStep: "s7", simPhase: "running", runningStage: "s7", progressPct: 0 });
           let progressTimer: ReturnType<typeof setInterval> | undefined;
           if (MOCK_MODE) {
-            set({ progressPct: 50, progressElapsed: "0s", progressRemaining: "..." });
-            get()._updateChecklistProgress("s7", 50);
+            set({ progressPct: 0, progressElapsed: "", progressRemaining: "" });
+            // mock模式：API返回后直接设100
           } else {
             progressTimer = setInterval(() => {
               const elapsed = (Date.now() - startTime) / 1000;
@@ -1102,8 +1102,8 @@ export const useRun = create<RunState>((set, get) => {
           if (!MOCK_MODE) await new Promise(resolve => setTimeout(resolve, 500));
           let s8ProgressTimer: ReturnType<typeof setInterval> | undefined;
           if (MOCK_MODE) {
-            set({ progressPct: 50, progressElapsed: "0s", progressRemaining: "..." });
-            get()._updateChecklistProgress("s8", 50);
+            set({ progressPct: 0, progressElapsed: "", progressRemaining: "" });
+            // mock模式：API返回后直接设100
           } else {
             s8ProgressTimer = setInterval(() => {
               const elapsed = (Date.now() - startTime) / 1000;
@@ -1222,8 +1222,8 @@ export const useRun = create<RunState>((set, get) => {
         const total = target === "s8" ? _s8Time() : (STAGE_TIMES[target] || 40);
         let progressTimer: ReturnType<typeof setInterval> | undefined;
         if (MOCK_MODE) {
-          set({ progressPct: 50, progressElapsed: "0s", progressRemaining: "..." });
-          get()._updateChecklistProgress(target, 50);
+          set({ progressPct: 0, progressElapsed: "", progressRemaining: "" });
+          // mock模式：API返回后直接设100
         } else {
           progressTimer = setInterval(() => {
             const elapsed = (Date.now() - startTime) / 1000;
