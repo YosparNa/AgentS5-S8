@@ -17,6 +17,7 @@ const SIM_ORDER = ["s1", "s2", "s25", "s3", "s4", "s5", "s6", "s7", "s8"] as con
 
 // Module-level timer registry — cleared on stop/reset
 let _timers: number[] = [];
+let _histCounter = 0;
 
 function clearAllTimers() {
   for (const t of _timers) window.clearTimeout(t);
@@ -76,7 +77,7 @@ interface RunState {
   progressRemaining: string;
 
   // 运行历史
-  agentHistory: Array<{ id: string; stage: string; summary: string; timestamp: string; data: unknown }>;
+  agentHistory: Record<string, Array<{ id: string; stage: string; summary: string; timestamp: string; data: unknown }>>;
   stageCurrentHist: Record<string, string>;
 
   // Actions
@@ -437,7 +438,7 @@ export const useRun = create<RunState>((set, get) => {
     progressPct: 0,
     progressElapsed: "0s",
     progressRemaining: "",
-    agentHistory: [],
+    agentHistory: {},
     stageCurrentHist: {},
 
     loadStages() {
@@ -747,19 +748,28 @@ export const useRun = create<RunState>((set, get) => {
     },
 
     agentSaveHistory(stageId: string, summary: string, data: unknown) {
-      const histId = "hist_" + Date.now();
-      set((s) => ({
-        agentHistory: [
-          { id: histId, stage: stageId, summary, timestamp: new Date().toLocaleString("zh-CN"), data },
-          ...s.agentHistory,
-        ].slice(0, 20),
-        stageCurrentHist: { ...s.stageCurrentHist, [stageId]: histId },
-      }));
+      const histId = "hist_" + Date.now() + "_" + (++_histCounter);
+      const item = { id: histId, stage: stageId, summary, timestamp: new Date().toLocaleString("zh-CN"), data };
+      set((s) => {
+        const existing = s.agentHistory[stageId] ?? [];
+        return {
+          agentHistory: {
+            ...s.agentHistory,
+            [stageId]: [item, ...existing].slice(0, 10),
+          },
+          stageCurrentHist: { ...s.stageCurrentHist, [stageId]: histId },
+        };
+      });
     },
 
     agentRollback(histId: string) {
       const { agentHistory } = get();
-      const hist = agentHistory.find((h) => h.id === histId);
+      // 在所有阶段中查找该历史记录
+      let hist: { id: string; stage: string; summary: string; timestamp: string; data: unknown } | undefined;
+      for (const items of Object.values(agentHistory)) {
+        hist = items.find((h) => h.id === histId);
+        if (hist) break;
+      }
       if (!hist) return;
       // 回滚到历史版本的产物
       set((s) => {
@@ -1206,23 +1216,70 @@ export const useRun = create<RunState>((set, get) => {
           _syncStagesToRun(wfv, set, get);
         }
 
-        // 7. 设置下一步状态（和 runFullWorkflow 完全一致的模式）
+        // 7. 设置下一步状态
         if (target === "s5") {
+          // S5 完成后自动继续跑 S6（和 runFullWorkflow 一致）
           const topics = (wfv?.stages.find(s => s.stage_code === "S5")?.output_artifact?.topics ?? []) as Array<{ score: number }>;
           if (topics.length > 0) {
             const bestIdx = topics.reduce((maxI, t, i, arr) => t.score > arr[maxI].score ? i : maxI, 0);
             set({ selectedTopicIdx: bestIdx, lockedTopicIdx: bestIdx });
           }
-          set({ currentAutoStep: "s6" });
+          const s5Stage = await dataProvider.getStage("s5");
+          get().agentSaveHistory("s5", _historySummary("s5", s5Stage?.output), s5Stage?.output ?? null);
+
+          // 自动运行 S6
+          const s6StartTime = Date.now();
+          const s6Total = STAGE_TIMES["s6"] || 55;
+          set({ currentAutoStep: "s6", runningStage: "s6", progressPct: 0 });
+          set((s) => ({
+            run: {
+              ...s.run,
+              nodes: {
+                ...s.run.nodes,
+                s5: { ...s.run.nodes.s5, status: "done" as RunStatus, percent: 100 },
+              },
+            },
+          }));
+          get()._initStageChecklist("s6");
+          get().loadStages();
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          const s6ProgressTimer = setInterval(() => {
+            const elapsed = (Date.now() - s6StartTime) / 1000;
+            const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (s6Total - 1)) * 92), 95);
+            const remaining = Math.max(0, Math.round(s6Total - elapsed));
+            set({ progressPct: pct, progressElapsed: Math.round(elapsed) + "s", progressRemaining: remaining + "s" });
+            get()._updateChecklistProgress("s6", pct);
+          }, 100);
+
+          const s6Config = useConfig.getState().getS6Config();
+          const wfv6 = await dataProvider.runS6(wfId, s6Config);
+          clearInterval(s6ProgressTimer);
+          set({ progressPct: 100, progressElapsed: Math.round((Date.now() - s6StartTime) / 1000) + "s", progressRemaining: "已完成" });
+          get()._updateChecklistProgress("s6", 100);
+          _syncStagesToRun(wfv6, set, get);
+
+          const s6Stage = await dataProvider.getStage("s6");
+          get().agentSaveHistory("s6", _historySummary("s6", s6Stage?.output), s6Stage?.output ?? null);
+
+          set({ currentAutoStep: "s6_review", simPhase: "idle", runningStage: null, progressPct: 0 });
+          get().loadStages();
+
         } else if (target === "s6") {
+          const s6Stage = await dataProvider.getStage("s6");
+          get().agentSaveHistory("s6", _historySummary("s6", s6Stage?.output), s6Stage?.output ?? null);
           set({ currentAutoStep: "s6_review" });
+          set({ simPhase: "idle", runningStage: null, progressPct: 0 });
+          get().loadStages();
+
         } else if (target === "s7") {
           const script = (wfv?.stages.find(s => s.stage_code === "S7")?.output_artifact?.body_md as string) || "";
+          const s7Stage = await dataProvider.getStage("s7");
+          get().agentSaveHistory("s7", _historySummary("s7", s7Stage?.output), s7Stage?.output ?? null);
           set({ editedScript: script, currentAutoStep: "s7_edit" });
+          set({ simPhase: "idle", runningStage: null, progressPct: 0 });
+          get().loadStages();
         }
-
-        set({ simPhase: "idle", runningStage: null, progressPct: 0 });
-        get().loadStages();
       } catch (e) {
         console.error("rejectAndRollback failed:", e);
         set({ simPhase: "idle", runningStage: null, progressPct: 0 });

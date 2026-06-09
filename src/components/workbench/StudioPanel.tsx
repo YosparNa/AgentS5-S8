@@ -481,34 +481,46 @@ function ProductCardItem({
         )}
       </button>
 
-      {/* Inline artifact expansion */}
+      {/* Inline artifact expansion — 显示所有关联阶段的产物 */}
       {expanded && isS5S8 && (() => {
-        const expandData = allStageData[expandStageId];
-        if (!expandData?.output || Object.keys(expandData.output).length === 0) return null;
-        const kind = expandData.config.kind;
-        const o = expandData.output as Record<string, unknown>;
+        const hasAnyOutput = linkedStages.some(sid => {
+          const o = allStageData[sid]?.output as Record<string, unknown> | undefined;
+          return o && Object.keys(o).length > 0;
+        });
+        if (!hasAnyOutput) return null;
         return (
-          <div className="border border-gray-200 border-t-0 rounded-b-lg bg-white px-2 pb-2 max-h-[300px] overflow-y-auto">
-            {kind === "topic" && (() => {
-              const topics = o.topics as Parameters<typeof TopicArtifact>[0]["topics"];
-              return topics?.length ? <TopicArtifact topics={topics} /> : null;
-            })()}
-            {kind === "outline" && (() => {
-              const outline = o.outline as Parameters<typeof OutlineArtifact>[0]["outline"];
-              return outline?.length ? (
-                <OutlineArtifact outline={outline} totalDuration={o.total_duration as string} crisisPoints={o.crisis_points as number[]} climaxPosition={o.climax_position as string} />
-              ) : null;
-            })()}
-            {kind === "script" && (() => {
-              const body = (o.body_md || o.excerpt) as string;
-              return body ? <ScriptArtifact excerpt={body} editable={true} wordCount={o.word_count as number} /> : null;
-            })()}
-            {kind === "adversarial" && (() => {
-              const roles = o.roles as Parameters<typeof AdversarialArtifact>[0]["roles"];
-              return roles?.length ? (
-                <AdversarialArtifact roles={roles} synthesis={o.synthesis as Parameters<typeof AdversarialArtifact>[0]["synthesis"]} averageScore={o.average_score as number} />
-              ) : null;
-            })()}
+          <div className="border border-gray-200 border-t-0 rounded-b-lg bg-white px-2 pb-2 max-h-[400px] overflow-y-auto space-y-3">
+            {linkedStages.map(sid => {
+              const sd = allStageData[sid];
+              const o = sd?.output as Record<string, unknown> | undefined;
+              if (!o || Object.keys(o).length === 0) return null;
+              const kind = sd?.config.kind;
+              return (
+                <div key={sid}>
+                  <div className="text-[10px] font-bold text-gray-500 mb-1 pt-1">{sid.toUpperCase()} 产物</div>
+                  {kind === "topic" && (() => {
+                    const topics = o.topics as Parameters<typeof TopicArtifact>[0]["topics"];
+                    return topics?.length ? <TopicArtifact topics={topics} /> : null;
+                  })()}
+                  {kind === "outline" && (() => {
+                    const outline = o.outline as Parameters<typeof OutlineArtifact>[0]["outline"];
+                    return outline?.length ? (
+                      <OutlineArtifact outline={outline} totalDuration={o.total_duration as string} crisisPoints={o.crisis_points as number[]} climaxPosition={o.climax_position as string} />
+                    ) : null;
+                  })()}
+                  {kind === "script" && (() => {
+                    const body = (o.body_md || o.excerpt) as string;
+                    return body ? <ScriptArtifact excerpt={body} editable={true} wordCount={o.word_count as number} /> : null;
+                  })()}
+                  {kind === "adversarial" && (() => {
+                    const roles = o.roles as Parameters<typeof AdversarialArtifact>[0]["roles"];
+                    return roles?.length ? (
+                      <AdversarialArtifact roles={roles} synthesis={o.synthesis as Parameters<typeof AdversarialArtifact>[0]["synthesis"]} averageScore={o.average_score as number} />
+                    ) : null;
+                  })()}
+                </div>
+              );
+            })}
           </div>
         );
       })()}
