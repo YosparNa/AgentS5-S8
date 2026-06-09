@@ -12,8 +12,12 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from app.agents import s5_topic, s6_outline, s7_script, s8_adversarial
+from app.mock_data import MOCK_S5, MOCK_S6, MOCK_S7, MOCK_S8
 
 router = APIRouter()
+
+# 模拟模式开关：设为 True 时跳过 LLM 调用，返回预设数据（快速测试用）
+MOCK_MODE = True
 
 # ===== 内存存储 =====
 
@@ -256,6 +260,25 @@ def _get_agent_fn(code: str):
 async def _run_agent(wf: dict, stage: dict, config_override: dict = None):
     """运行一个阶段的 agent。"""
     from app.pipeline import PipelineState, PipelineStatus
+
+    code = stage["code"]
+
+    # 模拟模式：返回预设数据，不调用 LLM
+    if MOCK_MODE:
+        mock_map = {"S5": MOCK_S5, "S6": MOCK_S6, "S7": MOCK_S7, "S8": MOCK_S8}
+        result = mock_map.get(code)
+        if result is not None:
+            artifact = _make_artifact(code, stage["slug"], result)
+            stage["artifact"] = artifact
+            stage["completed_at"] = _now_iso()
+            if stage.get("needs_review"):
+                stage["status"] = "awaiting_review"
+                wf["status"] = "awaiting_review"
+                wf["current_stage"] = code
+            else:
+                stage["status"] = "completed"
+                _advance_workflow(wf, code)
+            return artifact
 
     # 初始化或复用 PipelineState
     if not wf.get("_state"):
