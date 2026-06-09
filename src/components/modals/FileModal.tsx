@@ -136,8 +136,10 @@ export function FileModal() {
   const activeModal = useUi((s) => s.activeModal);
   const fileStageId = useUi((s) => s.fileStageId);
   const closeModal = useUi((s) => s.closeModal);
-  // updatedAt comes from the same runStore run-state as AgentStream/Studio.
   const producedAt = useRun((s) => (fileStageId ? s.run.nodes[fileStageId]?.producedAt : undefined));
+  // 优先从 runStore.stages 读取（始终是最新的，包含 _syncStages 写入的数据）
+  const runStages = useRun((s) => s.stages);
+  const stageVersion = useRun((s) => s.stageVersion);
 
   const open = activeModal === "file" && !!fileStageId;
 
@@ -145,9 +147,16 @@ export function FileModal() {
 
   useEffect(() => {
     if (fileStageId) {
-      dataProvider.getStage(fileStageId).then(setStage);
+      // 先从 runStore 读（最快，数据最新）
+      const fromStore = runStages[fileStageId];
+      if (fromStore && fromStore.output && Object.keys(fromStore.output).length > 0) {
+        setStage(fromStore);
+      } else {
+        // fallback: 从 dataProvider 读
+        dataProvider.getStage(fileStageId).then(setStage);
+      }
     }
-  }, [fileStageId]);
+  }, [fileStageId, stageVersion, runStages]);
 
   if (!open || !stage || !fileStageId) return null;
 

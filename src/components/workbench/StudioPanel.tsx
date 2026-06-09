@@ -396,13 +396,55 @@ function ProductCardItem({
   }
 
   const cls = cardClasses(card.color, effectiveStatus);
-  const files = dynamicFiles();
 
   // 展开时显示哪个阶段的数据（优先显示有产物的最后阶段）
   const expandStageId = [...linkedStages].reverse().find(sid => {
     const output = allStageData[sid]?.output as Record<string, unknown> | undefined;
     return output && Object.keys(output).length > 0;
   }) ?? effectiveStageId;
+
+  // 每个关联阶段的独立信息
+  function stageLines(): { icon: string; label: string; statusText: string; isDone: boolean }[] {
+    if (!isS5S8) {
+      const files = card.files ?? [];
+      return files.map(f => ({ icon: f, label: f, statusText: "", isDone: false }));
+    }
+    return linkedStages.map(sid => {
+      const st = nodeStatuses[sid]?.status ?? "pending";
+      const sd = allStageData[sid];
+      const output = sd?.output as Record<string, unknown> | undefined;
+      const hasOutput = output && Object.keys(output).length > 0;
+      const kind = sd?.config.kind;
+
+      let label = `待 ${sid.toUpperCase()}`;
+      if (hasOutput) {
+        if (kind === "topic") {
+          const topics = (output!.topics ?? []) as Array<{ score: number }>;
+          const best = topics.length > 0 ? Math.max(...topics.map(t => t.score)) : 0;
+          label = `选题卡 · ${best} 分`;
+        } else if (kind === "outline") {
+          const outline = (output!.outline ?? []) as Array<unknown>;
+          label = `大纲 · ${outline.length} 章`;
+        } else if (kind === "script") {
+          const wc = (output!.word_count as number) ?? 0;
+          label = `脚本 · ${wc.toLocaleString()} 字`;
+        } else if (kind === "adversarial") {
+          const roles = (output!.roles ?? []) as Array<unknown>;
+          label = `${roles.length} 角色质疑`;
+        }
+      }
+
+      let statusText = "";
+      if (st === "done" || st === "completed") statusText = "✓";
+      else if (st === "active") statusText = `${nodeStatuses[sid]?.percent ?? 0}%`;
+      else if (st === "awaiting_review") statusText = "待审";
+      else statusText = `待${sid.toUpperCase()}`;
+
+      return { icon: label, label, statusText, isDone: st === "done" || st === "completed" };
+    });
+  }
+
+  const lines = stageLines();
 
   return (
     <div className="mb-1.5">
@@ -415,34 +457,22 @@ function ProductCardItem({
           </div>
           <div className="flex items-center gap-1.5">
             <span className={cls.statusText}>{statusLabel()}</span>
-            {isS5S8 && effectiveStatus === "done" && (
+            {isS5S8 && (
               <Icon.ChevronDown size={10} className={cn("text-gray-400 transition-transform", expanded && "rotate-180")} />
             )}
           </div>
         </div>
 
-        {/* Body: file lines */}
-        {files.length > 0 && (
-          <div className={cn("p-2", card.progress && status === "active" ? "space-y-1" : "text-[10px] space-y-0.5")}>
-            {files.map((f, i) => {
-              if (card.progress && status === "active" && i === 0) {
-                return (
-                  <div key={i} className="flex items-center gap-1.5 text-[10px]">
-                    <FileIcon label={f} cls={cls.fileIcon} />
-                    <span className="flex-1">{f}</span>
-                    <div className="w-12 h-1 bg-gray-100 rounded-full">
-                      <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${effectivePercent || 76}%` }} />
-                    </div>
-                  </div>
-                );
-              }
-              return (
-                <div key={i} className="text-[10px]">
-                  <FileIcon label={f} cls={cls.fileIcon} />
-                  <span className="ml-1">{f}</span>
-                </div>
-              );
-            })}
+        {/* Body: per-stage lines */}
+        {lines.length > 0 && (
+          <div className="p-2 text-[10px] space-y-0.5">
+            {lines.map((line, i) => (
+              <div key={i} className="flex items-center gap-1.5">
+                <FileIcon label={line.label} cls={cls.fileIcon} />
+                <span className="flex-1">{line.label}</span>
+                <span className={cn("mono", line.isDone ? "text-emerald-600" : "text-gray-400")}>{line.statusText}</span>
+              </div>
+            ))}
           </div>
         )}
       </button>

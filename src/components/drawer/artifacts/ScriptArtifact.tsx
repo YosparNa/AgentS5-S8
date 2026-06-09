@@ -16,6 +16,7 @@ export function ScriptArtifact({ excerpt, editable = false, onEdit, wordCount }:
 
   const displayText = editedScript || excerpt;
   const charCount = wordCount ?? displayText.length;
+  const lineCount = Math.max(displayText.split("\n").length, 30);
 
   if (editable && isEditing) {
     return (
@@ -30,7 +31,8 @@ export function ScriptArtifact({ excerpt, editable = false, onEdit, wordCount }:
           </button>
         </div>
         <textarea
-          className="w-full text-[12px] leading-relaxed font-sans border border-gray-200 rounded p-2 resize-y min-h-[200px] outline-none focus:border-indigo-400"
+          className="w-full text-[12px] leading-relaxed font-sans border border-gray-200 rounded p-2 resize-y outline-none focus:border-indigo-400"
+          rows={lineCount}
           value={displayText}
           onChange={(e) => {
             const val = e.target.value;
