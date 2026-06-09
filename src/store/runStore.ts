@@ -19,6 +19,10 @@ const SIM_ORDER = ["s1", "s2", "s25", "s3", "s4", "s5", "s6", "s7", "s8"] as con
 let _timers: number[] = [];
 let _histCounter = 0;
 
+// 模拟模式：跳过等待，快速完成（与后端 MOCK_MODE 联动）
+const MOCK_MODE = true;
+const MOCK_STAGE_TIMES: Record<string, number> = { s5: 2, s6: 2, s7: 2, s8: 2 };
+
 function clearAllTimers() {
   for (const t of _timers) window.clearTimeout(t);
   _timers = [];
@@ -158,6 +162,7 @@ function _historySummary(stageId: string, output: Record<string, unknown> | null
 
 /** S8 预计时间：每个启用角色 20s */
 function _s8Time(): number {
+  if (MOCK_MODE) return 2;
   const cfg = useConfig.getState().getS8Config();
   const count = Object.values(cfg).filter(v => v !== false).length;
   return Math.max(count, 1) * 20;
@@ -608,7 +613,7 @@ export const useRun = create<RunState>((set, get) => {
     },
 
     async createAndRunS5(userData: string, channelDesc: string) {
-      const STAGE_TIMES: Record<string, number> = { s5: 47, s6: 55, s7: 120, s8: 75 };
+      const STAGE_TIMES: Record<string, number> = MOCK_MODE ? MOCK_STAGE_TIMES : { s5: 47, s6: 55, s7: 120, s8: 75 };
       const startTime = Date.now();
       const progressTimer = setInterval(() => {
         const elapsed = (Date.now() - startTime) / 1000;
@@ -645,7 +650,7 @@ export const useRun = create<RunState>((set, get) => {
     async runStage(stageCode: string, config: Record<string, unknown> = {}) {
       const { wfId } = get();
       if (!wfId) return;
-      const STAGE_TIMES: Record<string, number> = { s5: 47, s6: 55, s7: 120, s8: 75 };
+      const STAGE_TIMES: Record<string, number> = MOCK_MODE ? MOCK_STAGE_TIMES : { s5: 47, s6: 55, s7: 120, s8: 75 };
       const key = stageCode.toLowerCase();
       const startTime = Date.now();
       const progressTimer = setInterval(() => {
@@ -906,7 +911,7 @@ export const useRun = create<RunState>((set, get) => {
       const channelDesc = "AI 工具评测频道";
 
       // Step 2: 创建workflow + 运行S5
-      const STAGE_TIMES: Record<string, number> = { s5: 47, s6: 55, s7: 120, s8: 75 };
+      const STAGE_TIMES: Record<string, number> = MOCK_MODE ? MOCK_STAGE_TIMES : { s5: 47, s6: 55, s7: 120, s8: 75 };
       const startTime = Date.now();
 
       set({ simPhase: "running", runningStage: "s5", progressPct: 0, progressElapsed: "0s", progressRemaining: "" });
@@ -1001,7 +1006,7 @@ export const useRun = create<RunState>((set, get) => {
       const { wfId, currentAutoStep } = get();
       if (!wfId) return;
 
-      const STAGE_TIMES: Record<string, number> = { s7: 120, s8: 75 };
+      const STAGE_TIMES: Record<string, number> = MOCK_MODE ? MOCK_STAGE_TIMES : { s7: 120, s8: 75 };
 
       try {
         if (currentAutoStep === "s6_review") {
@@ -1141,7 +1146,7 @@ export const useRun = create<RunState>((set, get) => {
       const { wfId } = get();
       if (!wfId) return;
 
-      const STAGE_TIMES: Record<string, number> = { s5: 47, s6: 55, s7: 120, s8: 75 };
+      const STAGE_TIMES: Record<string, number> = MOCK_MODE ? MOCK_STAGE_TIMES : { s5: 47, s6: 55, s7: 120, s8: 75 };
       const ROLLBACK_STAGES = ["s5", "s6", "s7", "s8"];
       const targetIdx = ROLLBACK_STAGES.indexOf(target);
       if (targetIdx < 0) return;
