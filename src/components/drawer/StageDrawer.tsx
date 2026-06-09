@@ -170,10 +170,16 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
     const runStore = useRun();
     const stageKey = stage.code.toLowerCase();
     const isRunning = runStore.runningStage === stageKey;
+    const otherRunning = runStore.runningStage && runStore.runningStage !== stageKey;
     const selectedIdx = runStore.selectedTopicIdx;
     const lockedIdx = runStore.lockedTopicIdx;
+    const stages = runStore.stages;
 
-    // 进度条
+    const checkRunning = () => {
+      if (otherRunning) { alert(`${runStore.runningStage!.toUpperCase()} 正在运行，请等待完成`); return true; }
+      return false;
+    };
+
     const ProgressBar = isRunning ? (
       <div className="flex-1">
         <div className="flex items-center justify-between mb-1">
@@ -195,13 +201,15 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
             <button
               disabled={isRunning}
               onClick={async () => {
+                if (checkRunning()) return;
+                runStore._initStageChecklist("s5");
                 await runStore.createAndRunS5FromS4();
                 closeDrawer();
               }}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
             >
               <Icon.Sparkles size={10} />
-              {isRunning ? "生成中..." : "AI 生成选题（从S4热点）"}
+              {isRunning ? "生成中..." : "AI 生成选题"}
             </button>
           </>
         );
@@ -212,8 +220,12 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
           <>
             <div className="flex gap-2 items-center">
               <button className="text-[11px] border border-gray-200 px-2.5 py-1.5 rounded hover:bg-gray-50 flex items-center gap-1"
-                onClick={async () => { await runStore.runStage("S5"); closeDrawer(); }}>
+                onClick={async () => { if (checkRunning()) return; runStore._initStageChecklist("s5"); await runStore.runStage("S5"); closeDrawer(); }}>
                 <Icon.Rotate size={10} /> 重跑
+              </button>
+              <button className="text-[11px] border border-gray-200 px-2.5 py-1.5 rounded hover:bg-gray-50 flex items-center gap-1"
+                onClick={() => { closeDrawer(); setTimeout(() => openStage("s6"), 150); }}>
+                跳过
               </button>
               {isLocked ? (
                 <button className="text-[11px] border border-indigo-300 text-indigo-600 px-2.5 py-1.5 rounded hover:bg-indigo-50 flex items-center gap-1"
@@ -232,7 +244,7 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
             <button
               disabled={!isLocked}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
-              onClick={() => { closeDrawer(); runStore.navigateStage(1); }}>
+              onClick={() => { closeDrawer(); setTimeout(() => openStage("s6"), 150); }}>
               <Icon.ArrowRight size={10} /> 确认并进入S6
             </button>
           </>
@@ -248,7 +260,12 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
             {ProgressBar || <div />}
             <button
               disabled={isRunning}
-              onClick={async () => { await runStore.runStage("S6"); closeDrawer(); }}
+              onClick={async () => {
+                if (checkRunning()) return;
+                if (!stages["s5"]?.output?.topics || (stages["s5"].output.topics as unknown[]).length === 0) { alert("请先完成 S5 选题"); return; }
+                runStore._initStageChecklist("s6");
+                await runStore.runStage("S6"); closeDrawer();
+              }}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
             >
               <Icon.Sparkles size={10} />
@@ -262,7 +279,7 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
           <>
             <div className="flex gap-2 items-center flex-wrap">
               <button className="text-[11px] border border-gray-200 px-2.5 py-1.5 rounded hover:bg-gray-50 flex items-center gap-1"
-                onClick={async () => { await runStore.runStage("S6"); closeDrawer(); }}>
+                onClick={async () => { if (checkRunning()) return; runStore._initStageChecklist("s6"); await runStore.runStage("S6"); closeDrawer(); }}>
                 <Icon.Rotate size={10} /> 重新生成大纲
               </button>
               <button className="text-[11px] border border-amber-300 text-amber-600 px-2.5 py-1.5 rounded hover:bg-amber-50"
@@ -272,14 +289,11 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
             </div>
             <button className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
               onClick={async () => {
-                if (runStore.autoMode) {
-                  await runStore.approveAndContinue();
-                } else {
-                  await runStore.approveBackend("S6");
-                }
+                if (runStore.autoMode) { await runStore.approveAndContinue(); } else { await runStore.approveBackend("S6"); }
                 closeDrawer();
+                setTimeout(() => openStage("s7"), 150);
               }}>
-              <Icon.Check size={10} /> 审核通过
+              <Icon.ArrowRight size={10} /> 确认并进入S7
             </button>
           </>
         );
@@ -294,7 +308,12 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
             {ProgressBar || <div />}
             <button
               disabled={isRunning}
-              onClick={async () => { await runStore.runStage("S7"); closeDrawer(); }}
+              onClick={async () => {
+                if (checkRunning()) return;
+                if (!stages["s6"]?.output?.outline || (stages["s6"].output.outline as unknown[]).length === 0) { alert("请先完成 S6 大纲"); return; }
+                runStore._initStageChecklist("s7");
+                await runStore.runStage("S7"); closeDrawer();
+              }}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
             >
               <Icon.Sparkles size={10} />
@@ -306,10 +325,16 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
       if (status === "done") {
         return (
           <>
-            <button className="text-[11px] border border-gray-200 px-2.5 py-1.5 rounded hover:bg-gray-50 flex items-center gap-1"
-              onClick={async () => { await runStore.runStage("S7"); closeDrawer(); }}>
-              <Icon.Rotate size={10} /> 重跑
-            </button>
+            <div className="flex gap-2 items-center">
+              <button className="text-[11px] border border-gray-200 px-2.5 py-1.5 rounded hover:bg-gray-50 flex items-center gap-1"
+                onClick={async () => { if (checkRunning()) return; runStore._initStageChecklist("s7"); await runStore.runStage("S7"); closeDrawer(); }}>
+                <Icon.Rotate size={10} /> 重跑
+              </button>
+              <button className="text-[11px] border border-gray-200 px-2.5 py-1.5 rounded hover:bg-gray-50 flex items-center gap-1"
+                onClick={() => { closeDrawer(); setTimeout(() => openStage("s8"), 150); }}>
+                跳过
+              </button>
+            </div>
             <button className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
               onClick={async () => {
                 closeDrawer();
@@ -318,6 +343,7 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
                 } else {
                   await runStore.runStage("S8");
                 }
+                setTimeout(() => openStage("s8"), 150);
               }}>
               <Icon.ArrowRight size={10} /> 确认并进入S8
             </button>
@@ -334,7 +360,12 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
             {ProgressBar || <div />}
             <button
               disabled={isRunning}
-              onClick={async () => { await runStore.runStage("S8"); closeDrawer(); }}
+              onClick={async () => {
+                if (checkRunning()) return;
+                if (!stages["s7"]?.output?.body_md) { alert("请先完成 S7 脚本"); return; }
+                runStore._initStageChecklist("s8");
+                await runStore.runStage("S8"); closeDrawer();
+              }}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
             >
               <Icon.Sparkles size={10} />
@@ -347,29 +378,44 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
         return (
           <>
             <div className="flex gap-1.5 items-center flex-wrap">
+              <button className="text-[10px] border border-amber-300 text-amber-700 px-2 py-1 rounded hover:bg-amber-100"
+                onClick={async () => { await runStore.rejectAndRollback("s8"); closeDrawer(); }}>
+                重新生成
+              </button>
               <button className="text-[10px] border border-red-300 text-red-600 px-2 py-1 rounded hover:bg-red-50"
-                onClick={async () => { await runStore.rejectAndRollback("s5"); closeDrawer(); }}>
-                驳回(S5)
+                onClick={async () => { await runStore.rejectAndRollback("s7"); closeDrawer(); }}>
+                驳回(S7)
               </button>
               <button className="text-[10px] border border-red-300 text-red-600 px-2 py-1 rounded hover:bg-red-50"
                 onClick={async () => { await runStore.rejectAndRollback("s6"); closeDrawer(); }}>
                 驳回(S6)
               </button>
               <button className="text-[10px] border border-red-300 text-red-600 px-2 py-1 rounded hover:bg-red-50"
-                onClick={async () => { await runStore.rejectAndRollback("s7"); closeDrawer(); }}>
-                驳回(S7)
+                onClick={async () => { await runStore.rejectAndRollback("s5"); closeDrawer(); }}>
+                驳回(S5)
               </button>
             </div>
             <button className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
               onClick={async () => {
-                if (runStore.autoMode) {
-                  await runStore.approveAndContinue();
-                } else {
-                  await runStore.approveBackend("S8");
-                }
+                if (runStore.autoMode) { await runStore.approveAndContinue(); } else { await runStore.approveBackend("S8"); }
                 closeDrawer();
+                setTimeout(() => openStage("s9"), 150);
               }}>
-              <Icon.Check size={10} /> 审核通过
+              <Icon.ArrowRight size={10} /> 审核通过 进入S9
+            </button>
+          </>
+        );
+      }
+      if (status === "done") {
+        return (
+          <>
+            <button className="text-[11px] border border-gray-200 px-2.5 py-1.5 rounded hover:bg-gray-50 flex items-center gap-1"
+              onClick={async () => { if (checkRunning()) return; runStore._initStageChecklist("s8"); await runStore.runStage("S8"); closeDrawer(); }}>
+              <Icon.Rotate size={10} /> 重跑
+            </button>
+            <button className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"
+              onClick={() => { closeDrawer(); setTimeout(() => openStage("s9"), 150); }}>
+              <Icon.ArrowRight size={10} /> 进入S9
             </button>
           </>
         );

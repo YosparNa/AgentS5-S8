@@ -1145,15 +1145,18 @@ export const useRun = create<RunState>((set, get) => {
 
         } else if (currentAutoStep === "s8_review") {
           await dataProvider.approveStage(wfId, "S8");
-          // S8 完成，不跳转 S9（S9 未实现）
+          // S8 完成 → 进入 S9
           set((s) => ({
             run: {
               ...s.run,
+              currentNodeId: "s9",
               nodes: {
                 ...s.run.nodes,
                 s8: { ...s.run.nodes.s8, status: "done" as RunStatus, percent: 100 },
+                s9: { ...s.run.nodes.s9, status: "active" as RunStatus, percent: 0 },
               },
             },
+            currentNodeId: "s9",
             currentAutoStep: "done",
             autoMode: false,
             simPhase: "idle",
@@ -1161,7 +1164,7 @@ export const useRun = create<RunState>((set, get) => {
             progressPct: 0,
             pendingNodeId: null,
           }));
-          get().loadStages();
+          get()._forceLoadStages();
         }
       } catch (e) {
         console.error("approveAndContinue failed:", e);
