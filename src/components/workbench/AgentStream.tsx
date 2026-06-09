@@ -45,8 +45,6 @@ export function AgentStream({ extraUserBubbles = [] }: Props) {
   const approveAndContinue = useRun((s) => s.approveAndContinue);
   const rejectAndRollback = useRun((s) => s.rejectAndRollback);
   const currentAutoStep = useRun((s) => s.currentAutoStep);
-  const editedScript = useRun((s) => s.editedScript);
-  const setEditedScript = useRun((s) => s.setEditedScript);
   const openStage = useUi((s) => s.openStage);
 
   // Sort nodes by order; fall back to empty array
@@ -223,32 +221,18 @@ export function AgentStream({ extraUserBubbles = [] }: Props) {
                     ✓ {stage.code} 完成
                   </div>
                   <ChatArtifactCard stageId={node.stageId} />
-                  {/* S7 done + s7_edit → confirm edit card */}
+                  {/* S7 done + s7_edit → confirm card */}
                   {node.nodeId === "s7" && currentAutoStep === "s7_edit" && (
                     <div className="mt-2 max-w-[95%] border border-amber-200 bg-amber-50 rounded-xl p-3 shadow-sm">
                       <div className="text-[11px] font-bold text-amber-800 mb-2">
                         脚本已生成 · 编辑确认后进入 S8
                       </div>
-                      <textarea
-                        className="w-full text-[11px] leading-relaxed font-sans border border-amber-200 rounded p-2 resize-y min-h-[120px] max-h-[300px] outline-none focus:border-indigo-400 bg-white mb-2"
-                        value={editedScript}
-                        onChange={(e) => setEditedScript(e.target.value)}
-                        placeholder="脚本内容..."
-                      />
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => openStage("s7")}
-                          className="text-[11px] border border-amber-300 text-amber-700 px-2.5 py-1 rounded hover:bg-amber-100"
-                        >
-                          打开抽屉编辑
-                        </button>
-                        <button
-                          onClick={() => approveAndContinue()}
-                          className="text-[11px] bg-emerald-600 text-white px-2.5 py-1 rounded hover:bg-emerald-700"
-                        >
-                          确认并进入S8
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => approveAndContinue()}
+                        className="text-[11px] bg-emerald-600 text-white px-2.5 py-1 rounded hover:bg-emerald-700"
+                      >
+                        确认并进入S8
+                      </button>
                     </div>
                   )}
                 </div>
