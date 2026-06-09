@@ -225,14 +225,22 @@ export function AgentStream({ extraUserBubbles = [] }: Props) {
                   {node.nodeId === "s7" && currentAutoStep === "s7_edit" && (
                     <div className="mt-2 max-w-[95%] border border-amber-200 bg-amber-50 rounded-xl p-3 shadow-sm">
                       <div className="text-[11px] font-bold text-amber-800 mb-2">
-                        脚本已生成 · 编辑确认后进入 S8
+                        脚本已生成 · 编辑确认后自动进入 S8
                       </div>
-                      <button
-                        onClick={() => approveAndContinue()}
-                        className="text-[11px] bg-emerald-600 text-white px-2.5 py-1 rounded hover:bg-emerald-700"
-                      >
-                        确认并进入S8
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => useUi.getState().setExpandedStudioCard("s7")}
+                          className="text-[11px] border border-amber-300 text-amber-700 px-2.5 py-1 rounded hover:bg-amber-100"
+                        >
+                          编辑
+                        </button>
+                        <button
+                          onClick={() => approveAndContinue()}
+                          className="text-[11px] bg-emerald-600 text-white px-2.5 py-1 rounded hover:bg-emerald-700"
+                        >
+                          确认
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

@@ -322,8 +322,18 @@ function ProductCardItem({
   const [expanded, setExpanded] = useState(false);
   const [stageData, setStageData] = useState<StageDef | undefined>(undefined);
   const stageVersion = useRun((s) => s.stageVersion);
+  const expandedStudioCard = useUi((s) => s.expandedStudioCard);
+  const setExpandedStudioCard = useUi((s) => s.setExpandedStudioCard);
 
   const isS5S8 = ["s5", "s6", "s7", "s8"].includes(card.stageId);
+
+  // Auto-expand when expandedStudioCard matches this card
+  useEffect(() => {
+    if (expandedStudioCard === card.stageId) {
+      setExpanded(true);
+      setExpandedStudioCard(null); // consume the signal
+    }
+  }, [expandedStudioCard, card.stageId, setExpandedStudioCard]);
 
   // Refresh stage data when version changes (artifact updated)
   useEffect(() => {

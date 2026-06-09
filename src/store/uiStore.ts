@@ -43,6 +43,9 @@ interface UiState {
 
   probeMode: ProbeMode;
   setProbeMode: (m: ProbeMode) => void;
+
+  expandedStudioCard: string | null;
+  setExpandedStudioCard: (stageId: string | null) => void;
 }
 
 export const useUi = create<UiState>((set, get) => ({
@@ -105,4 +108,7 @@ export const useUi = create<UiState>((set, get) => ({
 
   probeMode: "web",
   setProbeMode: (m) => set({ probeMode: m }),
+
+  expandedStudioCard: null,
+  setExpandedStudioCard: (stageId) => set({ expandedStudioCard: stageId }),
 }));
