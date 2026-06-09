@@ -52,13 +52,27 @@ def _make_artifact(stage_code: str, slug: str, data) -> dict:
     if stage_code == "S5":
         topics = data.get("topics", []) if isinstance(data, dict) else []
         base["topics"] = [
-            {"rank": t.get("rank", i + 1), "title": t.get("title", ""), "score": t.get("score", 0), "unique": t.get("unique", ""), "locked": t.get("locked", False)}
+            {
+                "rank": t.get("rank", i + 1),
+                "title": t.get("title", ""),
+                "angle": t.get("angle", ""),
+                "score": t.get("score", 0),
+                "scores": t.get("scores", {}),
+                "unique": t.get("unique", ""),
+                "keywords": t.get("keywords", []),
+                "hook_idea": t.get("hook_idea", ""),
+                "competitors_covered": t.get("competitors_covered", []),
+                "predicted_views": t.get("predicted_views", ""),
+                "risk_notes": t.get("risk_notes", []),
+                "locked": t.get("locked", False),
+            }
             for i, t in enumerate(topics)
         ]
     elif stage_code == "S6":
         outline = data.get("outline", []) if isinstance(data, dict) else []
         base["outline"] = [
             {
+                "chapter": ch.get("chapter", i + 1),
                 "ch": ch.get("title", f"第{ch.get('chapter', i+1)}章"),
                 "dur": ch.get("duration", ""),
                 "tension": ch.get("tension", 5),
@@ -66,9 +80,15 @@ def _make_artifact(stage_code: str, slug: str, data) -> dict:
                 "crisis": ch.get("crisis", False),
                 "description": ch.get("description", ""),
                 "purpose": ch.get("purpose", ""),
+                "transition_to_next": ch.get("transition_to_next", ""),
+                "pros": ch.get("pros", []),
+                "cons": ch.get("cons", []),
             }
             for i, ch in enumerate(outline)
         ]
+        base["total_duration"] = data.get("total_duration", "")
+        base["crisis_points"] = data.get("crisis_points", [])
+        base["climax_position"] = data.get("climax_position", "")
     elif stage_code == "S7":
         text = data if isinstance(data, str) else str(data)
         base["excerpt"] = text[:200]

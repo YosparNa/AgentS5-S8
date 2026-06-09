@@ -109,22 +109,27 @@ export function OutputTab({ stage }: Props) {
     }
 
     case "outline": {
-      const { outline } = o as { outline: Parameters<typeof OutlineArtifact>[0]["outline"] };
+      const { outline, total_duration, crisis_points, climax_position } = o as {
+        outline: Parameters<typeof OutlineArtifact>[0]["outline"];
+        total_duration?: string;
+        crisis_points?: number[];
+        climax_position?: string;
+      };
       if (!outline || outline.length === 0) {
         content = <EmptyHint kind="outline" />;
       } else {
-        content = <OutlineArtifact outline={outline} />;
+        content = <OutlineArtifact outline={outline} totalDuration={total_duration} crisisPoints={crisis_points} climaxPosition={climax_position} />;
       }
       break;
     }
 
     case "script": {
-      const { excerpt, body_md } = o as { excerpt: string; body_md?: string };
+      const { excerpt, body_md, word_count } = o as { excerpt: string; body_md?: string; word_count?: number };
       const scriptText = body_md || excerpt;
       if (!scriptText) {
         content = <EmptyHint kind="script" />;
       } else {
-        content = <ScriptArtifact excerpt={scriptText} editable={true} />;
+        content = <ScriptArtifact excerpt={scriptText} editable={true} wordCount={word_count} />;
       }
       break;
     }

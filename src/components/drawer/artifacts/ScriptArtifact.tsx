@@ -6,14 +6,16 @@ interface Props {
   excerpt: string;
   editable?: boolean;
   onEdit?: (text: string) => void;
+  wordCount?: number;
 }
 
-export function ScriptArtifact({ excerpt, editable = false, onEdit }: Props) {
+export function ScriptArtifact({ excerpt, editable = false, onEdit, wordCount }: Props) {
   const editedScript = useRun((s) => s.editedScript);
   const { setEditedScript } = useRun.getState();
   const [isEditing, setIsEditing] = useState(false);
 
   const displayText = editedScript || excerpt;
+  const charCount = wordCount ?? displayText.length;
 
   if (editable && isEditing) {
     return (
@@ -44,7 +46,10 @@ export function ScriptArtifact({ excerpt, editable = false, onEdit }: Props) {
     <div className="bg-white rounded-lg border border-gray-200 p-3">
       {editable && (
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] text-gray-400">点击编辑脚本内容</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-gray-400">点击编辑脚本内容</span>
+            <span className="text-[9px] text-gray-400 bg-gray-100 px-1.5 rounded">{charCount} 字</span>
+          </div>
           <button
             onClick={() => setIsEditing(true)}
             className="text-[10px] text-indigo-600 hover:text-indigo-800 border border-indigo-200 px-2 py-0.5 rounded"
