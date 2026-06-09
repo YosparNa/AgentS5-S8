@@ -266,7 +266,7 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
                 <Icon.Rotate size={10} /> 重新生成大纲
               </button>
               <button className="text-[11px] border border-amber-300 text-amber-600 px-2.5 py-1.5 rounded hover:bg-amber-50"
-                onClick={async () => { await runStore.rejectBackend("S6", "用户驳回到S5", "s5"); runStore.navigateStage(-1); closeDrawer(); }}>
+                onClick={async () => { await runStore.rejectAndRollback("s5"); closeDrawer(); }}>
                 回到S5重新选题
               </button>
             </div>
@@ -348,15 +348,15 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
           <>
             <div className="flex gap-1.5 items-center flex-wrap">
               <button className="text-[10px] border border-red-300 text-red-600 px-2 py-1 rounded hover:bg-red-50"
-                onClick={async () => { await runStore.rejectBackend("S8", "驳回到S5", "s5"); closeDrawer(); }}>
+                onClick={async () => { await runStore.rejectAndRollback("s5"); closeDrawer(); }}>
                 驳回(S5)
               </button>
               <button className="text-[10px] border border-red-300 text-red-600 px-2 py-1 rounded hover:bg-red-50"
-                onClick={async () => { await runStore.rejectBackend("S8", "驳回到S6", "s6"); closeDrawer(); }}>
+                onClick={async () => { await runStore.rejectAndRollback("s6"); closeDrawer(); }}>
                 驳回(S6)
               </button>
               <button className="text-[10px] border border-red-300 text-red-600 px-2 py-1 rounded hover:bg-red-50"
-                onClick={async () => { await runStore.rejectBackend("S8", "驳回到S7", "s7"); closeDrawer(); }}>
+                onClick={async () => { await runStore.rejectAndRollback("s7"); closeDrawer(); }}>
                 驳回(S7)
               </button>
             </div>

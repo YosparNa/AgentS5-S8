@@ -1066,45 +1066,100 @@ export const useRun = create<RunState>((set, get) => {
       const { wfId } = get();
       if (!wfId) return;
 
-      try {
-        // 调用后端驳回
-        await dataProvider.rejectStage(wfId, "S8", `回滚到${target}`);
-        set({ rollbackTarget: target, currentAutoStep: target, simPhase: "running" });
+      const STAGE_TIMES: Record<string, number> = { s5: 37, s6: 40, s7: 90, s8: 75 };
+      const ROLLBACK_STAGES = ["s5", "s6", "s7", "s8"];
+      const targetIdx = ROLLBACK_STAGES.indexOf(target);
+      if (targetIdx < 0) return;
 
-        // 根据回滚目标重新运行
+      try {
+        // 1. 保存当前产物到历史记录（供回滚查看）
+        const currentNodes = get().run.nodes;
+        for (const sid of ROLLBACK_STAGES.slice(targetIdx)) {
+          const node = currentNodes[sid];
+          if (node?.status === "done") {
+            get().agentSaveHistory(sid, `驳回前 ${sid} 产物快照`, null);
+          }
+        }
+
+        // 2. 调用后端驳回
+        await dataProvider.rejectStage(wfId, "S8", `回滚到${target}`, target.toUpperCase());
+
+        // 3. 重置目标阶段到 S8 的工作台节点为 pending
+        set((s) => {
+          const nodes = { ...s.run.nodes };
+          for (const sid of ROLLBACK_STAGES.slice(targetIdx)) {
+            nodes[sid] = {
+              ...nodes[sid],
+              status: "pending" as RunStatus,
+              percent: 0,
+              doneCount: 0,
+              totalCount: 0,
+              checklist: [],
+              currentItem: "",
+            };
+          }
+          return { run: { ...s.run, nodes } };
+        });
+
+        // 4. 初始化目标阶段 checklist + 设置为 active
+        get()._initStageChecklist(target);
+        set({ rollbackTarget: target, currentAutoStep: target, simPhase: "running", runningStage: target, progressPct: 0, progressElapsed: "0s", progressRemaining: "" });
+
+        // 5. 带进度运行目标阶段
+        const startTime = Date.now();
+        const total = STAGE_TIMES[target] || 40;
+        const progressTimer = setInterval(() => {
+          const elapsed = (Date.now() - startTime) / 1000;
+          const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
+          const remaining = Math.max(0, Math.round(total - elapsed));
+          set({
+            progressPct: pct,
+            progressElapsed: Math.round(elapsed) + "s",
+            progressRemaining: remaining + "s",
+          });
+          get()._updateChecklistProgress(target, pct);
+        }, 100);
+
+        let wfv;
         if (target === "s5") {
-          // 清空所有，重新运行S5
-          set({ runningStage: "s5" });
           const s5Config = useConfig.getState().getS5Config();
-          const wfv = await dataProvider.runS5(wfId, s5Config);
+          wfv = await dataProvider.runS5(wfId, s5Config);
+        } else if (target === "s6") {
+          const s6Config = useConfig.getState().getS6Config();
+          wfv = await dataProvider.runS6(wfId, s6Config);
+        } else if (target === "s7") {
+          const s7Config = useConfig.getState().getS7Config();
+          wfv = await dataProvider.runS7(wfId, s7Config);
+        }
+
+        clearInterval(progressTimer);
+        set({ progressPct: 100, progressElapsed: Math.round((Date.now() - startTime) / 1000) + "s", progressRemaining: "已完成" });
+        get()._updateChecklistProgress(target, 100);
+
+        if (wfv) {
           _syncStagesToRun(wfv, set, get);
-          // 自动锁定最高分选题
-          const topics = (wfv.stages.find(s => s.stage_code === "S5")?.output_artifact?.topics ?? []) as Array<{ score: number }>;
+        }
+
+        // 6. 设置下一步状态
+        if (target === "s5") {
+          const topics = (wfv?.stages.find(s => s.stage_code === "S5")?.output_artifact?.topics ?? []) as Array<{ score: number }>;
           if (topics.length > 0) {
             const bestIdx = topics.reduce((maxI, t, i, arr) => t.score > arr[maxI].score ? i : maxI, 0);
             set({ selectedTopicIdx: bestIdx, lockedTopicIdx: bestIdx });
           }
           set({ currentAutoStep: "s6" });
         } else if (target === "s6") {
-          set({ runningStage: "s6" });
-          const s6Config = useConfig.getState().getS6Config();
-          const wfv = await dataProvider.runS6(wfId, s6Config);
-          _syncStagesToRun(wfv, set, get);
           set({ currentAutoStep: "s6_review" });
         } else if (target === "s7") {
-          set({ runningStage: "s7" });
-          const s7Config = useConfig.getState().getS7Config();
-          const wfv = await dataProvider.runS7(wfId, s7Config);
-          _syncStagesToRun(wfv, set, get);
-          const script = (wfv.stages.find(s => s.stage_code === "S7")?.output_artifact?.body_md as string) || "";
+          const script = (wfv?.stages.find(s => s.stage_code === "S7")?.output_artifact?.body_md as string) || "";
           set({ editedScript: script, currentAutoStep: "s7_edit" });
         }
 
-        set({ simPhase: "idle", runningStage: null });
+        set({ simPhase: "idle", runningStage: null, progressPct: 0 });
         get().loadStages();
       } catch (e) {
         console.error("rejectAndRollback failed:", e);
-        set({ simPhase: "idle", runningStage: null });
+        set({ simPhase: "idle", runningStage: null, progressPct: 0 });
       }
     },
   };

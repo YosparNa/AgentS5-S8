@@ -229,7 +229,7 @@ export function AgentStream({ extraUserBubbles = [] }: Props) {
                       </div>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => useUi.getState().setExpandedStudioCard("s7")}
+                          onClick={() => useUi.getState().openFile("s7")}
                           className="text-[11px] border border-amber-300 text-amber-700 px-2.5 py-1 rounded hover:bg-amber-100"
                         >
                           编辑

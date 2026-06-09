@@ -10,31 +10,20 @@ interface Props {
   stageId: string;
 }
 
-const S5S8 = new Set(["s5", "s6", "s7", "s8"]);
-
 export function ChatArtifactCard({ stageId }: Props) {
   const stage = useRun((s) => s.stages[stageId]);
   const producedAt = useRun((s) => s.run.nodes[stageId]?.producedAt);
   const openFile = useUi((s) => s.openFile);
-  const setExpandedStudioCard = useUi((s) => s.setExpandedStudioCard);
 
   if (!stage) return null;
 
   const files = artifactFileMeta(stage, { stageId, nodeId: stageId, updatedAt: producedAt });
   if (files.length === 0) return null;
 
-  function handleClick() {
-    if (S5S8.has(stageId)) {
-      setExpandedStudioCard(stageId);
-    } else {
-      openFile(stageId);
-    }
-  }
-
   return (
     <div
       className="max-w-[95%] cursor-pointer border border-gray-200 hover:border-indigo-300 rounded-xl overflow-hidden bg-white shadow-sm transition-colors"
-      onClick={handleClick}
+      onClick={() => openFile(stageId)}
     >
       {/* Card header */}
       <div className="px-3 py-2 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
