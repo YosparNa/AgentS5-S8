@@ -371,23 +371,25 @@ function ProductCardItem({
     for (const sid of linkedStages) {
       const sd = allStageData[sid];
       const output = sd?.output as Record<string, unknown> | undefined;
-      if (!output || Object.keys(output).length === 0) continue;
+      if (!output || Object.keys(output).length === 0) {
+        // 无产物时显示"待 XX"
+        labels.push(`待 ${sid.toUpperCase()}`);
+        continue;
+      }
       const kind = sd?.config.kind;
       if (kind === "topic") {
         const topics = (output.topics ?? []) as Array<{ score: number }>;
         const best = topics.length > 0 ? Math.max(...topics.map(t => t.score)) : 0;
-        labels.push(`${topics.length} 选题 · ${best} 分`);
+        labels.push(`选题卡 · ${best} 分`);
       } else if (kind === "outline") {
         const outline = (output.outline ?? []) as Array<unknown>;
-        const dur = output.total_duration as string | undefined;
-        labels.push(dur ? `${outline.length} 章 · ${dur}` : `${outline.length} 章`);
+        labels.push(`大纲 · ${outline.length} 章`);
       } else if (kind === "script") {
         const wc = (output.word_count as number) ?? 0;
-        labels.push(`${wc.toLocaleString()} 字`);
+        labels.push(`脚本 · ${wc.toLocaleString()} 字`);
       } else if (kind === "adversarial") {
         const roles = (output.roles ?? []) as Array<unknown>;
-        const avg = output.average_score as number | undefined;
-        labels.push(`${roles.length} 角色${avg ? ` · ${avg}分` : ""}`);
+        labels.push(`${roles.length} 角色质疑`);
       }
     }
     return labels.length > 0 ? labels : card.files ?? [];
