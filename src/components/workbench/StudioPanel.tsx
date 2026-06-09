@@ -315,7 +315,8 @@ function ProductCardItem({
   const cls = cardClasses(card.color, status);
 
   function statusLabel(): string {
-    if (status === "done" || status === "awaiting_review") return "已通过";
+    if (status === "done") return "已通过";
+    if (status === "awaiting_review") return "待审核";
     if (status === "active") return `${percent}%`;
     if (status === "skipped") return "已跳过";
     if (status === "rejected") return "已驳回";

@@ -940,13 +940,35 @@ export const useRun = create<RunState>((set, get) => {
           const wfv8 = await dataProvider.runS8(wfId, s8Config);
           clearInterval(progressTimer);
           set({ progressPct: 100, progressElapsed: Math.round((Date.now() - startTime) / 1000) + "s", progressRemaining: "已完成" });
-          _syncStagesToRun(wfv8, set, get);
-          set({ currentAutoStep: "s8_review", simPhase: "idle", runningStage: null, progressPct: 0 });
+
+          // 不用 _syncStagesToRun（后端会标 S8=completed 导致跳过审核）
+          // 手动设 S8=awaiting_review，等待用户审核
+          set((s) => ({
+            run: {
+              ...s.run,
+              nodes: {
+                ...s.run.nodes,
+                s7: { ...s.run.nodes.s7, status: "done" as RunStatus, percent: 100 },
+                s8: { ...s.run.nodes.s8, status: "awaiting_review" as RunStatus, percent: 100, doneCount: 1, totalCount: 1 },
+              },
+            },
+          }));
+          set({ currentAutoStep: "s8_review", simPhase: "idle", runningStage: null, progressPct: 0, pendingNodeId: "s8" });
           get().loadStages();
 
         } else if (currentAutoStep === "s8_review") {
           await dataProvider.approveStage(wfId, "S8");
-          set({ currentAutoStep: "done", autoMode: false, simPhase: "idle", runningStage: null, progressPct: 0 });
+          // S8 完成，不推进 S9（S9 未实现）
+          set((s) => ({
+            run: {
+              ...s.run,
+              nodes: {
+                ...s.run.nodes,
+                s8: { ...s.run.nodes.s8, status: "done" as RunStatus, percent: 100 },
+              },
+            },
+          }));
+          set({ currentAutoStep: "done", autoMode: false, simPhase: "done", runningStage: null, progressPct: 0, pendingNodeId: null });
           get().loadStages();
         }
       } catch (e) {

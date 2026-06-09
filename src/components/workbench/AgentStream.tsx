@@ -45,6 +45,8 @@ export function AgentStream({ extraUserBubbles = [] }: Props) {
   const approveAndContinue = useRun((s) => s.approveAndContinue);
   const rejectAndRollback = useRun((s) => s.rejectAndRollback);
   const currentAutoStep = useRun((s) => s.currentAutoStep);
+  const editedScript = useRun((s) => s.editedScript);
+  const setEditedScript = useRun((s) => s.setEditedScript);
   const openStage = useUi((s) => s.openStage);
 
   // Sort nodes by order; fall back to empty array
@@ -84,8 +86,8 @@ export function AgentStream({ extraUserBubbles = [] }: Props) {
                 ▶ {stage.code} {stage.title} Agent 启动
               </div>
 
-              {/* Active / awaiting_review → full agent card */}
-              {(status === "active" || status === "awaiting_review") && (
+              {/* Active / awaiting_review → full agent card (S8 awaiting_review handled separately below) */}
+              {(status === "active" || (status === "awaiting_review" && node.nodeId !== "s8")) && (
                 <div className="flex flex-col items-start max-w-[95%]">
                   {/* Header row */}
                   <div className="flex items-center gap-2 mb-2">
@@ -229,26 +231,73 @@ export function AgentStream({ extraUserBubbles = [] }: Props) {
                   <ChatArtifactCard stageId={node.stageId} />
                   {/* S7 done + s7_edit → confirm edit card */}
                   {node.nodeId === "s7" && currentAutoStep === "s7_edit" && (
-                    <div className="mt-2 w-full border border-indigo-200 bg-indigo-50 rounded-xl p-3 shadow-sm">
-                      <div className="text-[11px] font-bold text-indigo-800 mb-2">
-                        脚本已生成，请编辑确认后进入 S8
+                    <div className="mt-2 max-w-[95%] border border-amber-200 bg-amber-50 rounded-xl p-3 shadow-sm">
+                      <div className="text-[11px] font-bold text-amber-800 mb-2">
+                        脚本已生成 · 编辑确认后进入 S8
                       </div>
+                      <textarea
+                        className="w-full text-[11px] leading-relaxed font-sans border border-amber-200 rounded p-2 resize-y min-h-[120px] max-h-[300px] outline-none focus:border-indigo-400 bg-white mb-2"
+                        value={editedScript}
+                        onChange={(e) => setEditedScript(e.target.value)}
+                        placeholder="脚本内容..."
+                      />
                       <div className="flex gap-2">
                         <button
-                          onClick={() => { openStage("s7"); }}
-                          className="text-[11px] border border-indigo-300 text-indigo-600 px-3 py-1 rounded hover:bg-indigo-100"
+                          onClick={() => openStage("s7")}
+                          className="text-[11px] border border-amber-300 text-amber-700 px-2.5 py-1 rounded hover:bg-amber-100"
                         >
-                          编辑脚本
+                          打开抽屉编辑
                         </button>
                         <button
                           onClick={() => approveAndContinue()}
-                          className="text-[11px] bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700"
+                          className="text-[11px] bg-emerald-600 text-white px-2.5 py-1 rounded hover:bg-emerald-700"
                         >
                           确认并进入S8
                         </button>
                       </div>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* S8 awaiting_review → review card */}
+              {node.nodeId === "s8" && status === "awaiting_review" && pendingNodeId === "s8" && (
+                <div className="space-y-1">
+                  <div className="text-[10px] text-emerald-600 mono">
+                    ✓ {stage.code} 完成
+                  </div>
+                  <ChatArtifactCard stageId={node.stageId} />
+                  <div className="mt-2 max-w-[95%] border border-amber-200 bg-amber-50 rounded-xl p-3 shadow-sm">
+                    <div className="text-[11px] font-bold text-amber-800 mb-2">
+                      对抗审核完成 · 请确认结果
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => rejectAndRollback("s7")}
+                        className="text-[11px] border border-red-300 text-red-600 px-2.5 py-1 rounded hover:bg-red-50"
+                      >
+                        驳回(S7)
+                      </button>
+                      <button
+                        onClick={() => rejectAndRollback("s6")}
+                        className="text-[11px] border border-red-300 text-red-600 px-2.5 py-1 rounded hover:bg-red-50"
+                      >
+                        驳回(S6)
+                      </button>
+                      <button
+                        onClick={() => rejectAndRollback("s5")}
+                        className="text-[11px] border border-red-300 text-red-600 px-2.5 py-1 rounded hover:bg-red-50"
+                      >
+                        驳回(S5)
+                      </button>
+                      <button
+                        onClick={() => approveAndContinue()}
+                        className="text-[11px] bg-emerald-600 text-white px-2.5 py-1 rounded hover:bg-emerald-700"
+                      >
+                        通过
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
 
