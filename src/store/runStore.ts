@@ -889,6 +889,10 @@ export const useRun = create<RunState>((set, get) => {
         get()._updateChecklistProgress("s5", 100);
         _syncStagesToRun(wfv5, set, get);
 
+        // 保存 S5 产物到历史记录
+        const s5Stage = await dataProvider.getStage("s5");
+        get().agentSaveHistory("s5", "S5 选题生成完成", s5Stage?.output ?? null);
+
         // Step 3: 自动锁定最高分选题
         const topics = (wfv5.stages.find(s => s.stage_code === "S5")?.output_artifact?.topics ?? []) as Array<{ score: number }>;
         if (topics.length > 0) {
@@ -928,6 +932,10 @@ export const useRun = create<RunState>((set, get) => {
         set({ progressPct: 100, progressElapsed: Math.round((Date.now() - s6StartTime) / 1000) + "s", progressRemaining: "已完成" });
         get()._updateChecklistProgress("s6", 100);
         _syncStagesToRun(wfv6, set, get);
+
+        // 保存 S6 产物到历史记录
+        const s6Stage = await dataProvider.getStage("s6");
+        get().agentSaveHistory("s6", "S6 大纲生成完成", s6Stage?.output ?? null);
 
         // Step 5: S6等待审核
         set({ currentAutoStep: "s6_review", simPhase: "idle", runningStage: null });
@@ -980,6 +988,10 @@ export const useRun = create<RunState>((set, get) => {
           set({ progressPct: 100, progressElapsed: Math.round((Date.now() - startTime) / 1000) + "s", progressRemaining: "已完成" });
           get()._updateChecklistProgress("s7", 100);
 
+          // 保存 S7 产物到历史记录
+          const s7Stage = await dataProvider.getStage("s7");
+          get().agentSaveHistory("s7", "S7 脚本生成完成", s7Stage?.output ?? null);
+
           // S7 完成后，手动设置 S7=done, S8=pending（不使用 _syncStagesToRun，
           // 因为后端返回的 workflow 会把 S8 标记为 active，跳过用户确认阶段）
           set((s) => ({
@@ -1029,6 +1041,10 @@ export const useRun = create<RunState>((set, get) => {
           clearInterval(progressTimer);
           set({ progressPct: 100, progressElapsed: Math.round((Date.now() - startTime) / 1000) + "s", progressRemaining: "已完成" });
           get()._updateChecklistProgress("s8", 100);
+
+          // 保存 S8 产物到历史记录
+          const s8Stage = await dataProvider.getStage("s8");
+          get().agentSaveHistory("s8", "S8 对抗审核完成", s8Stage?.output ?? null);
 
           // 不用 _syncStagesToRun（后端会标 S8=completed 导致跳过审核）
           // 手动设 S8=awaiting_review，等待用户审核

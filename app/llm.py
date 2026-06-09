@@ -14,7 +14,7 @@ load_dotenv(_env_path)
 client = OpenAI(
     api_key=os.getenv("XIAOMI_API_KEY", ""),
     base_url="https://token-plan-cn.xiaomimimo.com/v1",
-    timeout=120.0,
+    timeout=300.0,
 )
 
 DEFAULT_MODEL = "mimo-v2.5-pro"
