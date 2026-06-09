@@ -764,7 +764,7 @@ export const useRun = create<RunState>((set, get) => {
       });
     },
 
-    agentRollback(histId: string) {
+    async agentRollback(histId: string) {
       const { agentHistory } = get();
       // 在所有阶段中查找该历史记录
       let hist: { id: string; stage: string; summary: string; timestamp: string; data: unknown } | undefined;
@@ -773,11 +773,16 @@ export const useRun = create<RunState>((set, get) => {
         if (hist) break;
       }
       if (!hist) return;
-      // 回滚到历史版本的产物
+      // 恢复产物数据到 STAGES
+      const stageDef = await dataProvider.getStage(hist.stage);
+      if (stageDef && hist.data) {
+        stageDef.output = hist.data as Record<string, unknown>;
+      }
+      // 更新节点状态
       set((s) => {
         const nodes = { ...s.run.nodes };
         nodes[hist.stage] = { ...nodes[hist.stage], status: "done" as RunStatus };
-        return { run: { ...s.run, nodes } };
+        return { run: { ...s.run, nodes }, stageVersion: s.stageVersion + 1 };
       });
       get().loadStages();
     },
@@ -1142,8 +1147,8 @@ export const useRun = create<RunState>((set, get) => {
       if (targetIdx < 0) return;
 
       try {
-        // 1. 保存当前产物快照到历史记录（含实际 artifact 数据）
-        for (const sid of ROLLBACK_STAGES.slice(targetIdx)) {
+        // 1. 保存被丢弃的后续阶段产物快照到历史记录（不含目标阶段，目标阶段会重新生成）
+        for (const sid of ROLLBACK_STAGES.slice(targetIdx + 1)) {
           const node = get().run.nodes[sid];
           if (node?.status === "done") {
             const stageDef = await dataProvider.getStage(sid);
@@ -1216,7 +1221,8 @@ export const useRun = create<RunState>((set, get) => {
         get()._updateChecklistProgress(target, 100);
 
         if (wfv) {
-          _syncStagesToRun(wfv, set, get);
+          // 不调用 _syncStagesToRun（后端自动推进会导致后续阶段变为 active）
+          // 各分支手动设状态
         }
 
         // 7. 设置下一步状态
@@ -1260,7 +1266,19 @@ export const useRun = create<RunState>((set, get) => {
           clearInterval(s6ProgressTimer);
           set({ progressPct: 100, progressElapsed: Math.round((Date.now() - s6StartTime) / 1000) + "s", progressRemaining: "已完成" });
           get()._updateChecklistProgress("s6", 100);
-          _syncStagesToRun(wfv6, set, get);
+          // 手动设 S6=done, S7/S8=pending（不用 _syncStagesToRun 避免后端自动推进）
+          set((s) => ({
+            run: {
+              ...s.run,
+              nodes: {
+                ...s.run.nodes,
+                s5: { ...s.run.nodes.s5, status: "done" as RunStatus, percent: 100 },
+                s6: { ...s.run.nodes.s6, status: "awaiting_review" as RunStatus, percent: 100, doneCount: 1, totalCount: 1 },
+                s7: { ...s.run.nodes.s7, status: "pending" as RunStatus, percent: 0 },
+                s8: { ...s.run.nodes.s8, status: "pending" as RunStatus, percent: 0 },
+              },
+            },
+          }));
 
           const s6Stage = await dataProvider.getStage("s6");
           get().agentSaveHistory("s6", _historySummary("s6", s6Stage?.output), s6Stage?.output ?? null);
@@ -1269,18 +1287,39 @@ export const useRun = create<RunState>((set, get) => {
           get().loadStages();
 
         } else if (target === "s6") {
+          // 手动设 S6=done，S7/S8=pending（不依赖后端自动推进）
+          set((s) => ({
+            run: {
+              ...s.run,
+              nodes: {
+                ...s.run.nodes,
+                s6: { ...s.run.nodes.s6, status: "done" as RunStatus, percent: 100, doneCount: 1, totalCount: 1 },
+                s7: { ...s.run.nodes.s7, status: "pending" as RunStatus, percent: 0 },
+                s8: { ...s.run.nodes.s8, status: "pending" as RunStatus, percent: 0 },
+              },
+            },
+          }));
           const s6Stage = await dataProvider.getStage("s6");
           get().agentSaveHistory("s6", _historySummary("s6", s6Stage?.output), s6Stage?.output ?? null);
-          set({ currentAutoStep: "s6_review" });
-          set({ simPhase: "idle", runningStage: null, progressPct: 0 });
+          set({ currentAutoStep: "s6_review", simPhase: "idle", runningStage: null, progressPct: 0, pendingNodeId: "s6" });
           get().loadStages();
 
         } else if (target === "s7") {
+          // 手动设 S7=done，S8=pending（不依赖后端自动推进）
           const script = (wfv?.stages.find(s => s.stage_code === "S7")?.output_artifact?.body_md as string) || "";
+          set((s) => ({
+            run: {
+              ...s.run,
+              nodes: {
+                ...s.run.nodes,
+                s7: { ...s.run.nodes.s7, status: "done" as RunStatus, percent: 100, doneCount: 1, totalCount: 1 },
+                s8: { ...s.run.nodes.s8, status: "pending" as RunStatus, percent: 0 },
+              },
+            },
+          }));
           const s7Stage = await dataProvider.getStage("s7");
           get().agentSaveHistory("s7", _historySummary("s7", s7Stage?.output), s7Stage?.output ?? null);
-          set({ editedScript: script, currentAutoStep: "s7_edit" });
-          set({ simPhase: "idle", runningStage: null, progressPct: 0 });
+          set({ editedScript: script, currentAutoStep: "s7_edit", simPhase: "idle", runningStage: null, progressPct: 0 });
           get().loadStages();
         }
       } catch (e) {
