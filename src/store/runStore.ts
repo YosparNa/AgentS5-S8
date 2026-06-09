@@ -439,6 +439,8 @@ export const useRun = create<RunState>((set, get) => {
     },
 
     loadRun(wfId) {
+      // 自动模式运行中不要重新加载，避免覆盖实时状态
+      if (get().autoMode && get().runningStage) return;
       // 如果 wfId 未改变且 run 已有状态，则跳过重新加载（避免状态重置）
       if (wfId && get().wfId === wfId && Object.keys(get().run.nodes).length > 0) {
         return;

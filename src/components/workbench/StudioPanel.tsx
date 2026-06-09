@@ -311,10 +311,8 @@ function FileIcon({ label, cls }: { label: string; cls: string }) {
 
 function ProductCardItem({
   card,
-  openStage,
 }: {
   card: ProductCard;
-  openStage: (id: string) => void;
 }) {
   const status = useRun((s) => s.nodeStatus(card.stageId));
   const percent = useRun((s) => s.run.nodes[card.stageId]?.percent ?? 0);
@@ -452,7 +450,7 @@ function ProductCardItem({
             }
             if (kind === "script") {
               const body = (o.body_md || o.excerpt) as string;
-              return body ? <ScriptArtifact excerpt={body} editable={false} wordCount={o.word_count as number} /> : null;
+              return body ? <ScriptArtifact excerpt={body} editable={true} wordCount={o.word_count as number} /> : null;
             }
             if (kind === "adversarial") {
               const roles = o.roles as Parameters<typeof AdversarialArtifact>[0]["roles"];
@@ -466,12 +464,6 @@ function ProductCardItem({
             }
             return null;
           })()}
-          <button
-            onClick={(e) => { e.stopPropagation(); openStage(card.stageId); }}
-            className="w-full mt-2 text-[10px] text-indigo-600 hover:text-indigo-800 border border-indigo-200 rounded py-1 hover:bg-indigo-50 transition"
-          >
-            打开抽屉编辑
-          </button>
         </div>
       )}
     </div>
@@ -551,7 +543,7 @@ export function StudioPanel() {
           </div>
 
           {PRODUCT_CARDS.map((card) => (
-            <ProductCardItem key={card.stageId} card={card} openStage={openStage} />
+            <ProductCardItem key={card.stageId} card={card} />
           ))}
         </div>
       </div>
