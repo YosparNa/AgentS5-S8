@@ -639,6 +639,16 @@ export const useRun = create<RunState>((set, get) => {
         clearInterval(progressTimer);
         set({ progressPct: 100, progressElapsed: Math.round((Date.now() - startTime) / 1000) + "s", progressRemaining: "已完成" });
         _syncStagesToRun(wfv, set, get);
+        // 手动模式：S5完成后，S6保持pending（不自动进入active）
+        set((s) => ({
+          run: {
+            ...s.run,
+            nodes: {
+              ...s.run.nodes,
+              s6: { ...s.run.nodes.s6, status: "pending" as RunStatus, percent: 0 },
+            },
+          },
+        }));
         // 保存历史
         const topics = wfv.stages.find(s => s.stage_code === "S5")?.output_artifact?.topics;
         get().agentSaveHistory("s5", `生成 ${Array.isArray(topics) ? topics.length : 0} 个选题`, topics);
@@ -689,6 +699,20 @@ export const useRun = create<RunState>((set, get) => {
 
         if (wfv) {
           _syncStagesToRun(wfv, set, get);
+          // 手动模式：完成后下一阶段保持pending（不自动进入active）
+          const nextStageMap: Record<string, string> = { s5: "s6", s6: "s7", s7: "s8" };
+          const nextStage = nextStageMap[key];
+          if (nextStage) {
+            set((s) => ({
+              run: {
+                ...s.run,
+                nodes: {
+                  ...s.run.nodes,
+                  [nextStage]: { ...s.run.nodes[nextStage], status: "pending" as RunStatus, percent: 0 },
+                },
+              },
+            }));
+          }
           // 保存历史
           const stage = wfv.stages.find(s => s.stage_code === stageCode);
           const artifact = stage?.output_artifact;
@@ -709,13 +733,28 @@ export const useRun = create<RunState>((set, get) => {
 
     async approveBackend(code: string) {
       const { wfId } = get();
-      if (!wfId) return;
+      if (!wfId) { alert("审核失败：未创建工作流"); return; }
       try {
         const wfv = await dataProvider.approveStage(wfId, code);
         _syncStagesToRun(wfv, set, get);
+        // 手动模式：审核通过后下一阶段保持pending
+        const nextStageMap: Record<string, string> = { S6: "s7", S8: "s8" };
+        const nextStage = nextStageMap[code];
+        if (nextStage) {
+          set((s) => ({
+            run: {
+              ...s.run,
+              nodes: {
+                ...s.run.nodes,
+                [nextStage]: { ...s.run.nodes[nextStage], status: "pending" as RunStatus, percent: 0 },
+              },
+            },
+          }));
+        }
         get().loadStages();
       } catch (e) {
         console.error(`Approve ${code} failed:`, e);
+        alert(`审核失败：${(e as Error).message || e}`);
       }
     },
 
