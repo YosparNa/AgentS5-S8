@@ -5,6 +5,7 @@
 
 import { useUi } from "@/store/uiStore";
 import { useRun } from "@/store/runStore";
+import { useConfig } from "@/store/configStore";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/cn";
 
@@ -42,9 +43,9 @@ const STAGE_META: Record<string, { title: string; agentLabel: string }> = {
 
 // S8 reviewer roles
 const S8_ROLES = [
-  { key: "troll", label: "杠精", emoji: "😤", desc: "逻辑漏洞压力测试" },
+  { key: "nitpicker", label: "杠精", emoji: "😤", desc: "逻辑漏洞压力测试" },
   { key: "peer", label: "同行", emoji: "🧑‍💻", desc: "专业视角技术校验" },
-  { key: "newbie", label: "小白", emoji: "😶", desc: "零基础理解力测试" },
+  { key: "novice", label: "小白", emoji: "😶", desc: "零基础理解力测试" },
   { key: "fan", label: "老粉", emoji: "❤️", desc: "忠实粉丝人设校验" },
   { key: "compliance", label: "合规", emoji: "⚖️", desc: "平台红线合规审查" },
 ] as const;
@@ -167,19 +168,21 @@ function StageChecklist({ stageId }: { stageId: string }) {
 
 function S8ReviewerGrid() {
   const pct = useRun((s) => s.progressPct);
+  const s8Config = useConfig((s) => s.getS8Config());
+  const activeRoles = S8_ROLES.filter(r => s8Config[r.key as keyof typeof s8Config] !== false);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-3">
       <div className="flex items-center justify-between mb-2.5">
         <div className="text-[12px] font-bold">审核角色</div>
         <div className="text-[10px] text-gray-500">
-          {S8_ROLES.filter((_, i) => pct >= (i + 1) * 20).length}/{S8_ROLES.length} 完成
+          {activeRoles.filter((_, i) => pct >= (i + 1) * (100 / activeRoles.length)).length}/{activeRoles.length} 完成
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        {S8_ROLES.map((role, idx) => {
-          const bandStart = idx * 20;
-          const bandEnd = (idx + 1) * 20;
+        {activeRoles.map((role, idx) => {
+          const bandStart = idx * (100 / activeRoles.length);
+          const bandEnd = (idx + 1) * (100 / activeRoles.length);
           const isDone = pct >= bandEnd;
           const isActive = pct >= bandStart && pct < bandEnd;
           const isWaiting = pct < bandStart;
@@ -195,7 +198,7 @@ function S8ReviewerGrid() {
                   ? "border-indigo-300 bg-indigo-50 shadow-sm"
                   : "border-gray-200 bg-gray-50/50",
                 // Last item centered if odd count
-                idx === S8_ROLES.length - 1 && S8_ROLES.length % 2 !== 0
+                idx === activeRoles.length - 1 && activeRoles.length % 2 !== 0
                   ? "col-span-2"
                   : ""
               )}

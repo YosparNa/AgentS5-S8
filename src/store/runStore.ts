@@ -786,13 +786,17 @@ export const useRun = create<RunState>((set, get) => {
           { label: "添加危机点转折", icon: "⚠️" },
         ],
         s8: [
-          { label: "加载审核脚本", icon: "📖" },
-          { label: "杠精逻辑压力测试", icon: "😤" },
-          { label: "同行专业审核", icon: "🧑‍💻" },
-          { label: "小白易懂性测试", icon: "😶" },
-          { label: "老粉人设校验", icon: "❤️" },
-          { label: "合规红线审查", icon: "⚖️" },
-        ],
+          { label: "加载审核脚本", icon: "📖", configKey: null },
+          { label: "杠精逻辑压力测试", icon: "😤", configKey: "nitpicker" },
+          { label: "同行专业审核", icon: "🧑‍💻", configKey: "peer" },
+          { label: "小白易懂性测试", icon: "😶", configKey: "novice" },
+          { label: "老粉人设校验", icon: "❤️", configKey: "fan" },
+          { label: "合规红线审查", icon: "⚖️", configKey: "compliance" },
+        ].filter(s => {
+          if (!s.configKey) return true; // "加载审核脚本" 始终显示
+          const cfg = useConfig.getState().getS8Config();
+          return cfg[s.configKey as keyof typeof cfg] !== false;
+        }),
       };
       const steps = STEPS[stageId] ?? [];
       const checklist: ChecklistItem[] = steps.map(s => ({ label: `${s.icon} ${s.label}`, done: false }));
