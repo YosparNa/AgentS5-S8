@@ -925,18 +925,23 @@ export const useRun = create<RunState>((set, get) => {
         const s5Config = useConfig.getState().getS5Config();
 
         // 进度更新（含 checklist 同步）
-        progressTimer = setInterval(() => {
-          const elapsed = (Date.now() - startTime) / 1000;
-          const total = STAGE_TIMES["s5"] || 47;
-          const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
-          const remaining = Math.max(0, Math.round(total - elapsed));
-          set({
-            progressPct: pct,
-            progressElapsed: elapsed < 60 ? Math.round(elapsed) + "s" : Math.floor(elapsed / 60) + "m" + Math.round(elapsed % 60) + "s",
-            progressRemaining: remaining > 0 ? remaining + "s" : "即将完成...",
-          });
-          get()._updateChecklistProgress("s5", pct);
-        }, 100);
+        if (MOCK_MODE) {
+          set({ progressPct: 50, progressElapsed: "0s", progressRemaining: "..." });
+          get()._updateChecklistProgress("s5", 50);
+        } else {
+          progressTimer = setInterval(() => {
+            const elapsed = (Date.now() - startTime) / 1000;
+            const total = STAGE_TIMES["s5"] || 47;
+            const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
+            const remaining = Math.max(0, Math.round(total - elapsed));
+            set({
+              progressPct: pct,
+              progressElapsed: elapsed < 60 ? Math.round(elapsed) + "s" : Math.floor(elapsed / 60) + "m" + Math.round(elapsed % 60) + "s",
+              progressRemaining: remaining > 0 ? remaining + "s" : "即将完成...",
+            });
+            get()._updateChecklistProgress("s5", pct);
+          }, 100);
+        }
 
         const wfv5 = await dataProvider.runS5(wfId, s5Config);
         clearInterval(progressTimer);
@@ -971,15 +976,21 @@ export const useRun = create<RunState>((set, get) => {
         }));
         get()._initStageChecklist("s6");
         get().loadStages();
-        await new Promise(resolve => setTimeout(resolve, 500));
+        if (!MOCK_MODE) await new Promise(resolve => setTimeout(resolve, 500));
 
-        const s6ProgressTimer = setInterval(() => {
-          const elapsed = (Date.now() - s6StartTime) / 1000;
-          const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (s6Total - 1)) * 92), 95);
-          const remaining = Math.max(0, Math.round(s6Total - elapsed));
-          set({ progressPct: pct, progressElapsed: Math.round(elapsed) + "s", progressRemaining: remaining + "s" });
-          get()._updateChecklistProgress("s6", pct);
-        }, 100);
+        let s6ProgressTimer: ReturnType<typeof setInterval> | undefined;
+        if (MOCK_MODE) {
+          set({ progressPct: 50, progressElapsed: "0s", progressRemaining: "..." });
+          get()._updateChecklistProgress("s6", 50);
+        } else {
+          s6ProgressTimer = setInterval(() => {
+            const elapsed = (Date.now() - s6StartTime) / 1000;
+            const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (s6Total - 1)) * 92), 95);
+            const remaining = Math.max(0, Math.round(s6Total - elapsed));
+            set({ progressPct: pct, progressElapsed: Math.round(elapsed) + "s", progressRemaining: remaining + "s" });
+            get()._updateChecklistProgress("s6", pct);
+          }, 100);
+        }
 
         const s6Config = useConfig.getState().getS6Config();
         const wfv6 = await dataProvider.runS6(wfId, s6Config);
@@ -1292,13 +1303,13 @@ export const useRun = create<RunState>((set, get) => {
           get().loadStages();
 
         } else if (target === "s6") {
-          // 手动设 S6=done，S7/S8=pending（不依赖后端自动推进）
+          // 手动设 S6=awaiting_review，S7/S8=pending（不依赖后端自动推进）
           set((s) => ({
             run: {
               ...s.run,
               nodes: {
                 ...s.run.nodes,
-                s6: { ...s.run.nodes.s6, status: "done" as RunStatus, percent: 100, doneCount: 1, totalCount: 1 },
+                s6: { ...s.run.nodes.s6, status: "awaiting_review" as RunStatus, percent: 100, doneCount: 1, totalCount: 1 },
                 s7: { ...s.run.nodes.s7, status: "pending" as RunStatus, percent: 0 },
                 s8: { ...s.run.nodes.s8, status: "pending" as RunStatus, percent: 0 },
               },
