@@ -379,9 +379,6 @@ export function LiveTab() {
 
       {/* Progress bar + timing */}
       <ProgressBar />
-
-      {/* Intervention card */}
-      <InterventionCard />
     </div>
   );
 }

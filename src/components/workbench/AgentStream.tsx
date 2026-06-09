@@ -197,16 +197,22 @@ export function AgentStream({ extraUserBubbles = [] }: Props) {
                       </div>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => approveAndContinue()}
-                          className="text-[11px] bg-emerald-600 text-white px-3 py-1 rounded hover:bg-emerald-700"
+                          onClick={() => rejectAndRollback("s6")}
+                          className="text-[11px] border border-amber-300 text-amber-700 px-2.5 py-1 rounded hover:bg-amber-100"
                         >
-                          通过
+                          重新生成
                         </button>
                         <button
                           onClick={() => rejectAndRollback("s5")}
                           className="text-[11px] bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
                         >
                           驳回
+                        </button>
+                        <button
+                          onClick={() => approveAndContinue()}
+                          className="text-[11px] bg-emerald-600 text-white px-3 py-1 rounded hover:bg-emerald-700"
+                        >
+                          通过
                         </button>
                       </div>
                     </div>
@@ -281,6 +287,7 @@ export function AgentStream({ extraUserBubbles = [] }: Props) {
                         请确认审核结果
                       </div>
                       <div className="flex gap-2">
+                        <button onClick={() => rejectAndRollback("s8")} className="text-[11px] border border-amber-300 text-amber-700 px-2.5 py-1 rounded hover:bg-amber-100">重新生成</button>
                         <button onClick={() => rejectAndRollback("s7")} className="text-[11px] border border-red-300 text-red-600 px-2.5 py-1 rounded hover:bg-red-50">驳回(S7)</button>
                         <button onClick={() => rejectAndRollback("s6")} className="text-[11px] border border-red-300 text-red-600 px-2.5 py-1 rounded hover:bg-red-50">驳回(S6)</button>
                         <button onClick={() => rejectAndRollback("s5")} className="text-[11px] border border-red-300 text-red-600 px-2.5 py-1 rounded hover:bg-red-50">驳回(S5)</button>

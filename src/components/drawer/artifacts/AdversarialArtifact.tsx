@@ -124,12 +124,21 @@ export function AdversarialArtifact({ roles, synthesis, averageScore }: Props) {
           )}
 
           {/* 总结 */}
-          {r.summary && (
-            <div className="text-[11px] text-gray-600 bg-gray-50 rounded p-2 mt-1">{r.summary}</div>
-          )}
+          {r.summary && (() => {
+            const summaryText = typeof r.summary === "string" ? r.summary : String(r.summary);
+            // 检测是否是 JSON 字符串
+            let displayText = summaryText;
+            try {
+              if (summaryText.startsWith("{")) {
+                const parsed = JSON.parse(summaryText);
+                displayText = parsed.summary || parsed.text || summaryText;
+              }
+            } catch { /* 不是 JSON，直接显示 */ }
+            return <div className="text-[11px] text-gray-600 bg-gray-50 rounded p-2 mt-1 whitespace-pre-wrap">{displayText}</div>;
+          })()}
           {/* 兼容旧格式：note */}
           {!r.summary && r.note && (
-            <div className="text-[11px] text-gray-600 bg-gray-50 rounded p-2 mt-1">{r.note}</div>
+            <div className="text-[11px] text-gray-600 bg-gray-50 rounded p-2 mt-1">{typeof r.note === "string" ? r.note : JSON.stringify(r.note)}</div>
           )}
         </div>
       ))}
