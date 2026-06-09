@@ -367,10 +367,6 @@ function ProductCardItem({
   const cls = cardClasses(card.color, effectiveStatus);
 
   // 每个关联阶段的独立信息
-    return output && Object.keys(output).length > 0;
-  }) ?? effectiveStageId;
-
-  // 每个关联阶段的独立信息
   function stageLines(): { icon: string; label: string; statusText: string; isDone: boolean }[] {
     if (!isS5S8) {
       const files = card.files ?? [];
