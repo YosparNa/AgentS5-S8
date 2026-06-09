@@ -128,6 +128,13 @@ function isEnabled(nodeId: string, nodes: WorkflowNode[]): boolean {
   return node?.enabled !== false;
 }
 
+/** S8 预计时间：每个启用角色 20s */
+function _s8Time(): number {
+  const cfg = useConfig.getState().getS8Config();
+  const count = Object.values(cfg).filter(v => v !== false).length;
+  return Math.max(count, 1) * 20;
+}
+
 /** 将后端 WorkflowView 的 stages 状态同步到 runStore 的 run.nodes */
 function _syncStagesToRun(wfv: WorkflowView, set: Function, get: Function) {
   const runNodes: Record<string, NodeRun> = { ...get().run.nodes };
@@ -573,11 +580,11 @@ export const useRun = create<RunState>((set, get) => {
     },
 
     async createAndRunS5(userData: string, channelDesc: string) {
-      const STAGE_TIMES: Record<string, number> = { s5: 37, s6: 40, s7: 90, s8: 75 };
+      const STAGE_TIMES: Record<string, number> = { s5: 47, s6: 55, s7: 120, s8: 75 };
       const startTime = Date.now();
       const progressTimer = setInterval(() => {
         const elapsed = (Date.now() - startTime) / 1000;
-        const total = STAGE_TIMES["s5"] || 37;
+        const total = STAGE_TIMES["s5"] || 47;
         const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
         const remaining = Math.max(0, Math.round(total - elapsed));
         set({
@@ -610,7 +617,7 @@ export const useRun = create<RunState>((set, get) => {
     async runStage(stageCode: string, config: Record<string, unknown> = {}) {
       const { wfId } = get();
       if (!wfId) return;
-      const STAGE_TIMES: Record<string, number> = { s5: 37, s6: 40, s7: 90, s8: 75 };
+      const STAGE_TIMES: Record<string, number> = { s5: 47, s6: 55, s7: 120, s8: 75 };
       const key = stageCode.toLowerCase();
       const startTime = Date.now();
       const progressTimer = setInterval(() => {
@@ -857,7 +864,7 @@ export const useRun = create<RunState>((set, get) => {
       const channelDesc = "AI 工具评测频道";
 
       // Step 2: 创建workflow + 运行S5
-      const STAGE_TIMES: Record<string, number> = { s5: 37, s6: 40, s7: 90, s8: 75 };
+      const STAGE_TIMES: Record<string, number> = { s5: 47, s6: 55, s7: 120, s8: 75 };
       const startTime = Date.now();
 
       set({ simPhase: "running", runningStage: "s5", progressPct: 0, progressElapsed: "0s", progressRemaining: "" });
@@ -872,7 +879,7 @@ export const useRun = create<RunState>((set, get) => {
         // 进度更新（含 checklist 同步）
         const progressTimer = setInterval(() => {
           const elapsed = (Date.now() - startTime) / 1000;
-          const total = STAGE_TIMES["s5"] || 37;
+          const total = STAGE_TIMES["s5"] || 47;
           const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);
           const remaining = Math.max(0, Math.round(total - elapsed));
           set({
@@ -902,7 +909,7 @@ export const useRun = create<RunState>((set, get) => {
 
         // Step 4: 自动运行S6（带进度）
         const s6StartTime = Date.now();
-        const s6Total = STAGE_TIMES["s6"] || 40;
+        const s6Total = STAGE_TIMES["s6"] || 55;
         set({ currentAutoStep: "s6", runningStage: "s6", progressPct: 0 });
         // S5 done → S6 active + checklist
         set((s) => ({
@@ -951,7 +958,7 @@ export const useRun = create<RunState>((set, get) => {
       const { wfId, currentAutoStep } = get();
       if (!wfId) return;
 
-      const STAGE_TIMES: Record<string, number> = { s7: 90, s8: 75 };
+      const STAGE_TIMES: Record<string, number> = { s7: 120, s8: 75 };
 
       try {
         if (currentAutoStep === "s6_review") {
@@ -972,7 +979,7 @@ export const useRun = create<RunState>((set, get) => {
 
           // 运行 S7 带进度 + checklist
           const startTime = Date.now();
-          const total = STAGE_TIMES["s7"] || 90;
+          const total = STAGE_TIMES["s7"] || 120;
           set({ currentAutoStep: "s7", simPhase: "running", runningStage: "s7", progressPct: 0 });
           const progressTimer = setInterval(() => {
             const elapsed = (Date.now() - startTime) / 1000;
@@ -1014,7 +1021,7 @@ export const useRun = create<RunState>((set, get) => {
         } else if (currentAutoStep === "s7_edit") {
           // S7 确认 → 运行 S8 带进度 + checklist
           const startTime = Date.now();
-          const total = STAGE_TIMES["s8"] || 75;
+          const total = _s8Time();
           set({ currentAutoStep: "s8", simPhase: "running", runningStage: "s8", progressPct: 0 });
           set((s) => ({
             run: {
@@ -1086,7 +1093,7 @@ export const useRun = create<RunState>((set, get) => {
       const { wfId } = get();
       if (!wfId) return;
 
-      const STAGE_TIMES: Record<string, number> = { s5: 37, s6: 40, s7: 90, s8: 75 };
+      const STAGE_TIMES: Record<string, number> = { s5: 47, s6: 55, s7: 120, s8: 75 };
       const ROLLBACK_STAGES = ["s5", "s6", "s7", "s8"];
       const targetIdx = ROLLBACK_STAGES.indexOf(target);
       if (targetIdx < 0) return;
@@ -1136,7 +1143,7 @@ export const useRun = create<RunState>((set, get) => {
 
         // 6. 带进度运行目标阶段
         const startTime = Date.now();
-        const total = STAGE_TIMES[target] || 40;
+        const total = target === "s8" ? _s8Time() : (STAGE_TIMES[target] || 40);
         const progressTimer = setInterval(() => {
           const elapsed = (Date.now() - startTime) / 1000;
           const pct = elapsed < 1 ? Math.round(elapsed * 3) : Math.min(3 + Math.round(((elapsed - 1) / (total - 1)) * 92), 95);

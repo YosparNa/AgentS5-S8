@@ -1,12 +1,15 @@
 // HistoryTab — 运行历史，从 runStore.agentHistory 读取
 import { useRun } from "@/store/runStore";
 import { useUi } from "@/store/uiStore";
+import { cn } from "@/lib/cn";
 
 export function HistoryTab() {
   const stageId = useUi((s) => s.stageDrawer.stageId);
   const history = useRun((s) => s.agentHistory);
   const stageHistory = useRun((s) => s.agentHistory.filter((h) => h.stage === stageId));
   const currentHistId = useRun((s) => s.stageCurrentHist[stageId || ""]);
+  const runningStage = useRun((s) => s.runningStage);
+  const isRunning = !!runningStage;
 
   // 优先显示当前阶段历史，无则显示全部历史
   const displayHistory = stageHistory.length > 0 ? stageHistory : history;
@@ -44,8 +47,10 @@ export function HistoryTab() {
             </div>
             {!isCurrent && hist.data && (
               <button
-                onClick={() => useRun.getState().agentRollback(hist.id)}
-                className="text-[10px] border border-gray-200 px-2 py-0.5 rounded hover:bg-gray-50 shrink-0"
+                onClick={() => !isRunning && useRun.getState().agentRollback(hist.id)}
+                disabled={isRunning}
+                className={cn("text-[10px] border border-gray-200 px-2 py-0.5 rounded shrink-0", isRunning ? "opacity-40 cursor-not-allowed" : "hover:bg-gray-50")}
+                title={isRunning ? "生成中不可回滚" : ""}
               >
                 回滚
               </button>
