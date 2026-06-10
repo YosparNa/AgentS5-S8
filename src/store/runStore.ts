@@ -998,14 +998,15 @@ export const useRun = create<RunState>((set, get) => {
         const s5Stage = await dataProvider.getStage("s5");
         get().agentSaveHistory("s5", _historySummary("s5", s5Stage?.output), s5Stage?.output ?? null);
 
-        // Step 3: 自动锁定最高分选题
+        // Step 3: 自动锁题检查
+        const autoLock = useConfig.getState().s5_autoLock;
         const topics = (wfv5.stages.find(s => s.stage_code === "S5")?.output_artifact?.topics ?? []) as Array<{ score: number }>;
-        if (topics.length > 0) {
+        if (autoLock && topics.length > 0) {
+          // 自动锁题：锁定最高分，继续进入 S6
           const bestIdx = topics.reduce((maxI, t, i, arr) => t.score > arr[maxI].score ? i : maxI, 0);
           set({ selectedTopicIdx: bestIdx, lockedTopicIdx: bestIdx });
-        }
 
-        // Step 4: 自动运行S6（带进度）
+          // Step 4: 自动运行S6（带进度）
         const s6StartTime = Date.now();
         const s6Total = STAGE_TIMES["s6"] || 55;
         set({ currentAutoStep: "s6", runningStage: "s6", progressPct: 0 });
@@ -1051,6 +1052,11 @@ export const useRun = create<RunState>((set, get) => {
         // Step 5: S6等待审核
         set({ currentAutoStep: "s6_review", simPhase: "idle", runningStage: null });
         get()._forceLoadStages();
+        } else {
+          // 自动锁题关闭：暂停等待用户手动锁题
+          set({ currentAutoStep: "s5_review", simPhase: "idle", runningStage: null, progressPct: 0 });
+          get()._forceLoadStages();
+        }
       } catch (e) {
         if (progressTimer) clearInterval(progressTimer);
         console.error("runFullWorkflow failed:", e);

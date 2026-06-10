@@ -534,6 +534,13 @@ export function ConfigTab({ stage }: Props) {
               ]}
             />
           </Cb>
+          <Cb title="锁题设置">
+            <SwCtrl
+              items={[
+                { label: "自动锁题", value: cfg.s5_autoLock, onChange: (v: boolean) => cfg.setS5AutoLock(v) },
+              ]}
+            />
+          </Cb>
         </>
       );
       break;

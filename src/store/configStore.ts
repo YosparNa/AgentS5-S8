@@ -20,6 +20,7 @@ interface ConfigStore {
   s5_userData: string;
   s5_toggles: [boolean, boolean, boolean];
   s5_sliders: [number, number, number, number];
+  s5_autoLock: boolean;
 
   // S6 大纲
   s6_selectedOption: number;
@@ -36,6 +37,7 @@ interface ConfigStore {
   setS5ChannelDesc(v: string): void;
   setS5UserData(v: string): void;
   setS5Toggle(i: number, v: boolean): void;
+  setS5AutoLock(v: boolean): void;
   setS5Slider(i: number, v: number): void;
 
   // S6 Actions
@@ -64,6 +66,7 @@ export const useConfig = create<ConfigStore>((set, get) => ({
   s5_userData: "",
   s5_toggles: [true, true, true],
   s5_sliders: [7, 8, 6, 9],
+  s5_autoLock: true,
 
   // S6 初始值
   s6_selectedOption: 0,
@@ -85,8 +88,9 @@ export const useConfig = create<ConfigStore>((set, get) => ({
       t[i] = v;
       return { s5_toggles: t };
     });
-   
+
   },
+  setS5AutoLock: (v) => set({ s5_autoLock: v }),
   setS5Slider: (i, v) => {
     set((s) => {
       const sl = [...s.s5_sliders] as [number, number, number, number];

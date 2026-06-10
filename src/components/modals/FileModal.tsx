@@ -214,11 +214,41 @@ export function FileModal() {
 
           {/* Action buttons row */}
           <div className="flex items-center gap-2 mt-2">
-            <button className="flex items-center gap-1.5 text-[11px] text-gray-500 border border-gray-200 rounded px-2.5 py-1 hover:bg-gray-50 transition-colors">
+            <button
+              onClick={() => {
+                const kind = stage.config.kind as string;
+                const o = stage.output as Record<string, unknown> | undefined;
+                let text = "";
+                if (kind === "topic") text = JSON.stringify(o?.topics ?? [], null, 2);
+                else if (kind === "outline") text = JSON.stringify(o?.outline ?? [], null, 2);
+                else if (kind === "script") text = String(o?.body_md ?? o?.excerpt ?? "");
+                else if (kind === "adversarial") text = JSON.stringify(o?.roles ?? [], null, 2);
+                else text = JSON.stringify(o ?? {}, null, 2);
+                navigator.clipboard.writeText(text).catch(() => {});
+              }}
+              className="flex items-center gap-1.5 text-[11px] text-gray-500 border border-gray-200 rounded px-2.5 py-1 hover:bg-gray-50 transition-colors"
+            >
               <Icon.Copy size={11} />
               复制
             </button>
-            <button className="flex items-center gap-1.5 text-[11px] text-gray-500 border border-gray-200 rounded px-2.5 py-1 hover:bg-gray-50 transition-colors">
+            <button
+              onClick={() => {
+                const kind = stage.config.kind as string;
+                const o = stage.output as Record<string, unknown> | undefined;
+                let text = "", ext = "json";
+                if (kind === "topic") { text = JSON.stringify(o?.topics ?? [], null, 2); }
+                else if (kind === "outline") { text = JSON.stringify(o?.outline ?? [], null, 2); }
+                else if (kind === "script") { text = String(o?.body_md ?? o?.excerpt ?? ""); ext = "md"; }
+                else if (kind === "adversarial") { text = JSON.stringify(o?.roles ?? [], null, 2); }
+                else { text = JSON.stringify(o ?? {}, null, 2); }
+                const blob = new Blob([text], { type: "text/plain" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url; a.download = `${fileStageId}_产物.${ext}`; a.click();
+                URL.revokeObjectURL(url);
+              }}
+              className="flex items-center gap-1.5 text-[11px] text-gray-500 border border-gray-200 rounded px-2.5 py-1 hover:bg-gray-50 transition-colors"
+            >
               <Icon.Download size={11} />
               下载
             </button>
@@ -229,6 +259,38 @@ export function FileModal() {
         <div className="flex-1 overflow-y-auto bg-gray-50">
           <ModalBody stage={stage} />
         </div>
+
+        {/* ── S5 Lock Footer (autoLock OFF 时显示) ── */}
+        {fileStageId === "s5" && useRun.getState().currentAutoStep === "s5_review" && (
+          <div className="px-5 py-3 border-t border-gray-200 bg-white flex items-center justify-between">
+            <span className="text-[11px] text-gray-500">选择选题后锁定，确认进入 S6</span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  const rs = useRun.getState();
+                  if (rs.selectedTopicIdx !== null) rs.lockTopic();
+                }}
+                className="text-[11px] border border-indigo-300 text-indigo-600 px-3 py-1 rounded hover:bg-indigo-50"
+              >
+                锁定选题
+              </button>
+              <button
+                onClick={() => {
+                  const rs = useRun.getState();
+                  if (rs.lockedTopicIdx !== null) {
+                    closeModal();
+                    useRun.setState({ currentAutoStep: "s6" });
+                    rs.approveAndContinue();
+                  }
+                }}
+                disabled={useRun.getState().lockedTopicIdx === null}
+                className="text-[11px] bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 disabled:opacity-40"
+              >
+                确认并进入S6
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

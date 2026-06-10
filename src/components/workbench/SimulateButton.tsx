@@ -5,6 +5,7 @@ import { Icon } from "@/components/icons";
 
 const AUTO_STEP_LABELS: Record<string, string> = {
   s5: "S5 选题生成中...",
+  s5_review: "S5 选题待锁定",
   s6: "S6 大纲生成中...",
   s6_review: "S6 大纲待审核",
   s7: "S7 脚本生成中...",
