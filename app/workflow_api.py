@@ -101,6 +101,15 @@ def _make_artifact(stage_code: str, slug: str, data) -> dict:
     elif stage_code == "S8":
         roles_raw = data.get("roles", []) if isinstance(data, dict) else []
         role_key_map = {"杠精": "nitpicker", "同行": "peer", "小白": "novice", "老粉": "fan", "合规": "compliance"}
+
+        def _str_item(item):
+            """确保 issues/suggestions/highlights 元素是字符串"""
+            if isinstance(item, str):
+                return item
+            if isinstance(item, dict):
+                return item.get("description", item.get("suggestion", item.get("text", str(item))))
+            return str(item)
+
         base["roles"] = [
             {
                 "role_key": role_key_map.get(r.get("name", ""), r.get("name", "")),
@@ -108,10 +117,10 @@ def _make_artifact(stage_code: str, slug: str, data) -> dict:
                 "avatar": r.get("emoji", ""),
                 "score": r.get("score", 0),
                 "focus": r.get("focus", ""),
-                "issues": r.get("issues", []),
-                "suggestions": r.get("suggestions", []),
-                "highlights": r.get("highlights", []),
-                "summary": r.get("summary", ""),
+                "issues": [_str_item(x) for x in r.get("issues", [])][:3],
+                "suggestions": [_str_item(x) for x in r.get("suggestions", [])][:3],
+                "highlights": [_str_item(x) for x in r.get("highlights", [])][:2],
+                "summary": str(r.get("summary", ""))[:100],
             }
             for r in roles_raw
         ]

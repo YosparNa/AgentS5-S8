@@ -365,7 +365,7 @@ function ProductCardItem({
   const cls = cardClasses(card.color, effectiveStatus);
 
   // 每个关联阶段的独立信息
-  function stageLines(): { icon: string; label: string; statusText: string; isDone: boolean }[] {
+  function stageLines(): { icon: string; label: string; statusText: string; isDone: boolean; clickable?: boolean; sid?: string }[] {
     if (!isS5S8) {
       const files = card.files ?? [];
       return files.map(f => ({ icon: f, label: f, statusText: "", isDone: false }));
@@ -401,7 +401,10 @@ function ProductCardItem({
       else if (st === "awaiting_review") statusText = "待审";
       else statusText = `待${sid.toUpperCase()}`;
 
-      return { icon: label, label, statusText, isDone: st === "done" || st === "completed" };
+      // S7/S8 有产物时可点击打开 FileModal
+      const clickable = hasOutput && (kind === "script" || kind === "adversarial");
+
+      return { icon: label, label, statusText, isDone: st === "done" || st === "completed", clickable, sid };
     });
   }
 
@@ -431,13 +434,27 @@ function ProductCardItem({
         {/* Body: per-stage lines */}
         {lines.length > 0 && (
           <div className="p-2 text-[10px] space-y-0.5">
-            {lines.map((line, i) => (
-              <div key={i} className="flex items-center gap-1.5">
-                <FileIcon label={line.label} cls={cls.fileIcon} />
-                <span className="flex-1">{line.label}</span>
-                <span className={cn("mono", line.isDone ? "text-emerald-600" : "text-gray-400")}>{line.statusText}</span>
-              </div>
-            ))}
+            {lines.map((line, i) => {
+              const content = (
+                <>
+                  <FileIcon label={line.label} cls={cls.fileIcon} />
+                  <span className="flex-1">{line.label}</span>
+                  <span className={cn("mono", line.isDone ? "text-emerald-600" : "text-gray-400")}>{line.statusText}</span>
+                  {line.clickable && <span className="text-[9px] text-indigo-500">点击查看</span>}
+                </>
+              );
+              if (line.clickable && line.sid) {
+                return (
+                  <div key={i}
+                    className="flex items-center gap-1.5 cursor-pointer hover:bg-indigo-50 rounded px-1 py-0.5 transition"
+                    onClick={(e) => { e.stopPropagation(); useUi.getState().openFile(line.sid!); }}
+                  >
+                    {content}
+                  </div>
+                );
+              }
+              return <div key={i} className="flex items-center gap-1.5">{content}</div>;
+            })}
           </div>
         )}
       </button>
