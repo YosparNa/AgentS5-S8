@@ -20,7 +20,6 @@ export function SimulateButton() {
   const currentAutoStep = useRun((s) => s.currentAutoStep);
   const runningStage = useRun((s) => s.runningStage);
   const approveAndContinue = useRun((s) => s.approveAndContinue);
-  const rejectAndRollback = useRun((s) => s.rejectAndRollback);
   const runFullWorkflow = useRun((s) => s.runFullWorkflow);
 
   if (editMode) return null;
@@ -37,14 +36,9 @@ export function SimulateButton() {
         )}
         <span className="text-[10px] text-indigo-600 font-semibold">{label}</span>
         {!isRunning && currentAutoStep !== "done" && (
-          <>
             <button onClick={() => approveAndContinue()} className="text-[11px] bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700 flex items-center gap-1">
               <Icon.ArrowRight size={10} /> 继续
             </button>
-            <button onClick={() => rejectAndRollback("s5")} className="text-[11px] border border-red-300 text-red-600 px-2 py-1 rounded hover:bg-red-50">
-              驳回
-            </button>
-          </>
         )}
         {currentAutoStep === "done" && (
           <button onClick={() => { useRun.setState({ autoMode: false, currentAutoStep: "idle" }); }}

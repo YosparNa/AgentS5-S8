@@ -379,16 +379,8 @@ function DrawerFooter({ stage, status, closeDrawer, openModal, navigate }: Foote
                 重新生成
               </button>
               <button className="text-[10px] border border-red-300 text-red-600 px-2 py-1 rounded hover:bg-red-50"
-                onClick={async () => { await runStore.rejectAndRollback("s7"); closeDrawer(); }}>
-                驳回(S7)
-              </button>
-              <button className="text-[10px] border border-red-300 text-red-600 px-2 py-1 rounded hover:bg-red-50"
                 onClick={async () => { await runStore.rejectAndRollback("s6"); closeDrawer(); }}>
                 驳回(S6)
-              </button>
-              <button className="text-[10px] border border-red-300 text-red-600 px-2 py-1 rounded hover:bg-red-50"
-                onClick={async () => { await runStore.rejectAndRollback("s5"); closeDrawer(); }}>
-                驳回(S5)
               </button>
             </div>
             <button className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold px-3 py-1.5 rounded flex items-center gap-1"

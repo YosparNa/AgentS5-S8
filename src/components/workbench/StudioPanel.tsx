@@ -11,8 +11,6 @@ import { dataProvider } from "@/services/dataProvider";
 import type { RunStatus, StageDef } from "@/types";
 import { TopicArtifact } from "@/components/drawer/artifacts/TopicArtifact";
 import { OutlineArtifact } from "@/components/drawer/artifacts/OutlineArtifact";
-import { ScriptArtifact } from "@/components/drawer/artifacts/ScriptArtifact";
-import { AdversarialArtifact } from "@/components/drawer/artifacts/AdversarialArtifact";
 
 // ── Product card config ────────────────────────────────────────────────────
 
@@ -472,14 +470,26 @@ function ProductCardItem({
                     ) : null;
                   })()}
                   {kind === "script" && (() => {
-                    const body = (o.body_md || o.excerpt) as string;
-                    return body ? <ScriptArtifact excerpt={body} editable={true} wordCount={o.word_count as number} /> : null;
+                    const useUi_ = useUi.getState();
+                    return (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); useUi_.openFile(sid); }}
+                        className="text-[11px] text-indigo-600 hover:text-indigo-800 border border-indigo-200 rounded px-3 py-1.5 hover:bg-indigo-50 transition w-full text-left"
+                      >
+                        📄 点击查看脚本
+                      </button>
+                    );
                   })()}
                   {kind === "adversarial" && (() => {
-                    const roles = o.roles as Parameters<typeof AdversarialArtifact>[0]["roles"];
-                    return roles?.length ? (
-                      <AdversarialArtifact roles={roles} synthesis={o.synthesis as Parameters<typeof AdversarialArtifact>[0]["synthesis"]} averageScore={o.average_score as number} />
-                    ) : null;
+                    const useUi_ = useUi.getState();
+                    return (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); useUi_.openFile(sid); }}
+                        className="text-[11px] text-indigo-600 hover:text-indigo-800 border border-indigo-200 rounded px-3 py-1.5 hover:bg-indigo-50 transition w-full text-left"
+                      >
+                        ⚔️ 点击查看审核结果
+                      </button>
+                    );
                   })()}
                 </div>
               );
