@@ -145,6 +145,12 @@ export function FileModal() {
 
   const [stage, setStage] = useState<StageDef | undefined>(undefined);
 
+  // S5 锁题状态（响应式）
+  const selectedTopicIdx = useRun((s) => s.selectedTopicIdx);
+  const lockedTopicIdx = useRun((s) => s.lockedTopicIdx);
+  const currentAutoStep = useRun((s) => s.currentAutoStep);
+  const { lockTopic, runStage: runStageFn } = useRun.getState();
+
   useEffect(() => {
     if (fileStageId) {
       // 先从 runStore 读（最快，数据最新）
@@ -235,16 +241,16 @@ export function FileModal() {
               onClick={() => {
                 const kind = stage.config.kind as string;
                 const o = stage.output as Record<string, unknown> | undefined;
-                let text = "", ext = "json";
-                if (kind === "topic") { text = JSON.stringify(o?.topics ?? [], null, 2); }
-                else if (kind === "outline") { text = JSON.stringify(o?.outline ?? [], null, 2); }
-                else if (kind === "script") { text = String(o?.body_md ?? o?.excerpt ?? ""); ext = "md"; }
-                else if (kind === "adversarial") { text = JSON.stringify(o?.roles ?? [], null, 2); }
-                else { text = JSON.stringify(o ?? {}, null, 2); }
+                let text = "";
+                if (kind === "script") {
+                  text = String(o?.body_md ?? o?.excerpt ?? "");
+                } else {
+                  text = JSON.stringify(o ?? {}, null, 2);
+                }
                 const blob = new Blob([text], { type: "text/plain" });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
-                a.href = url; a.download = `${fileStageId}_产物.${ext}`; a.click();
+                a.href = url; a.download = `${fileStageId}_产物.md`; a.click();
                 URL.revokeObjectURL(url);
               }}
               className="flex items-center gap-1.5 text-[11px] text-gray-500 border border-gray-200 rounded px-2.5 py-1 hover:bg-gray-50 transition-colors"
@@ -261,29 +267,25 @@ export function FileModal() {
         </div>
 
         {/* ── S5 Lock Footer (autoLock OFF 时显示) ── */}
-        {fileStageId === "s5" && useRun.getState().currentAutoStep === "s5_review" && (
+        {fileStageId === "s5" && currentAutoStep === "s5_review" && (
           <div className="px-5 py-3 border-t border-gray-200 bg-white flex items-center justify-between">
             <span className="text-[11px] text-gray-500">选择选题后锁定，确认进入 S6</span>
             <div className="flex gap-2">
               <button
-                onClick={() => {
-                  const rs = useRun.getState();
-                  if (rs.selectedTopicIdx !== null) rs.lockTopic();
-                }}
-                className="text-[11px] border border-indigo-300 text-indigo-600 px-3 py-1 rounded hover:bg-indigo-50"
+                onClick={() => { if (selectedTopicIdx !== null) lockTopic(); }}
+                disabled={selectedTopicIdx === null}
+                className="text-[11px] border border-indigo-300 text-indigo-600 px-3 py-1 rounded hover:bg-indigo-50 disabled:opacity-40"
               >
                 锁定选题
               </button>
               <button
                 onClick={() => {
-                  const rs = useRun.getState();
-                  if (rs.lockedTopicIdx !== null) {
+                  if (lockedTopicIdx !== null) {
                     closeModal();
-                    useRun.setState({ currentAutoStep: "s6" });
-                    rs.approveAndContinue();
+                    runStageFn("S6");
                   }
                 }}
-                disabled={useRun.getState().lockedTopicIdx === null}
+                disabled={lockedTopicIdx === null}
                 className="text-[11px] bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 disabled:opacity-40"
               >
                 确认并进入S6
