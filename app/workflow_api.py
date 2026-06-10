@@ -17,7 +17,7 @@ from app.mock_data import MOCK_S5, MOCK_S6, MOCK_S7, MOCK_S8
 router = APIRouter()
 
 # 模拟模式开关：设为 True 时跳过 LLM 调用，返回预设数据（快速测试用）
-MOCK_MODE = True
+MOCK_MODE = False
 
 # ===== 内存存储 =====
 

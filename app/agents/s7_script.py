@@ -37,7 +37,7 @@ def run(state: PipelineState) -> str:
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": _build_user_content(state)},
     ]
-    return chat(messages, temperature=0.7, max_tokens=32768)
+    return chat(messages, temperature=0.7, max_tokens=4096)
 
 
 def re_run_with_feedback(state: PipelineState, feedback: str, old_script: str = None) -> str:
@@ -53,4 +53,4 @@ def re_run_with_feedback(state: PipelineState, feedback: str, old_script: str = 
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": user_content},
     ]
-    return chat(messages, temperature=0.6, max_tokens=32768)
+    return chat(messages, temperature=0.6, max_tokens=4096)

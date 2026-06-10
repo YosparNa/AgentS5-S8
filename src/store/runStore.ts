@@ -20,7 +20,7 @@ let _timers: number[] = [];
 let _histCounter = 0;
 
 // 模拟模式：跳过等待，快速完成（与后端 MOCK_MODE 联动）
-const MOCK_MODE = true;
+const MOCK_MODE = false;
 const MOCK_STAGE_TIMES: Record<string, number> = { s5: 2, s6: 2, s7: 2, s8: 2 };
 
 function clearAllTimers() {
