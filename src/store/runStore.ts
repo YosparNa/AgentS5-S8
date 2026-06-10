@@ -1265,13 +1265,35 @@ export const useRun = create<RunState>((set, get) => {
         set({ rollbackTarget: target, currentAutoStep: target, simPhase: "running", runningStage: target, progressPct: 0, progressElapsed: "0s", progressRemaining: "" });
         get().loadStages();
 
-        // 6. 带进度运行目标阶段
+        // 6. S6 目标：不重新生成，直接回到待审核状态
+        if (target === "s6") {
+          set((s) => ({
+            run: {
+              ...s.run,
+              nodes: {
+                ...s.run.nodes,
+                s6: { ...s.run.nodes.s6, status: "awaiting_review" as RunStatus, percent: 100, doneCount: 1, totalCount: 1 },
+                s7: { ...s.run.nodes.s7, status: "pending" as RunStatus, percent: 0 },
+                s8: { ...s.run.nodes.s8, status: "pending" as RunStatus, percent: 0 },
+              },
+            },
+            currentAutoStep: "s6_review",
+            pendingNodeId: "s6",
+            simPhase: "idle",
+            runningStage: null,
+            progressPct: 0,
+          }));
+          get()._forceLoadStages();
+          return;
+        }
+
+        // 6. S5/S7 目标：带进度重新运行
         const startTime = Date.now();
-        const total = target === "s8" ? _s8Time() : (STAGE_TIMES[target] || 40);
+        const total = STAGE_TIMES[target] || 40;
         let progressTimer: ReturnType<typeof setInterval> | undefined;
         if (MOCK_MODE) {
-          set({ progressPct: 0, progressElapsed: "", progressRemaining: "" });
-          // mock模式：API返回后直接设100
+          set({ progressPct: 50, progressElapsed: "0s", progressRemaining: "..." });
+          get()._updateChecklistProgress(target, 50);
         } else {
           progressTimer = setInterval(() => {
             const elapsed = (Date.now() - startTime) / 1000;
