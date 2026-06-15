@@ -3,6 +3,7 @@
 from app.llm import chat
 from app.pipeline import PipelineState
 from app.utils import build_config_instructions, get_config
+from app.agents.s6_research import research, build_research_context
 
 SYSTEM_PROMPT = open("app/prompts/s7_script.txt", encoding="utf-8").read()
 
@@ -13,7 +14,7 @@ CONFIG_MAPPING = [
 ]
 
 
-def _build_user_content(state: PipelineState) -> str:
+def _build_user_content(state: PipelineState, research_ctx: str = "") -> str:
     cfg_text = build_config_instructions(get_config(state), CONFIG_MAPPING)
     outline = state.outline_data
     outline_text = ""
@@ -29,13 +30,21 @@ def _build_user_content(state: PipelineState) -> str:
 
 {cfg_text}
 
+{research_ctx}
+
 请根据大纲生成完整的口播脚本。"""
 
 
 def run(state: PipelineState) -> str:
+    # 素材补充：扫描大纲中的 [需补充案例]，搜索真实素材
+    research_ctx = ""
+    if state.outline_data:
+        research_result = research(state.outline_data)
+        research_ctx = build_research_context(research_result)
+
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": _build_user_content(state)},
+        {"role": "user", "content": _build_user_content(state, research_ctx)},
     ]
     return chat(messages, temperature=0.7, max_tokens=4096)
 
