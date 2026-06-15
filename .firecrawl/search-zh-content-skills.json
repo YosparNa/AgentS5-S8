@@ -1,0 +1,20 @@
+Agent Skills (Claude Skills) 详细攻略，一期视频精通 - YouTube
+  URL: https://www.youtube.com/watch?v=DNF0FJ9l7wo
+  会员频道有自制课程《小白玩转Git/Github，全功能精讲》 Agent Skills最近非常的火，起初它还只是Claude中一个小功能模块，就在最近两个月，越来越多的人 ...
+
+Skill Prompt Generator - 基于Skills的智能提示词生成系统 - GitHub
+  URL: https://github.com/huangserva/skill-prompt-generator
+  这是一个基于Claude Skill的**AI人像Prompt生成系统**，能够从特征库中智能组合生成高质量的人像描述Prompt，并具备自动学习和库扩展能力。 核心能力: Prompt生成、特征 ...
+  Category: github
+
+Claude Skills 教學：從零開始打造你的AI 自動化工作流 - WenHao Yu
+  URL: https://yu-wenhao.com/zh-TW/blog/claude-skills-guide/
+  這篇Claude Skills 教學從實際案例出發，帶你理解Skill 的運作原理、三層載入架構、觸發機制、設計模式，以及Anthropic 官方的Skill 寫作哲學。
+
+content-pipeline - DevOps on GitHub | SkillsLLM
+  URL: https://skillsllm.com/skill/content-pipeline
+  第9 步：品牌视频生成（可选）. 仅当用户提到"视频"、"抖音"、"视频号"或 ... 装上这个Skill，你的Claude Code 就变成了内容生产线。 One Skill ...
+
+AI龙虾必备：4个做短视频的Agent Skills - 火山引擎开发者社区
+  URL: https://developer.volcengine.com/articles/7628057925173002290
+  Skills 是Anthropic 在Claude Code 里推出的一种能力扩展机制，本质上是一份写给AI Agent 的说明书。它告诉AI 在特定场景下应该调用哪些工具、按什么顺序 ...
