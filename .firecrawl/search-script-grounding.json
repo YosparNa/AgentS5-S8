@@ -1,0 +1,963 @@
+Prompt Engineering For storytelling: From Chaos to Characters ...
+  URL: https://medium.com/@karthikeyasuppa01/prompt-engineering-for-storytelling-from-chaos-to-characters-building-6550cd35ee7d
+  You know what's harder than building an arc reactor? Teaching an AI to tell stories without making it sound like it's reading a grocery list ...
+
+  --- Content ---
+  [Sitemap](https://medium.com/sitemap/sitemap.xml)
+  
+  [Open in app](https://play.google.com/store/apps/details?id=com.medium.reader&referrer=utm_source%3DmobileNavBar&source=post_page---top_nav_layout_nav-----------------------------------------)
+  
+  Sign up
+  
+  [Sign in](https://medium.com/m/signin?operation=login&redirect=https%3A%2F%2Fmedium.com%2F%40karthikeyasuppa01%2Fprompt-engineering-for-storytelling-from-chaos-to-characters-building-6550cd35ee7d&source=post_page---top_nav_layout_nav-----------------------global_nav------------------)
+  
+  [Medium Logo](https://medium.com/?source=post_page---top_nav_layout_nav-----------------------------------------)
+  
+  Get app
+  
+  [Write](https://medium.com/m/signin?operation=register&redirect=https%3A%2F%2Fmedium.com%2Fnew-story&source=---top_nav_layout_nav-----------------------new_post_topnav------------------)
+  
+  [Search](https://medium.com/search?source=post_page---top_nav_layout_nav-----------------------------------------)
+  
+  Sign up
+  
+  [Sign in](https://medium.com/m/signin?operation=login&redirect=https%3A%2F%2Fmedium.com%2F%40karthikeyasuppa01%2Fprompt-engineering-for-storytelling-from-chaos-to-characters-building-6550cd35ee7d&source=post_page---top_nav_layout_nav-----------------------global_nav------------------)
+  
+  ![Unknown user](https://miro.medium.com/v2/resize:fill:32:32/1*dmbNkD5D-u45r44go_cf0g.png)
+  
+  # Prompt Engineering For storytelling: From Chaos to Characters Building
+  
+  [![Karthikeya Suppa](https://miro.medium.com/v2/da:true/resize:fill:32:32/0*7OercWHJh-NJs7Re)](https://medium.com/@karthikeyasuppa01?source=post_page---byline--6550cd35ee7d---------------------------------------)
+  
+  [Karthikeya Suppa](https://medium.com/@karthikeyasuppa01?source=post_page---byline--6550cd35ee7d---------------------------------------)
+  
+  Follow
+  
+  6 min read
+  
+  ·
+  
+  May 24, 2025
+  
+  62
+  
+  [Listen](https://medium.com/m/signin?actionUrl=https%3A%2F%2Fmedium.com%2Fplans%3Fdimension%3Dpost_audio_button%26postId%3D6550cd35ee7d&operation=register&redirect=https%3A%2F%2Fmedium.com%2F%40karthikeyasuppa01%2Fprompt-engineering-for-storytelling-from-chaos-to-characters-building-6550cd35ee7d&source=---header_actions--6550cd35ee7d---------------------post_audio_button------------------)
+  
+  Share
+  
+  You know what’s harder than building an arc reactor? Teaching an AI to tell stories without making it sound like it’s reading a grocery list. \[May be building an arc reactor is hard I don’t know you are getting the point I hope\]But hey, I’ve always been partial to impossible projects — keeps life interesting.
+  
+  Press enter or click to view image in full size
+  
+  ![](https://miro.medium.com/v2/resize:fit:700/1*SeDeCoSC5G75fTk_rBI3Pw.png)
+  
+  From Iron Man - I
+  
+  ## Where It All Started
+  
+  So there I was, staring at my screen, thinking “I’m going to create the perfect prompt for a storytelling chatbot.” Simple enough, right? Wrong. Dead wrong. What started as a simple idea turned into a challenge that had me questioning my life choices at 2 AM.
+  
+  First things first — I knew I needed structure. So I divided my approach into two clear segments: **Positive Prompt** and **Negative Prompt**. The positive prompt would tell the AI what to do, and the negative would warn it what to avoid. Think of it as giving directions to someone who’s never driven before — you need both “turn left here” and “don’t drive into that lake.”
+  
+  ## The Research
+  
+  I read a lot of articles and watched a bunch of YouTube videos, and this is what I discovered: technically, my prompt needs to have some limitations, such as a set of guidelines that bind it to accomplishing great things because it isn’t a person discussing a single incident; rather, it’s a story involving several things, and it won’t speak to you the way I do with you who are reading this blog.
+  
+  It needed to craft actual stories — narratives with beginnings, middles, ends, conflicts, and resolutions. Stories that would grab readers and not let go. This realization led me to the next phase, where I had to think like both a storyteller and a programmer.
+  
+  ## The Dancing Technique Discovery
+  
+  The first breakthrough came from YouTuber Kallaway (shoutout to him!). His “Dancing technique” was exactly what I needed — the concept of conflict and context dancing together throughout a story. I incorporated this philosophy right into my prompt:
+  
+  Press enter or click to view image in full size
+  
+  ![](https://miro.medium.com/v2/resize:fit:700/1*nEJyGc3dnp7zGOs5a-cqXw.png)
+  
+  From How To Become A Master Storyteller by kallaway
+  
+  _“You are a narrative story generative chatbot, whose goal is to take the query of the user and the provided summary it has a random story content that can include various elements. Feel free to be creative and add your own twist, while ensuring the story progresses in a manner that reveals the conflict and then the context that resolves it, layer by layer like an onion.”_
+  
+  This became the foundation — stories that breathe, that reveal themselves gradually rather than dumping everything at once.
+  
+  ## Building the Foundation
+  
+  The second major component came from Philip Humm’s insights, combined with my own experimentation. I created a specific story database for content (which I’ll link it [**here**](https://medium.com/@karthikeyasuppa01/crafting-tales-with-ai-building-a-story-generator-using-rag-6aab06ba36fc)), but more importantly, I established the pre-writing framework:
+  
+  ” _In creating the story, keep in mind the following aspects of pre-writing:_
+  
+  1. _Concept and Theme: Develop a core idea or theme that the story will explore._
+  2. _Character Development: Create well-rounded characters with distinct personalities, motivations, flaws, and goals._
+  3. _Setting: Establish a believable environment, considering time period, location, and atmosphere._
+  4. _Plot Outline: Map out the major events of your story, including the inciting incident, rising action, climax, falling action, and resolution._”
+  
+  ## The Technical Deep Dive
+  
+  From Kallaway’s storytelling masterclass, I learned about the “but and therefore” framework instead of “and then” — this creates those crucial conflict loops that keep readers hooked. From Philip Humm’s 9-minute storytelling guide, I discovered the power of zooming into moments rather than summarizing events.
+  
+  ![](https://miro.medium.com/v2/resize:fit:490/1*sWu-O6a2HITQpJ6BC8_blg.png)
+  
+  I combined these insights into specific writing elements for my prompt:cha
+  
+  ## Get Karthikeya Suppa’s stories in your inbox
+  
+  Join Medium for free to get updates from this writer.
+  
+  Subscribe
+  
+  Subscribe
+  
+  Remember me for faster sign in
+  
+  _”When writing the story, incorporate the following elements:_
+  
+  1. _Hooking Introduction: Start with an engaging opening line or scene that captures the reader’s attention and introduces the main conflict._
+  2. _Dialogue: Use realistic dialogue to reveal character traits and advance the plot._
+  3. _Show, Don’t Tell: Describe details vividly using sensory language to immerse the reader in the story rather than simply stating facts._
+  4. _Conflict and Tension: Build suspense by creating obstacles and challenges for your characters, raising the stakes as the story progresses._
+  5. _Pacing: Balance action and exposition to maintain a steady rhythm throughout the story._
+  6. _Point of View: Choose a consistent narrative perspective to guide the reader’s experience.”_
+  
+  ## The Story Structure Requirements
+  
+  I wasn’t done yet. I needed to ensure every story had proper structure:
+  
+  Press enter or click to view image in full size![](https://miro.medium.com/v2/resize:fit:1919/1*5c9LkD4esvoiE0mOJu9BMQ.png)
+  
+  Press enter or click to view image in full size![](https://miro.medium.com/v2/resize:fit:1919/1*lFik2TLbMI4fSvGribPLng.png)
+  
+  _”Ensure the story includes the following key elements:_
+  
+  1. _Character Arc: Show how the protagonist develops and changes throughout the story in response to the conflict._
+  2. _Climax: The turning point of the story where the central conflict reaches its peak._
+  3. _Resolution: The conclusion where the conflicts are resolved, leaving the reader with a sense of satisfaction.”_
+  
+  ## The Final Polish
+  
+  The last layer focused on consistency and quality:
+  
+  ”Lastly, consider the following important aspects:
+  
+  1. Consistency: Ensure the characters, setting, and plot remain consistent throughout the story.
+  2. Voice: Develop a unique writing style that reflects the tone and perspective of your story.
+  3. Revision and Editing: Once the first draft is complete, thoroughly revise and edit to polish your writing, correct errors, and improve clarity.”
+  
+  ## The Magic Touch
+  
+  Here’s something I discovered through testing — the introduction matters immensely. I ended up including this specific intro line: _“I’d be delighted to spin a yarn for you! Here’s the story”_
+  
+  This simple phrase does something magical — it primes the reader’s imagination, making them more receptive to the story that follows.
+  
+  I also considered adding a **negative prompt** to avoid generic responses like “Here is your story,” but ultimately decided the positive framework was strong enough on its own.
+  
+  ## The Obsessive Details
+  
+  One final note that saved me countless hours: I made absolutely sure there were no spelling or grammatical mistakes in the prompt itself. Why? Because errors force the AI to spend processing power correcting and understanding mistakes instead of focusing on storytelling. Clean prompts equal better performance. Though not particularly significant, it is absolutely needed to hive better result.
+  
+  ## Where I Ended Up
+  
+  What started as a simple idea to create a storytelling chatbot turned into a comprehensive prompt engineering project a side with the other things. I now have a system that doesn’t just generate stories — it creates narratives that understand conflict, context, character development, and reader engagement.
+  
+  The journey taught me that good prompts aren’t just instructions; they’re architectural blueprints for creativity. Every word matters, every structure serves a purpose, and every technique builds toward one goal: stories that make people stop scrolling and start reading.
+  
+  Now, whenever I input a simple query into my chatbot, I get back stories that dance between conflict and context, stories that zoom into moments rather than summarize events, and stories that leave readers satisfied rather than confused.
+  
+  The data it received, the pacing tone, emotions, and relations etc are not the only things that count .The user’s inventiveness in describing what he wants to develop produces a structure where the AI fills in rest of the gaps with the creative architecture that I created , assisting it in securing the light it needs. [_This is how it turned out_](https://medium.com/@karthikeyasuppa01/once-upon-an-ai-spell-how-ai-turns-words-into-worlds-c3ce4c2e4a02)
+  
+  From chaos to character — that’s how you build a storytelling machine that actually knows how to tell a story.
+  
+  ![](https://miro.medium.com/v2/resize:fit:325/1*LDjEoQdvGNNJs6RhnYfKww.gif)
+  
+  You can learn more about the story telling and followed by prompt Designing from the videos and the Google course below
+  
+  [Prompt Engineering](https://medium.com/tag/prompt-engineering?source=post_page-----6550cd35ee7d---------------------------------------)
+  
+  [Storytelling](https://medium.com/tag/storytelling?source=post_page-----6550cd35ee7d---------------------------------------)
+  
+  [Prompting Technique](https://medium.com/tag/prompting-technique?source=post_page-----6550cd35ee7d---------------------------------------)
+  
+  [LLM](https://medium.com/tag/llm?source=post_page-----6550cd35ee7d---------------------------------------)
+  
+  [![Karthikeya Suppa](https://miro.medium.com/v2/resize:fill:48:48/0*7OercWHJh-NJs7Re)](https://medium.com/@karthikeyasuppa01?source=post_page---post_author_info--6550cd35ee7d---------------------------------------)
+  
+  [![Karthikeya Suppa](https://miro.medium.com/v2/resize:fill:64:64/0*7OercWHJh-NJs7Re)](https://medium.com/@karthikeyasuppa01?source=post_page---post_author_info--6550cd35ee7d---------------------------------------)
+  
+  Follow
+  
+  [**Written by Karthikeya Suppa**](https://medium.com/@karthikeyasuppa01?source=post_page---post_author_info--6550cd35ee7d---------------------------------------)
+  
+  [12 followers](https://medium.com/@karthikeyasuppa01/followers?source=post_page---post_author_info--6550cd35ee7d---------------------------------------)
+  
+  · [2 following](https://medium.com/@karthikeyasuppa01/following?source=post_page---post_author_info--6550cd35ee7d---------------------------------------)
+  
+  As an AI and ML engineer, I unravel puzzles with sharp logic and bold vision, weaving artful solutions. I craft innovations to shape a brighter future.
+  
+  Follow
+  
+  [Help](https://help.medium.com/hc/en-us?source=post_page-----6550cd35ee7d---------------------------------------)
+  
+  [Status](https://status.medium.com/?source=post_page-----6550cd35ee7d---------------------------------------)
+  
+  [About](https://medium.com/about?autoplay=1&source=post_page-----6550cd35ee7d---------------------------------------)
+  
+  [Careers](https://medium.com/jobs-at-medium/work-at-medium-959d1a85284e?source=post_page-----6550cd35ee7d---------------------------------------)
+  
+  [Press](mailto:pressinquiries@medium.com)
+  
+  [Blog](https://blog.medium.com/?source=post_page-----6550cd35ee7d---------------------------------------)
+  
+  [Store](https://medium.com/store)
+  
+  [Privacy](https://policy.medium.com/medium-privacy-policy-f03bf92035c9?source=post_page-----6550cd35ee7d---------------------------------------)
+  
+  [Rules](https://policy.medium.com/medium-rules-30e5502c4eb4?source=post_page-----6550cd35ee7d---------------------------------------)
+  
+  [Terms](https://policy.medium.com/medium-terms-of-service-9db0094a1e0f?source=post_page-----6550cd35ee7d---------------------------------------)
+  
+  [Text to speech](https://speechify.com/medium?source=post_page-----6550cd35ee7d---------------------------------------)
+  
+  reCAPTCHA
+  
+  Recaptcha requires verification.
+  
+  protected by **reCAPTCHA**
+  --- End Content ---
+
+10 GENIUS ChatGPT Prompts For Screenwriters - YouTube
+  URL: https://www.youtube.com/watch?v=sM_Ml4EvrMI
+  ... story structure and building characters to simulating writer's rooms and pitching to production companies. Whether you're an aspiring ...
+
+  --- Content ---
+  ![Thumbnail (1920x1080)](https://i.ytimg.com/vi/sM_Ml4EvrMI/maxresdefault.jpg)
+  # [10 GENIUS ChatGPT Prompts For Screenwriters](https://www.youtube.com/watch?v=sM_Ml4EvrMI)
+  
+  **Visibility**: Public
+  **Uploaded by**: [The Media Insider](https://www.youtube.com/@TheMediaInsider)
+  **Uploaded at**: 2025-04-22
+  **Published at**: 
+  **Length**: 25:45
+  **Views**: 22391
+  **Likes**: 868
+  **Category**: Education
+  
+  ## Description
+  
+  ```
+  Stop leaving yourself vulnerable to data breaches. Go to my sponsor https://aura.com/mediainsider to get a 14-day free trial and see if any of your data has been exposed.
+  -------------------------------------------------------------------------------
+  In this video, I share 10 powerful, creative, and practical ways screenwriters are using ChatGPT to become better writers — from generating story structure and building characters to simulating writer’s rooms and pitching to production companies.
+  
+  Whether you’re an aspiring screenwriter, a media studies student, or a pro looking to speed up your process, these ChatGPT prompts will change the way you write.
+  
+  🔥 In this video:
+  00:00: Intro
+  01:21 Structure
+  05:37 Backstory 
+  08:03 Mood Board
+  09:00 Team of Writers
+  11:53 Prose
+  13:33 Interview
+  15:42 Roleplay
+  18:00 Critics
+  20:16 Reddit
+  22:48 Pitch
+  
+  💡 Prompts featured include:
+   • “You’re a team of screenwriters. Brainstorm this scene…”
+   • “Act as a Reddit user sharing a wild fan theory…”
+   • “Write a cover letter pitching this script to an agent…”
+   • And more!
+  
+  👉 Don’t forget to like, subscribe and drop a comment below if you’ve tried using AI in your creative process.
+  
+  #Screenwriting #ChatGPT #ScreenwriterTips #AIforWriters #Scriptwriting #HowToWriteAScript #Filmmaking #SaveTheCat #StoryStructure #CreativeWriting
+  -------------------------------------------------------------------------------
+  SUPPORT ME ON PATREON
+  To support this channel and access content early, visit:
+  http://www.patreon.com/themediainsider
+  -------------------------------------------------------------------------------
+  Music provided by HookSounds - get a discounted subscription by using this link:
+  https://www.hooksounds.com/ref/TheMediaInsider/
+  or use the code INSIDER10 when you sign up directly!
+  -------------------------------------------------------------------------------
+  The Media Insider is a channel for all things media and film. If you are studying them or just an enthusiast, subscibe for regular doses of theory and analysis.
+  ```
+  
+  ## Transcript
+  
+  Okay, this is amazing. Check this out.
+  Okay, chat GPT, I'm writing a scene for
+  my script and I want to play with some
+  dialogue options. I want you to role
+  play as the character Paul and I'm going
+  to play as Isaac in the scene where he
+  is confronted by Isaac about his
+  gambling addiction. Is that okay? Sure,
+  let's do it. You can start whenever
+  you're ready, Isaac. Hey, Paul. Whoa,
+  hang on. What's going on with your eyes?
+  You haven't looked like you haven't
+  slept in days. Oh, these? Nah, it's just
+  a new fashion statement. You know,
+  trying to look mysterious like a movie
+  star or something. So, what's up? That's
+  so cool. This is just one of the awesome
+  ways that Chat GPT can help you with
+  screenwriting, which we're going to go
+  over in this video. So, I just want to
+  get one thing straight right away. I do
+  not for a second think Chat GPT is going
+  to replace screenwriters. I actually
+  completely agree with what Sam Alman
+  said at his recent TED talk about AI
+  being another tool to help creatives in
+  their various endeavors. The creative
+  spirit of humanity is an incredibly
+  important thing and we want to build
+  tools that lift that up that make it so
+  that new people can create better art.
+  So here we go. Here are 10 ideas for
+  prompts you can use whilst you're
+  screenwriting. And what I've done is
+  I've broken them down into three
+  sections. prompts to help you before you
+  start writing, prompts to help you
+  during writing, and prompts to help you
+  after. So, let's get straight into it
+  with some ideas for how we can use AI to
+  help us before we start writing. And the
+  first tip is use it to help you
+  structure your story. I'm assuming you
+  probably already got a rough idea as to
+  the plot. I'm going to show you how you
+  can use AI to turn that into a structure
+  and actually start having the building
+  blocks to help you write. So, since The
+  Last of a season 2 has just dropped,
+  let's go with a post-apocalyptic kind of
+  zombie horror film. I've got an idea for
+  a film that I'm about to start writing.
+  I know the main plot points, but I'd
+  like
+  to see how it might fit into a tried and
+  tested structure. Please, can you put
+  the following idea into a threeact
+  structure, Save the Cat and Dan Harmon's
+  Story Circle. The story takes place in
+  1940s London. The war has come to a
+  sudden close after the Nazis have
+  released a chemical weapon on England
+  which makes people ravenously hungry for
+  human flesh. We follow the story of a
+  small group of survivors in a network of
+  bomb raid shelters. One of the survivors
+  is a chemistry graduate who believes
+  they can find a cure if they can make
+  their way to the medical institute which
+  is overrun by the
+  infected meateers. You get the idea.
+  Realistically, if I was doing this, I
+  would give it way more detail. I talked
+  about my my who my main characters are,
+  my likely villains, but notice what I've
+  done here is I've said what I'd like to
+  do is um give you this rough idea and I
+  want it in a specific structure. Let's
+  see what it comes up with. Okay, that's
+  really really cool. So, straight away um
+  it's given me those three structures.
+  Now, I would point out I've just picked
+  those three because they're probably the
+  most wellknown in western cinema. Um but
+  you could ask it to apply any structure.
+  You can even ask it to turn it into a
+  nonlinear structure like Tarantino might
+  use. But let's see what it's done for
+  the three-act structure. So, we've got
+  act one, the setup. Opening image, a
+  sepia tone view of 1940s London, eerie,
+  quiet, and ruined. Act two,
+  confrontation. Act three, resolution.
+  That's really cool. And I'm just
+  thinking like if you are new to
+  screenwriting and you have this idea,
+  but you're not necessarily sure how to
+  have the var the various plot points,
+  this is a really really great way to
+  just put you on your your your path to
+  writing your first draft. Let's take a
+  look at some of the other ones. So,
+  we've got the save the cat beat sheet.
+  Literally 15 beats. That's pretty cool.
+  And like I said, I don't think this is
+  cheating. I think for when you're new to
+  screenwriting, it's just a tool to help
+  you actually get writing. Before we go
+  on, let me just take a minute to tell
+  you about the sponsor of today's video,
+  Aura. Now, if you're anything like me,
+  when it comes to your online security
+  and your data, perhaps you'll have an
+  I'll deal with it later sort of uh
+  mindset. I know there are risks out
+  there. I literally fell for a scam
+  website recently which got me to fork
+  over £50 for a low emission zone. And I
+  know that there are data breaches and
+  trackers following us around everywhere.
+  But because the danger isn't always
+  right in front of us, it's easy to
+  ignore until something actually goes
+  wrong. Aura is an amazing service which
+  gives you back ownership of your data
+  and where it actually is stored. It
+  scans the web for any signs that your
+  personal information has been leaked or
+  sold. Aura doesn't just show you where
+  your data might be online, where you
+  don't want it to be. It also takes
+  action. Aura can automatically send out
+  opt out email requests to websites which
+  are misusing your data. And it helps to
+  remove your information from those
+  places where you might never have even
+  agreed to have them there in the first
+  place. You can go to my link at
+  aura.com/thediainsider to try 14 days
+  for free. More than enough time for Aura
+  to find out if any of your personal
+  information has been exposed. So, the
+  next way I think AI is a really great
+  tool to help writers before they start
+  writing is to help you out by writing a
+  character backstory. Now, I'm a big
+  believer that before you start writing,
+  the more intimately you know your
+  characters, the better. The more you
+  understand their motivations or how they
+  behave or how they change over the
+  course of a story. So, how might this
+  look as a prompt? The young chemistry
+  graduate I mentioned is called Hank
+  Wallace. I imagine him to be an orphan,
+  very reserved and although not formally
+  stated, clear traits of neuro divergence
+  such as autism. Please can you suggest a
+  backstory for this character which
+  explains his
+  fascination with
+  chemistry and offers us a clear
+  motivation for helping the survivors.
+  Right, let's find out a bit more about
+  Hank Wallace. Wow, this is in depth. Let
+  me give the highlights. Hank grew up in
+  London orphanage after losing his
+  parents to a houseire when he was just 5
+  years old caused by a faulty gas heater.
+  The trauma of the event coupled with his
+  difficulty processing emotions in
+  conventional ways made him an intensely
+  quiet and withdrawn child. While other
+  children bonded over games of shared
+  stories, Hank found solace in pattern
+  structures and predictable systems. I
+  already love this guy. It goes on, but
+  straight away I feel a lot more
+  confident writing with Hank's voice. And
+  actually, and let's put in a bonus one.
+  If you want to be a bit more specific,
+  we could go on to ask, can you give me
+  five specific traits that I can use in
+  his communication style so I get a clear
+  sense of his unique voice. Oh, there's
+  some good ideas. precise literal
+  language, minimal small talk, rhythmic
+  pauses before speaking, hyperfocused
+  tangents, avoids eye contact, prefers
+  objects. This is really cool. And like I
+  said, I'm feeling quite confident
+  writing about this character. I also
+  want to do um any people in the audience
+  with neurode divergence, I want to do
+  them uh justice um in representing
+  someone. So, it shows it's a really
+  really great tool for research before
+  you start writing. Okay. And my final
+  tip for how you can use AI as a tool to
+  help you before writing is to use it to
+  help visualize settings. Now, I think it
+  would just be wrong of me uh to not
+  include the visualizing brilliance of
+  chat GPT um in this video. So, here's a
+  great idea as to how you can use it for
+  visual stimulus. Okay. So, I've said,
+  I'm nearly ready to start writing, but
+  I'd like some visual stimulus to have
+  open whilst I write actions and
+  descriptions. Please, can you produce a
+  mood board featuring about 20 pictures
+  as a collage featuring battlebbor
+  survivors, bomb shelter settings, and
+  the infected meateers in a rural English
+  1940s postapocalyptic setting. Let's see
+  how it does. That's really cool. I love
+  some of the features there like the gas
+  masks and the uh the use of lanterns
+  because we can assume electricity is
+  down. So, this is straight away giving
+  me ideas as I start writing the uh
+  description for the settings and the
+  actions. Just having something like this
+  open can really really help. Right now,
+  let's get to the exciting part. By this
+  point, you're probably eager to start
+  writing. Um, and there's a few ways that
+  can help you write with actually writing
+  for you. So, let's just jump straight
+  into our first tip. In my experience of
+  working with students, the hardest
+  thing, the thing that that maybe kind of
+  stalls them the most is just knowing
+  where the heck to start. So, here's a
+  prompt that you can use to literally get
+  you started. I'm ready to start writing,
+  but I'm not sure how to start scene one.
+  I'd like you to act as a team of four
+  unique writers, each with their own
+  distinct style and voice. I'd like each
+  writer to suggest a different opening
+  scene that will hook the audience in a
+  different
+  way. And I'd like each writer to
+  justify why their idea is best. There we
+  go. I've got a team of writers. I'm
+  going to do the writing, but I'd like to
+  know where AI thinks I should start.
+  Okay, so writer one, the suspense
+  builder. Gritty, atmospheric.
+  Hitchcockian, I already like it. Opening
+  scene, we open in total darkness. The
+  sound of distant sirens, breathing,
+  ragged, urgent. Then a single match
+  flares to life, illuminating Hank
+  Wallace's face in a closeup. He's
+  crouched in a tunnel, staring at
+  something just out of frame. We slowly
+  reveal a dismembered hand twitching on
+  the concrete floor. I already want to do
+  that scene. That's so cool. And there's
+  justifications as to why that hook
+  works. It hooks the audience with
+  mystery, dread, and a compelling visual.
+  It sets the tone immediately.
+  Claustrophobic and tense. It introduces
+  Hank without needing exposition. We're
+  in the world now, and it's already gone
+  wrong. I love that. I could start
+  writing that straight away. What should
+  we look at next? The humanist,
+  character-driven, emotional approach is
+  writer two. We've got the world builder,
+  writer three, or we've got the
+  shockmaster. It's got to be the shock
+  master. Let's have a look. Um, so writer
+  four, black screen, the sound of a radio
+  crackling, then screaming. We cut to a
+  POV shot, running through an alley,
+  panting. The camera whips around.
+  Figures in the distance lurch into view,
+  distorted and fast. The runner slips
+  into a shelter, bolster the hatch, and
+  is immediately dragged back out,
+  screaming by infected hands. Smash cut
+  to Hank who opens his eyes with the
+  start. It was a nightmare. Or was
+  it? I think I kind of like that one
+  actually. Anyway, if you're stuck to
+  know where to start, if you're just
+  lacking that kind of like get the ball
+  rolling, ask one of your team of four
+  writers for ideas for how you might
+  start. Okay. Next tip is for people who
+  are completely new to screenwriting. If
+  the uh formatting of the uh screenplay
+  is slowing you down, one thing you can
+  do is turn pros into a screenplay. So
+  what I've done is I've put together
+  actually using chat GPT um the opening
+  scene of this film but it's written as
+  pros something you might feel an awful
+  lot more uh comfortable with and what we
+  can actually say to chat GPT is I've
+  written the opening for my film as pros
+  please convert it into a screenplay
+  format with the correct formatting
+  including slug lines, action, and
+  dialogue. So, this is nice cuz just like
+  I would expect, um, obviously we've got
+  slug lines, exterior, London, night,
+  winter, 1940s. The description of the
+  setting is far more concise, just as
+  you'd expect in a screenplay. So, we now
+  have snow falls like ash, drifting in
+  lazy spirals through a shattered, bomb
+  ravaged city. Streets lie broken. Bricks
+  are scorched and crumbling. Every corner
+  whispers ruin. Oh, a voice calm and
+  steady begins to speak. Voice over. It
+  was the worst of winters in the
+  bitterest of time. Snow fell, not like
+  gentle feathers from heaven, but like
+  the ash of some great fairness. That's
+  really, really cool. The way it's turned
+  pros into a screenplay. Again, another
+  really great way to start you writing if
+  you are stuck. The formatting isn't
+  perfect. The dialogue should be
+  centered, but if you're using
+  screenwriting software, that usually
+  takes care of the um the specific
+  formatting for you. So, there's one
+  option for using AI to help you write a
+  screenplay. Okay, time for the next uh
+  writing tip for using CH EPT. Um, and I
+  want to go back to uh our main
+  character, Hank Wallace. Uh, we've
+  written a really cool backstory for him,
+  and I kind of understand his
+  motivations, but when he's in a specific
+  scene, um, I might want to know how he's
+  thinking real time. So, what we can
+  actually do is get, uh, Chat GPT to act
+  uh, as our character, and we can
+  actually interview him. Okay, so here's
+  the prompt. I'm now writing the scene in
+  which he confides in Mrs. Baker, an old
+  family friend who acts like a mother to
+  him, that he isn't 100% certain he can
+  come up with a cure and is experiencing
+  self-doubt. In this scene, he finds
+  resolve. I would like you to act as Hank
+  and allow me to interview you to
+  understand how you may act and speak in
+  this scene. So, let's have a word with
+  Hank. Hi, Hank. Why are you doubting
+  yourself? Hank shifts uncomfortably. His
+  fingers fidgeting with a sleeve in his
+  jacket. I don't know. It's just the more
+  I look at it, the more I feel I'm
+  missing something. The formula, the
+  reactions, they should be working. But I
+  can't I can't be sure. Every time I
+  think I'm close, it slips away. It's
+  like trying to catch something in the
+  dark. If I can't even get this right,
+  what happens to everyone? What happens
+  if I fail? He glances down, voice barely
+  a whisper. I don't have anyone else to
+  rely on. I'm not even sure the right per
+  I'm the right person for this. So again,
+  I'm interviewing him. I'm I'm starting
+  to like get a sense as to kind of like
+  that self-doubt. Let's ask him, where do
+  you find
+  courage when you have needed it in the
+  past? He looks away for a moment, his
+  gaze distant as if recalling something.
+  Courage is not something I feel exactly.
+  It's more like pushing through. Anyway,
+  when I was younger, it was my uncle who
+  used to tell me that I didn't need to be
+  brave all the time. Just take the next
+  step, even if it's small, even if it's
+  shaky. I like that. So, maybe we could
+  factor in the idea of the uncle as a
+  character we have in flashbacks or
+  someone he refers to. That's quite cool.
+  So, there's one option for you. You can
+  um interview your characters to try and
+  really get inside their head. But the
+  last tip I want to show you for writing
+  is a little bit more explicit. And
+  something that writers often do is they
+  will just brainstorm or roleplay an idea
+  with other writers or actors to just see
+  how it kind of like unfolds. So let's
+  have a go at doing that now with chat
+  GPT. So the prompt I've come up with is
+  I'd like to have a go at acting out a
+  flashback scene between Hank and his
+  uncle. We'll call him Uncle Tim. I'd
+  like you to act as the uncle and I'll be
+  Hank. I'm looking for dialogue options
+  in a scene about courage back when Hank
+  was 10 years old before the war. The
+  uncle is quite old-fashioned and
+  minimalist in his language, but
+  everything he says is relevant and
+  carries wisdom and grace. He says a lot
+  in very few words. Let's see what it
+  comes up with. So, I was going to get
+  started, but chat PT already has. Uncle
+  Tim sits in his worn chair, the dim
+  light from the fireplace flickering
+  across his face. He exhales slowly,
+  looking out the window. After a moment,
+  he turns his eyes towards you, his voice
+  low and steady. Uncle Tim, you're quiet,
+  Hank. Something on your mind. I've said,
+  "No." "Well, yes. It's the other boys at
+  school. I'm not like them, am
+  I?" Uncle Tim leans forward slightly,
+  his hands resting on his knees, his eyes
+  soften, but he doesn't rush to answer.
+  He lets the silence linger, then speaks
+  slowly, each word deliberate. No, you're
+  not like them, and that's fine. He
+  glances down at the floor for a moment,
+  as if considering his next words
+  carefully. They'll always try and make
+  you fit, but you don't have to. You've
+  got your own way. It'll make more sense
+  later, but it's yours. He looks back up,
+  his gaze steady, like a rock in a river.
+  Courage isn't fitting in. It's knowing
+  when to stand firm, even if you're
+  standing alone. Oh, it's so good. I
+  mean, there's bits there that I would
+  probably use in this screenplay. Um, and
+  what's interesting is as a writer, I
+  suppose I'm reading it, getting a sense
+  for Uncle Tim's voice, but I'm also
+  getting a sense for um Hank's voice. So,
+  I think one of the great ways, one of
+  the great things of doing this roleplay
+  is to really act and put yourself in
+  those shoes of the characters you're
+  writing. It's one thing just put it on a
+  page, but it's another one to personify
+  them. So, I think that's one of the best
+  things you can do uh with AI whilst
+  you're writing. Okay, time for the final
+  section for this, which is all about
+  ways you can use AI to help you after
+  you've actually uh written your
+  screenplay when you're in the kind of
+  like the review section. So, let's
+  assume I've finished off this
+  screenplay. One of the first things we
+  can do is get Chachi P to uh be a brutal
+  critic. Okay, here's the prompt. I'd
+  like you to act as a film critic who has
+  an extensive understanding of world
+  cinema and has seen every story and
+  trick on film before. What are some of
+  the most obvious cliches I've used which
+  may draw criticisms once the film is
+  released? Okay, this is turns out my
+  idea wasn't as good as I thought it was.
+  The lone genius hero Hank's character,
+  the archetype of a lone, neurody
+  divergent or emotionally reserved
+  character carrying the weight of the
+  world on their shoulders is certainly
+  compelling, but it's also a bit of a
+  well-worn trope. Yeah, I'd agree with
+  that one. The mentor figure, Mrs. Baker.
+  Critics may find her role too simplistic
+  or one-dimensional, especially if she's
+  not given enough backstory. Now, this is
+  actually my whole point of doing this.
+  Actually, that is true. Mrs. Baker's
+  character is there purely as a kind of
+  like, I'll pick you up when you hit rock
+  bottom. Perhaps I need to go back to my
+  draft and think about giving her more of
+  a substantial role. The overrun medical
+  institute as the last hope. Some might
+  argue that this setting while effective
+  has been overused and lacks freshness
+  unless you subvert it in some way. This
+  is interesting. Let's see if Chachi P
+  Chachi PT can uh help. I agree
+  with 4. Can you give me three
+  alternatives to the medical center which
+  subvert from convention? So, it's come
+  up with the abandoned theater. Yeah, but
+  why would you go there to find a cure?
+  Instead of a medical facility, Hank and
+  the survivors can seek refuge in an
+  abandoned pre-war theater that was
+  converted into a research hub by a group
+  of rogue scientists. Yeah, I quite like
+  that one. Fair one. The overgrown
+  university. Okay, so there's a few
+  options there, but once you think you
+  have finished, throw it at a critic,
+  courtesy of chat GPT, and ask it where
+  the cliches are. And if you agree with
+  it, then you can ask for some uh
+  solutions to your problems. Right, let's
+  go on to the next uh after writing
+  prompt. Another approach to
+  screenwriting that I really like um is
+  to try and work out what the audience is
+  predicting and do the opposite. So, very
+  similar to the last one that we just
+  said about, but when you think about the
+  likes of some great shows at the minute
+  like The White Lotus, it's amazing that
+  as these stories are unfolding, there's
+  there's a huge amount of fan theory
+  online and it almost always does the
+  last thing that we're expecting. So,
+  what I'm going to ask for it to do is
+  try and come up with some fan theories
+  so that I can make sure I do the
+  opposite. Here's the prompt. I'd like
+  you to act as a Reddit community who are
+  obsessed with this story. I'd like you
+  to imagine that you are aware of the
+  story up to the point where they're
+  about to reach the medical center, but
+  you don't know what happens next. I'd
+  like you to write a Reddit post asking
+  for fan theories, and I'd like 10
+  responses of fan theories so I can see
+  what the obvious choices are and try and
+  avoid them. Okay, so it's literally done
+  this like a Reddit post. Um, survival
+  stories spoiler. What happens next in
+  Hank's quest for a cure? Hey folks, I'm
+  a huge fan of the story of Hank and his
+  group of survivors, and honestly, I'm
+  dying to know what happens next. What
+  are your theories on how Hank's quest
+  for a cure will play out? The first one,
+  I think the medical center is going to
+  be abandoned. The survivors are going to
+  find it empty, maybe even overrun with
+  the infected, and the equipment will be
+  broken or useless. The real twist is
+  that Hank already has the cure. He just
+  doesn't know it yet. It's in his own DNA
+  or something. That's interesting. Now,
+  I'd say that's quite predictable. it's
+  quite um quite obvious that means we
+  don't want to do it. So you can look
+  through these and find out like you know
+  what what is what what is the thing that
+  people aren't expecting. Oh here's one
+  from brainstorming beast. What if the
+  cure is not physical but psychological?
+  Maybe the cure isn't about solving the
+  virus or the infection but changing how
+  people perceive the outbreak. It's about
+  out there. Hank will have to create a
+  new kind of therapy or mindaltering
+  treatment. I bet they'll find a facility
+  full of failed trials and broken system.
+  That's kind of interesting. I actually
+  kind of like that one. Uh once you
+  finish uh writing, throw it into chat
+  GPT and ask what the online community
+  are going to be saying about it. Was it
+  predictable? Um what was some of the
+  most obvious plot points? This this is
+  especially true if you want to kind of
+  write your screenplay as a a series um
+  of maybe 10 episodes, something for
+  Netflix. That's really useful because
+  then you can see it's kind of like,
+  well, this is how far I've gotten. where
+  does it go next? Okay. And the final tip
+  I want to share with you after you've
+  actually written your screenplay is it's
+  very likely that you're going to have to
+  write a cover letter to various
+  production companies. Um, and I doubt
+  many of you have done this before. So,
+  what we're going to do is we're going to
+  do a cold pitch email to a production
+  company which needs to be really concise
+  or perhaps to an agent. Okay, here's the
+  prompt. I've completed my screenplay and
+  I'm really pleased with it. I want to
+  send it to all the production companies
+  and agents in the UK and potentially the
+  US. I'm aware the letter needs to be
+  concise, persuasive, and get the reader
+  to actually pick up my screenplay, but I
+  don't know how to write such a letter to
+  agents. Please, can you draft a letter
+  for me to adapt? So, this is nice cuz
+  it's done it um almost like it's a
+  template, so I can just change the name,
+  address um in in Microsoft Word. Let's
+  see what we've got. Dear agents
+  name/production team, I hope this
+  message finds you well. My name is Simon
+  Hunter and I'm reaching out to share my
+  completed screenplay titled Oh, I don't
+  have a name for it yet. Let's come up
+  with some names. Give me three possible
+  titles for the screenplay. After the
+  fall, nah, generic. The Last Cure.
+  Fragments of Dawn. Let's go with
+  Fragments of Dawn. My name is Simon
+  Hunter and I'm reaching out to you to
+  share my completed screenplay titled
+  Fragments of Dawn. I believe it could be
+  an excellent fit for your agency and I
+  would love to give you the opportunity
+  to review it. Fragments of Dawn is a
+  post-apocalyptic film set in London
+  following the journey of briefly
+  describe the protagonist and the
+  conflict in one or two sentences. So,
+  this is great. It is actually giving me
+  an awful lot of autonomy over it. So,
+  I'll talk about Hank there. I'm sure I
+  could go back and ask it to fill in
+  those gaps based on everything I've said
+  about it so far. But actually, this is
+  great because I can now tailor the
+  letter to each of the production
+  companies I send it to. So, if I sent it
+  to A24, I could make sure I site some of
+  their films and some of the things which
+  I know they're interested in as a
+  production house. So, that's kind of
+  cool. And it actually gives me the
+  confidence now to write my my letter to
+  agents and see about getting this thing
+  made. So, guys, I hope you've really
+  enjoyed that. If you've made it this
+  far, I've got a bit of a favor to ask.
+  If you could go ahead and press the like
+  button, it will help this video's uh
+  visibility. Likewise, if you could post
+  something below such as your prompts
+  that you're using uh ways that you use
+  chat GPT uh in film making, that would
+  really uh help spot get some spotlight
+  and help the channel grow. And finally,
+  if you want to see more stuff like this,
+  go ahead and subscribe. Three things
+  that I'd really appreciate if uh if you
+  could spend the time to do that one. As
+  always, thank you very much for
+  watching. Thank you specifically to my
+  patronons who uh keep this channel
+  going. And if you would like to join a
+  community of filmmakers and uh get
+  better access to me and chat about um
+  all things film, go ahead and head over
+  to my uh my Patreon page uh right now.
+  That'd be great. Uh thanks very much for
+  watching and I'll see you in the next
+  one.
+  --- End Content ---
+
+How to stop AI from "fact-checking" fictional creative writing? - Reddit
+  URL: https://www.reddit.com/r/ChatGPTPromptGenius/comments/1rhv8jh/how_to_stop_ai_from_factchecking_fictional/
+  ​Does anyone have a solid system prompt or "persona" setup that tells the AI to stay in "Creative Fiction Mode" and stop cross-referencing real- ...

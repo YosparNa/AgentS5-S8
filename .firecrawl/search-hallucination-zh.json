@@ -1,0 +1,19 @@
+AI 提示工程指南
+  URL: https://cloud.google.com/discover/what-is-prompt-engineering?hl=zh-CN
+  提示工程是一门设计和优化提示的艺术和科学，可指导AI 模型（尤其是LLM）生成所需回答。通过精心设计提示，您可以为模型提供上下文、说明和示例，帮助模型理解 ...
+
+一起学习生成式人工智能（二）｜Prompt 技巧- YouTube
+  URL: https://www.youtube.com/watch?v=DXsfhM1XGgc
+  ... Prompt 及其高级用法，带大家开启全新的生成式人工智能体验。 课程相关链接：https://github.com/microsoft/generative-ai ... 性| 思维链提示| 贪婪 ...
+
+什麼是提示工程？– AI 提示工程介紹 - AWS
+  URL: https://aws.amazon.com/tw/what-is/prompt-engineering/
+  提示是請求生成式AI 執行特定任務的自然語言文字。生成式AI 是一項人工智慧解決方案，可建立故事、對話、影片、影像和音樂等新內容。該解決方案由 ...
+
+幻觉降低与可靠性工程深度实用指南 - Jimmy Song
+  URL: https://jimmysong.io/zh/book/ai-handbook/playbook/hallucination/
+  AI 幻觉不可避免，但高可靠性工程让幻觉可控、可查、可防，助你打造值得信赖的智能系统。 本文系统梳理了RAG. RAG（检索增强生成）. 通过检索外部知识并与 ...
+
+AI 提示词（Prompt）入门五：ChatGPT 幻觉问题？如何解决？ - 知乎
+  URL: https://zhuanlan.zhihu.com/p/681701122
+  通过分析语言模型内部状态，尝试检测和减少幻觉现象。SAPLMA方法通过在模型的每个隐藏层添加分类器来判断信息真实性，这种方法帮助识别和减轻生成过程 ...

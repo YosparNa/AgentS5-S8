@@ -1,0 +1,1092 @@
+Reducing AI Hallucinations: 6 Prompt Engineering Techniques That ...
+  URL: https://medium.com/@aysan.nazarmohamady/reducing-ai-hallucinations-6-prompt-engineering-techniques-that-actually-work-16b583797bd0
+  The good news? Strategic prompt engineering can reduce hallucination rates by up to 36% according to research. Through experimentation with ...
+
+  --- Content ---
+  [Sitemap](https://medium.com/sitemap/sitemap.xml)
+  
+  [Open in app](https://play.google.com/store/apps/details?id=com.medium.reader&referrer=utm_source%3DmobileNavBar&source=post_page---top_nav_layout_nav-----------------------------------------)
+  
+  Sign up
+  
+  [Sign in](https://medium.com/m/signin?operation=login&redirect=https%3A%2F%2Fmedium.com%2F%40aysan.nazarmohamady%2Freducing-ai-hallucinations-6-prompt-engineering-techniques-that-actually-work-16b583797bd0&source=post_page---top_nav_layout_nav-----------------------global_nav------------------)
+  
+  [Medium Logo](https://medium.com/?source=post_page---top_nav_layout_nav-----------------------------------------)
+  
+  Get app
+  
+  [Write](https://medium.com/m/signin?operation=register&redirect=https%3A%2F%2Fmedium.com%2Fnew-story&source=---top_nav_layout_nav-----------------------new_post_topnav------------------)
+  
+  [Search](https://medium.com/search?source=post_page---top_nav_layout_nav-----------------------------------------)
+  
+  Sign up
+  
+  [Sign in](https://medium.com/m/signin?operation=login&redirect=https%3A%2F%2Fmedium.com%2F%40aysan.nazarmohamady%2Freducing-ai-hallucinations-6-prompt-engineering-techniques-that-actually-work-16b583797bd0&source=post_page---top_nav_layout_nav-----------------------global_nav------------------)
+  
+  ![Unknown user](https://miro.medium.com/v2/resize:fill:32:32/1*dmbNkD5D-u45r44go_cf0g.png)
+  
+  # Reducing AI Hallucinations: 6 Prompt Engineering Techniques That Actually Work
+  
+  [![Aysan Nazarmohammadi](https://miro.medium.com/v2/resize:fill:32:32/1*YD336h2Em9bWcqACNcvVbg.jpeg)](https://medium.com/@aysan.nazarmohamady?source=post_page---byline--16b583797bd0---------------------------------------)
+  
+  [Aysan Nazarmohammadi](https://medium.com/@aysan.nazarmohamady?source=post_page---byline--16b583797bd0---------------------------------------)
+  
+  Follow
+  
+  7 min read
+  
+  ·
+  
+  Dec 3, 2025
+  
+  [Listen](https://medium.com/m/signin?actionUrl=https%3A%2F%2Fmedium.com%2Fplans%3Fdimension%3Dpost_audio_button%26postId%3D16b583797bd0&operation=register&redirect=https%3A%2F%2Fmedium.com%2F%40aysan.nazarmohamady%2Freducing-ai-hallucinations-6-prompt-engineering-techniques-that-actually-work-16b583797bd0&source=---header_actions--16b583797bd0---------------------post_audio_button------------------)
+  
+  Share
+  
+  Press enter or click to view image in full size
+  
+  ![](https://miro.medium.com/v2/resize:fit:700/0*kKtK6qc8KFsK21uD.jpg)
+  
+  AI Hallucinations
+  
+  ## Why Your AI Keeps Making Things Up (And How to Fix It)
+  
+  AI hallucinations — when language models confidently generate false or nonsensical information — remain one of the most persistent challenges in deploying LLMs in production. A recent study found that chatbots fabricate facts approximately 27% of the time, with 46% of generated texts containing factual errors. In domains like news analysis, healthcare, and finance, where accuracy is non-negotiable, these hallucinations can undermine trust and cause real harm.
+  
+  The good news? Strategic prompt engineering can reduce hallucination rates by up to 36% according to research. Through experimentation with various LLMs including GPT-4, Claude, and open-source models, I’ve identified six practical techniques that consistently improve output accuracy. Let’s explore them.
+  
+  ## 1\. Chain-of-Thought (CoT) Prompting: Make AI Show Its Work
+  
+  **What it is:** Instead of asking for a direct answer, you explicitly instruct the model to reason step-by-step before reaching a conclusion.
+  
+  **Why it works:** CoT prompting reduces logic gaps and encourages internal consistency, making it harder for the model to fabricate information mid-reasoning.
+  
+  **Before (High Hallucination Risk):**
+  
+  ```
+  What were the main causes of the 2008 financial crisis?
+  ```
+  
+  **After (CoT Approach):**
+  
+  ```
+  Analyze the 2008 financial crisis step-by-step:
+  1. What economic conditions existed before 2008?
+  2. What specific events triggered the crisis?
+  3. What were the underlying systemic issues?
+  4. How did these factors interconnect?
+  
+  Please think through each step before providing your final analysis.
+  ```
+  
+  **Real-world impact:** Research shows CoT can improve accuracy by up to 30% in complex reasoning tasks. The key is forcing the model to build its argument incrementally rather than generating a plausible-sounding answer from nowhere.
+  
+  **Pro tip:** Add “If you’re uncertain about any step, explicitly state your confidence level” to surface knowledge gaps.
+  
+  ## 2\. “According to…” Prompting: Ground Responses in Sources
+  
+  **What it is:** Explicitly instruct the model to base its answer on specific, verifiable sources.
+  
+  **Why it works:** By directing the model toward authoritative references, you discourage invention-based hallucinations and promote fact-based reasoning.
+  
+  **Before:**
+  
+  ```
+  What are the side effects of aspirin?
+  ```
+  
+  **After:**
+  
+  ```
+  According to medical literature and FDA guidelines, what are the documented side effects of aspirin? Please cite specific sources for each major side effect.
+  ```
+  
+  **Implementation examples:**
+  
+  - “Based on the official documentation…”
+  - “According to peer-reviewed research…”
+  - “As stated in the company’s quarterly report…”
+  
+  Studies indicate this method can improve accuracy by up to 20%. The technique works particularly well when combined with Retrieval-Augmented Generation (RAG) systems where you can directly provide source documents.
+  
+  ## 3\. Retrieval-Augmented Generation (RAG): Provide Direct Context
+  
+  **What it is:** Instead of relying on the model’s training data, you provide relevant documents or data directly in the prompt.
+  
+  **Why it works:** RAG grounds the model’s response in actual retrieved information, dramatically reducing the need for it to “fill in” missing knowledge with fabricated details.
+  
+  **Basic RAG Template:**
+  
+  ```
+  Using ONLY the information in the following document, answer the question below. If the document doesn't contain the answer, respond with "insufficient data."
+  
+  [DOCUMENT CONTENT]
+  ---
+  Document 1: Recent analysis shows global semiconductor sales reached $555 billion in 2023, representing a 1.1% decline from 2022...
+  
+  Document 2: According to TSMC's Q4 report, 3nm chip production increased by 45% quarter-over-quarter...
+  ---
+  
+  Question: What were the trends in semiconductor sales and production in 2023?
+  
+  Answer based only on the provided documents.
+  ```
+  
+  **Key considerations:**
+  
+  - Quality of retrieved documents directly impacts results
+  - Multiple complementary sources provide more robustness
+  - Explicitly instruct “use ONLY the provided information”
+  
+  **Advanced variation:** Combine RAG with CoT by asking the model to quote specific passages that support each part of its reasoning.
+  
+  ## 4\. Step-Back Prompting: Zoom Out Before Diving In
+  
+  **What it is:** Before tackling the specific question, ask the model to first consider higher-level context and principles.
+  
+  **Why it works:** By encouraging abstract thinking first, the model builds a conceptual framework that guides more accurate specific answers. Research shows this outperforms standard CoT by up to 36% in some cases.
+  
+  **Template Structure:**
+  
+  ```
+  Step 1 (Abstraction): What are the general principles underlying [topic]?
+  Step 2 (Reasoning): Given those principles, [specific question]?
+  ```
+  
+  **Example:**
+  
+  ```
+  Instead of directly asking: "How can I optimize my database query performance?"
+  
+  Use Step-Back:
+  "First, what are the fundamental factors that affect database query performance in general?
+  
+  Now, given a PostgreSQL database with 50M rows and complex JOIN operations, what specific optimization strategies would you recommend?"
+  ```
+  
+  **When to use it:** Complex technical questions, strategic planning, any scenario requiring holistic understanding before specific recommendations.
+  
+  ## 5\. Structured Output with Constraints: Control the Format
+  
+  **What it is:** Explicitly define the format and structure you expect, limiting the model’s creative freedom.
+  
+  **Why it works:** Tight format control reduces speculative or tangential statements, preventing the model from drifting into unsupported claims or made-up statistics.
+  
+  ## Get Aysan Nazarmohammadi’s stories in your inbox
+  
+  Join Medium for free to get updates from this writer.
+  
+  Subscribe
+  
+  Subscribe
+  
+  Remember me for faster sign in
+  
+  **Example Template:**
+  
+  ```
+  Analyze competitor pricing strategies. Format your response EXACTLY as follows, using only factual information:
+  
+  1. Competitor Name: [name]
+     - Pricing Model: [specific model]
+     - Price Point: [exact number with source]
+     - Market Position: [one sentence]
+     - Source: [where this data came from]
+  
+  If any information is unavailable, write "Data not available" instead of estimating.
+  
+  Provide analysis for exactly 3 competitors.
+  ```
+  
+  **Additional constraints that help:**
+  
+  - Maximum word/sentence counts
+  - Required sections
+  - Explicit prohibition of estimation (“Do not estimate or approximate”)
+  - JSON or structured data formats
+  
+  **Real-world application:** In news analysis systems, I’ve found that requiring sources and confidence levels for each claim reduces hallucinations by approximately 40%.
+  
+  ## 6\. Self-Verification: Make AI Check Its Own Work
+  
+  **What it is:** After generating a response, prompt the model to evaluate its own answer for potential inaccuracies.
+  
+  **Why it works:** This meta-cognitive approach surfaces uncertainty and knowledge gaps the model might not have acknowledged initially.
+  
+  **Two-Step Template:**
+  
+  ```
+  Step 1: [Your original question]
+  
+  Step 2: Review your answer above and:
+  - Identify any claims you're less than 90% confident about
+  - Note any logical inconsistencies
+  - Flag areas where you might be filling gaps with plausible-sounding information
+  - Provide a confidence score (0-10) for your overall response
+  ```
+  
+  **Advanced variation (Chain-of-Verification):**
+  
+  ```
+  1. Generate initial answer
+  2. Generate verification questions about your answer
+  3. Answer those verification questions independently
+  4. Use verification answers to revise original response
+  ```
+  
+  Research shows this CoVe (Chain-of-Verification) method significantly reduces hallucinated content by forcing the model to cross-check its own output.
+  
+  ## Combining Techniques: The Power of Layered Approaches
+  
+  The real magic happens when you combine multiple techniques. Here’s a powerful template that layers several methods:
+  
+  ```
+  Context: [Provide relevant documents - RAG]
+  
+  Task: [Specific question]
+  
+  Instructions:
+  1. First, identify the high-level principles relevant to this question [Step-Back]
+  2. Think through this step-by-step [CoT]
+  3. Base your response ONLY on the provided context [RAG constraint]
+  4. Format your answer as:
+     - Main Finding: [one sentence]
+     - Supporting Evidence: [quotes from context with document references]
+     - Confidence Level: [0-10]
+     [Structured Output]
+  
+  5. Finally, review your response and flag any uncertain claims [Self-Verification]
+  ```
+  
+  ## Quick Implementation Checklist
+  
+  When crafting prompts to minimize hallucinations:
+  
+  **Do:**
+  
+  - Be specific and detailed. Vague prompts invite creative gap-filling.
+  - Request sources. Use “According to…” or “Based on…” language.
+  - Provide context. Use RAG when you have relevant documents.
+  - Break down complexity. Apply multi-step reasoning for complex questions.
+  - Control output format. Define structured responses with clear constraints.
+  - Lower temperature. Set to 0.3–0.5 for factual tasks (vs. 0.7–1.0 for creative work).
+  - Request confidence levels. Make uncertainty explicit.
+  - Test and iterate. Different models respond differently to prompting techniques.
+  
+  **Don’t:**
+  
+  - Ask open-ended questions without constraints for factual tasks.
+  - Accept first output, especially for high-stakes applications.
+  - Ignore uncertainty signals. If model says “I think” or “possibly,” probe deeper.
+  
+  ## The Reality Check: Prompting Isn’t a Silver Bullet
+  
+  While these techniques significantly reduce hallucinations, it’s crucial to acknowledge their limitations. Prompt engineering is a powerful diagnostic tool that surfaces model capability gaps, but it’s not a complete solution to AI safety.
+  
+  For production systems handling critical information:
+  
+  - **Always implement verification layers** — Human review, fact-checking APIs, or cross-validation with multiple models
+  - **Monitor and log** — Track hallucination rates and patterns
+  - **Set clear expectations** — Communicate AI limitations to end users
+  - **Combine approaches** — Use prompt engineering alongside fine-tuning, better training data, and architectural improvements
+  
+  ## Moving Forward
+  
+  As language models become more sophisticated, the gap between their articulate outputs and their actual grounding in truth remains a fundamental challenge. The techniques outlined here represent the current state-of-the-art in prompt engineering for hallucination reduction, backed by peer-reviewed research and real-world application.
+  
+  The key insight: Hallucinations aren’t just a model problem — they’re often a prompt problem. By being deliberate about how we query these systems, we can dramatically improve their reliability.
+  
+  Start with one or two techniques, measure the results, and iterate. Your specific use case will determine which combination works best. And remember: the goal isn’t to eliminate hallucinations entirely (likely impossible with current technology), but to reduce them to acceptable levels while maintaining the model’s usefulness.
+  
+  ## References & Further Reading
+  
+  1. [Chain-of-Verification Reduces Hallucinations](https://arxiv.org/abs/2309.11495) — Meta AI Research
+  2. [Step-Back Prompting Technical Paper](https://arxiv.org/abs/2310.06117) — Google DeepMind
+  3. [Retrieval-Augmented Generation for Knowledge-Intensive NLP](https://arxiv.org/abs/2005.11401) — Facebook AI
+  4. [Prompt Engineering Guide](https://www.promptingguide.ai/) — Comprehensive resource
+  5. [AI Hallucination Research Overview](https://en.wikipedia.org/wiki/Hallucination_(artificial_intelligence)) — Wikipedia
+  
+  [Ai Hallucination](https://medium.com/tag/ai-hallucination?source=post_page-----16b583797bd0---------------------------------------)
+  
+  [Prompt Engineering](https://medium.com/tag/prompt-engineering?source=post_page-----16b583797bd0---------------------------------------)
+  
+  [Llm Accuracy](https://medium.com/tag/llm-accuracy?source=post_page-----16b583797bd0---------------------------------------)
+  
+  [Ai Reliability](https://medium.com/tag/ai-reliability?source=post_page-----16b583797bd0---------------------------------------)
+  
+  [![Aysan Nazarmohammadi](https://miro.medium.com/v2/resize:fill:48:48/1*YD336h2Em9bWcqACNcvVbg.jpeg)](https://medium.com/@aysan.nazarmohamady?source=post_page---post_author_info--16b583797bd0---------------------------------------)
+  
+  [![Aysan Nazarmohammadi](https://miro.medium.com/v2/resize:fill:64:64/1*YD336h2Em9bWcqACNcvVbg.jpeg)](https://medium.com/@aysan.nazarmohamady?source=post_page---post_author_info--16b583797bd0---------------------------------------)
+  
+  Follow
+  
+  [**Written by Aysan Nazarmohammadi**](https://medium.com/@aysan.nazarmohamady?source=post_page---post_author_info--16b583797bd0---------------------------------------)
+  
+  [13 followers](https://medium.com/@aysan.nazarmohamady/followers?source=post_page---post_author_info--16b583797bd0---------------------------------------)
+  
+  · [1 following](https://medium.com/@aysan.nazarmohamady/following?source=post_page---post_author_info--16b583797bd0---------------------------------------)
+  
+  Follow
+  
+  [Help](https://help.medium.com/hc/en-us?source=post_page-----16b583797bd0---------------------------------------)
+  
+  [Status](https://status.medium.com/?source=post_page-----16b583797bd0---------------------------------------)
+  
+  [About](https://medium.com/about?autoplay=1&source=post_page-----16b583797bd0---------------------------------------)
+  
+  [Careers](https://medium.com/jobs-at-medium/work-at-medium-959d1a85284e?source=post_page-----16b583797bd0---------------------------------------)
+  
+  [Press](mailto:pressinquiries@medium.com)
+  
+  [Blog](https://blog.medium.com/?source=post_page-----16b583797bd0---------------------------------------)
+  
+  [Store](https://medium.com/store)
+  
+  [Privacy](https://policy.medium.com/medium-privacy-policy-f03bf92035c9?source=post_page-----16b583797bd0---------------------------------------)
+  
+  [Rules](https://policy.medium.com/medium-rules-30e5502c4eb4?source=post_page-----16b583797bd0---------------------------------------)
+  
+  [Terms](https://policy.medium.com/medium-terms-of-service-9db0094a1e0f?source=post_page-----16b583797bd0---------------------------------------)
+  
+  [Text to speech](https://speechify.com/medium?source=post_page-----16b583797bd0---------------------------------------)
+  
+  reCAPTCHA
+  --- End Content ---
+
+Improve Accuracy and Reduce Hallucinations with a ... - PromptHub
+  URL: https://www.prompthub.us/blog/improve-accuracy-and-reduce-hallucinations-with-a-simple-prompting-technique
+  Adding the “According to” phrase to your prompt increases the probability that LLMs will ground their response in data they've been trained on, ...
+
+  --- Content ---
+  # Improve Accuracy and Reduce Hallucinations with a Simple Prompting Technique
+  
+  Last updated on
+  
+  January 15, 2025
+  
+  Contents
+  
+  Hallucinations are a big problem in the AI space. If you’re using any generative AI tools, (ChatGPT included), the likelihood of receiving incorrect information is high.
+  
+  Our friends over at [Synthminds](https://synthminds.ai/) shared a study with us from Johns Hopkins University that introduces a prompting method that can **help reduce hallucinations**. (You can check it out [here](https://arxiv.org/pdf/2305.13252.pdf)).
+  
+  The study introduced a method called “According to…”. _According-to_ prompting directs LLMs to ground their responses using data from their pre-training set. This method was inspired by journalists' practice of quoting information “according to sources”.
+  
+  It involves adding some text to a prompt that instructs the model to source information from a specific (and trusted) source, like Wikipedia.
+  
+  ‍
+  
+  ![Graphic displaying messages between human and AI, using the according to method](https://cdn.prod.website-files.com/646e63db3a42c618e0a9935c/66bcb8573aa92a4b2a131e46_64d3fb6068f4310943f17a52_Accoring%2520to%2520prompting%2520method%2520example.png)
+  
+  After adding in the "According to" phrase, the output becomes more grounded to factual data
+  
+  ‍
+  
+  ### The core of “According to...” prompting
+  
+  Adding the “According to” phrase to your prompt increases the probability that LLMs will ground their response in data they’ve been trained on, rather than making things up (i.e. hallucinating).
+  
+  This method goes beyond referencing just one source like Wikipedia. It can pull from anything that is known to be in the pre-trained data. I've listed a few examples below.
+  
+  ### Grounding Examples
+  
+  **Law**:
+  
+  - "Based on the rulings in Harvard Law Review..."
+  
+  **Medicine**:
+  
+  - "According to the World Health Organization's latest report..."
+  
+  **Entertainment**:
+  
+  - "Based on the reviews in Rotten Tomatoes..."
+  
+  **Finance**:
+  
+  - "As per the insights from Bloomberg's market data..."
+  
+  **Technology**:
+  
+  - "As highlighted in the latest issue of MIT Technology Review..."
+  
+  **Education**:
+  
+  - "Based on the curriculum guidelines from the Department of Education..."
+  
+  **Environment**:
+  
+  - "Based on the data from the Environmental Protection Agency (EPA)..."
+  
+  ‍
+  
+  We put together a simple template so that you can try this method out in PromptHub (link [here](https://app.prompthub.us/templates/168)).
+  
+  If you don't have PromptHub access but want to try it out, reply to the email that gets sent when you join the waitlist and I'll share an access code with you
+  
+  ‍
+  
+  ![The "according to" template in the PromptHub platform  ](https://cdn.prod.website-files.com/646e63db3a42c618e0a9935c/66bcb8583aa92a4b2a131e61_64d4ffbf158fd5af4e812b41_According%2520to%2520prompt%2520template.png)
+  
+  [Test Prompt](https://app.prompthub.us/templates/168)
+  
+  ‍
+  
+  ### Experiments: Setup
+  
+  The researchers ran experiments across a variety of open and closed source models.
+  
+  They used open-source datasets (Natural Questions, TriviaQA, HotpotQA, and ELI5) to gather questions and tasks for the experiment.
+  
+  **Experiment design**
+  
+  The main goal was to compare the grounding effectiveness of the “According to...” method. The main question was “when we add these types of phrases to prompts, does output better reflect the exact data from the pre-trained set?”.
+  
+  For each dataset, the model was presented with a question or task.
+  
+  **Measurement with QUIP-Score**
+  
+  To ensure that the model's responses were genuinely rooted in its pre-training data, the researchers used a tool called [Data Portraits](https://arxiv.org/abs/2303.03919). This tool allowed them to quickly determine if the model’s output was directly pulled from its training data.
+  
+  Data Portraits work by indexing a large corpus (like Wikipedia) and then performing fast lookups to see if a particular sequence of words in the model's output was present in the indexed data.
+  
+  To quantify the grounding of the model’s output, the researchers created a metric called the QUIP-Score (Quoted Information Precision). A higher score means a more significant portion of the output corresponds with its training data.
+  
+  ### Experiments: **Results**
+  
+  **Overview**
+  
+  ![Table of showing the performance differences between the null prompt, grounded props, and anti-grounded prompts](https://cdn.prod.website-files.com/646e63db3a42c618e0a9935c/67882cbf37e7588112ef9f9b_64d413dec7702dfde34e2aa7_List%2520of%2520prompts%2520and%2520their%2520scores.png)
+  
+  Performance of the null, grounded, and anti-grounded prompts
+  
+  ‍
+  
+  A few notes about the graph above
+  
+  - The top section is the null prompt (no additional prompt other than the question or task)
+  - The middle section includes the grounding prompts
+  - The last section includes the anti-grounding prompts
+  - Colored cells indicate gains (green), losses (red), or the same (gray)
+  
+  ‍
+  
+  **Grounding effectiveness compared to traditional prompting**
+  
+  ‍
+  
+  ![A table comparing how different models performed with grounded prompts vs the null prompt](https://cdn.prod.website-files.com/646e63db3a42c618e0a9935c/67882cbf37e7588112ef9fb3_64d412b306031227c3f1756a_Table%2520showing%2520percentage%2520improvement%2520for%2520grounding%2520prompt%2520vs%2520null.png)
+  
+  Percentage improvements when using the grounding prompt compared to the null prompt across models
+  
+  ‍
+  
+  Outputs generated using the "According to..." method were consistently more grounded in factual data from the training corpus and achieved higher QUIP-Scores compared to traditional prompting (usually by 5-15%).
+  
+  While the primary focus was on grounding, the researchers noted that the “According to…” method sometimes also improved the _quality_ of the responses.
+  
+  One very important thing to note is that a high grounding or QUIP score doesn’t always equate to the correctness of the answer.
+  
+  **Anti-grounding prompts**
+  
+  Anti-grounding prompts, which either discouraged grounding or instructed the model to anchor its answers in other corpora, typically led to diminished grounding to the pre-trained data and lower QUIP-Scores.
+  
+  Additionally, in tasks that relied heavily on Wikipedia content, the use of anti-grounding prompts also led to a decrease in performance as well.
+  
+  **Impact of model size**
+  
+  The experiments spanned across various models, of different sizes. As the model size increased, so did its ability to effectively ground its responses.
+  
+  ‍
+  
+  ![2 graphs demonstrating results from the experiment, based on model size ](https://cdn.prod.website-files.com/646e63db3a42c618e0a9935c/67882cbf37e7588112ef9fa2_64d4105dde116116f7cf8aee_Model%2520size%2520vs%2520QUIP-Score.png)
+  
+  The larger the model, the better its ability to effectively ground its responses
+  
+  ‍
+  
+  **Impact of frequency**
+  
+  The study showed that text that is frequently present in the training data is more likely to be accurately referenced in the model's output.
+  
+  ‍
+  
+  ![2 bar graphs showing how the frequency of an entity in training data related to its QUIP-Score](https://cdn.prod.website-files.com/646e63db3a42c618e0a9935c/67882cbf37e7588112ef9f9f_64d4107cbb348f0c9b76d962_graph%2520of%2520impact%2520of%2520entity%2520frequency%2520on%2520QUIP-Scores.png)
+  
+  The more frequent a piece of info appeared in the training data, the easier it could be grounded
+  
+  ‍
+  
+  **Example prompts and responses**
+  
+  ‍
+  
+  ![table of prompts and outputs from null prompt and grounded prompts](https://cdn.prod.website-files.com/646e63db3a42c618e0a9935c/67882cbf37e7588112ef9fc0_64d41593bb65b931986d9958_Prompt%2520Examples.png)
+  
+  Outputs from null prompts and grounded prompts
+  
+  ‍
+  
+  ### I **ncorporating "According to..." in fine-tuned models**
+  
+  A challenge when using the “According to…” method on models that are closed (like OpenAI models), is that you can’t be 100% sure of what is in the training data. But if you fine tune your own model, you’ll know with greater detail. Grounding responses in reliable pre-trained data can bolster the accuracy and reliability of these specialized models.
+  
+  An important thing to keep in mind is one of the fundamental rules of prompt engineering, “give the model room to think”. You don’t want grounding to overly restrict the model’s creative or problem-solving capabilities. For example, if you attempt to ground a query about law to an entertainment corpus, you might end up with incorrect results.
+  
+  ‍
+  
+  ### Wrapping up
+  
+  The “According to…” method is another tool you can add to your prompt engineering toolbelt.
+  
+  If you’re interested in other prompt engineering methods I would recommend checking out our other articles:
+  
+  - [Exploring Multi-Persona Prompting for Better Outputs](https://www.prompthub.us/blog/exploring-multi-persona-prompting-for-better-outputs)
+  - [How Tree of Thoughts Prompting Works](https://www.prompthub.us/blog/how-tree-of-thoughts-prompting-works)
+  
+  ‍
+  
+  Happy prompting!
+  
+  ![Headshot of founder Dan Claery](https://cdn.prod.website-files.com/646e63db3a42c618e0a9935c/646e68e621bf1a9b0321ad7b_Product%20Hunt%20Headshot.png)
+  
+  Dan Cleary
+  
+  Founder
+  
+  ## Get the week's best prompt engineering and AI content
+  
+  Dan's Working Notes \| Substack
+  
+  [![Logo](https://substackcdn.com/image/fetch/$s_!HQuX!,w_170,c_limit,f_auto,q_auto:best,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fb0984d55-403c-4b6b-bddb-d7efc4864b7c_1600x1600.png)](https://danjcleary.substack.com/)
+  
+  # [Dan's Working Notes](https://danjcleary.substack.com/)
+  
+  I’m building an AI startup. This is what I’m learning along the way.
+  
+  By Dan Cleary
+  · Over 9,000 subscribers
+  
+  Subscribe
+  
+  By subscribing you agree to [Substack's Terms of Use](https://danjcleary.substack.com/tos?utm_source=embed_publication), [our Privacy Policy](https://danjcleary.substack.com/privacy?utm_source=embed_publication) and [our Information collection notice](https://substack.com/ccpa?utm_source=embed_publication#personal-data-collected)
+  
+  [![Substack](https://substackcdn.com/image/fetch/$s_!R0u0!,w_200,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack.com%2Fimg%2Fsubstack_wordmark.black.png)](https://substack.com/?utm_source=embed&utm_content=danjcleary)
+  
+  ## Join thousands of AI builders
+  
+  [Start for free](https://app.prompthub.us/register) [Schedule a demo](https://calendly.com/prompthub/onboarding)
+  
+  ## More from the PromptHub Blog
+  
+  [![A zoomed-in picture of a white Church](https://cdn.prod.website-files.com/646e63db3a42c618e0a9935c/68fa9045a429aa5e8fdeb506_thumbnail%2085.png)\\
+  **LLMs Are Eating the Context Layer** \\
+  \\
+  October 23, 2025](https://www.prompthub.us/blog/llms-are-eating-the-context-layer)
+  
+  [![An orange desert scene](https://cdn.prod.website-files.com/646e63db3a42c618e0a9935c/68ed4389b132e2acf92642c4_thumbnail%2084.png)\\
+  **OpenAI DevDay 2025 Roundup: Apps, Agents, and the New AI Stack** \\
+  \\
+  October 13, 2025](https://www.prompthub.us/blog/openai-devday-2025-roundup-apps-agents-and-the-new-ai-stack)
+  
+  [![Orange siding on a glass building](https://cdn.prod.website-files.com/646e63db3a42c618e0a9935c/68dee7d32078e73014db79a0_thumbnail%2083.png)\\
+  **Everything You Need to Know about Claude 4.5** \\
+  \\
+  October 2, 2025](https://www.prompthub.us/blog/everything-you-need-to-know-about-claude-4-5)
+  --- End Content ---
+
+Grounding AI reduces hallucinations and increases response ...
+  URL: https://www.k2view.com/blog/grounding-ai/
+  Grounding AI is the process of connecting large language models to real-world data to prevent hallucinations and ensure more reliable and relevant outputs.
+
+  --- Content ---
+  🎉 K2view named a **Visionary** in Gartner’s latest Magic Quadrant for Data Integration
+  
+  [Read More](https://www.k2view.com/cs/c/?cta_guid=58a9c48d-5c01-4e60-9977-a17918936cf1&signature=AAH58kGgZcE4PGW_469I-THELLDzmjGSAQ&portal_id=5983023&pageId=172471027607&placement_guid=f06858ef-51b7-4bf9-a58e-6ffcd4a0e16e&click=a6b59e14-c268-42fb-a94a-43a630bf0904&redirect_url=APefjpEPsyVbB6SqwzvaO0k06xZBFmP-wqpZjHazsmZhpPj0shTBAhXmWI2Mq7YYddEa4W2UUfUzgnLdy-OOY-gfyINutkXFCk-AoTiflsZV3Jih3CtAtbaZdr-mTAt_SiDtjjP_I0S9C4Rd51K6Kd264pvpXLunEdmff3Thi9XuvHCH6W4g02NhfzqACrN791DwcePYRe01&hsutk=&canon=https%3A%2F%2Fwww.k2view.com%2Fblog%2Fgrounding-ai%2F&ts=1781345072758 "Read More")
+  
+  [![](https://www.k2view.com/hubfs/k2view-logo-1.svg)](https://www.k2view.com/)
+  
+  [![logo-light](https://www.k2view.com/hubfs/logo-light.svg)](https://www.k2view.com/)
+  
+  - Platform
+  
+  
+  
+  
+  
+  
+  ### Overview
+  
+  
+  
+  
+    - [Data Product Platform](https://www.k2view.com/platform/data-product-platform/)
+    - [Micro-Database Technology](https://www.k2view.com/platform/micro-database/)
+    - [Demo Video](https://www.k2view.com/data-product-platform-demo/)
+  
+  ### Capabilities
+  
+    - [Data Integration](https://www.k2view.com/platform/data-integration-tools/)
+    - [Data Virtualization](https://www.k2view.com/platform/data-virtualization-tools)
+    - [Data-as-a-Service Automation](https://www.k2view.com/platform/data-as-a-service-automation/)
+    - [Data Governance](https://www.k2view.com/platform/data-governance-tools/)
+    - [Data Catalog](https://www.k2view.com/platform/data-catalog/)
+    - [Data Orchestration](https://www.k2view.com/platform/data-orchestration-tools/)
+  
+  ### Architecture
+  
+    - [Data Fabric](https://www.k2view.com/platform/data-fabric-architecture/)
+    - [Data Mesh](https://www.k2view.com/platform/data-mesh-architecture/)
+    - [Data Hub](https://www.k2view.com/platform/data-hub-architecture/)
+  
+  [![demo](https://www.k2view.com/hs-fs/hubfs/DEMO-Dec-01-2025-10-07-55-0055-AM.png?width=1354&height=1127&name=DEMO-Dec-01-2025-10-07-55-0055-AM.png)](https://www.k2view.com/data-product-platform-demo/?utm_campaign=K2view&utm_source=top-nav-bar)
+  
+  - Solutions
+  
+  
+  
+  
+  
+  
+  ### Data Privacy and Compliance
+  
+  
+  
+  
+    - [Synthetic Data Generation](https://www.k2view.com/solutions/synthetic-data-generation-tools/)
+    - [Test Data Management](https://www.k2view.com/solutions/test-data-management-software/)
+    - [Data Masking](https://www.k2view.com/solutions/data-masking-tools/)
+    - [Data Tokenization](https://www.k2view.com/solution/data-tokenization-tools/)
+  
+  ### Data for Generative AI
+  
+    - [AI Data Readiness](https://www.k2view.com/solutions/ai-ready-data/)
+    - [Data-Grounded AI Chatbots](https://www.k2view.com/solutions/ai-chatbot-for-customer-service)
+    - [MCP Data Integration](https://www.k2view.com/solutions/mcp-integration/)
+    - [Retrieval-Augmented Generation (RAG)](https://www.k2view.com/solutions/rag-tools/)
+  
+  ### Data Integration
+  
+    - [Customer Data Integration](https://www.k2view.com/solutions/customer-360-platform)
+    - [Data Pipelining](https://www.k2view.com/solutions/data-pipeline-tools/)
+    - [Cloud Data Integration (iPaaS)](https://www.k2view.com/platform/ipaas-platform/)
+    - [Data Migration](https://www.k2view.com/solutions/data-migration-tools/)
+  
+  [![product tour](https://www.k2view.com/hs-fs/hubfs/PT-Dec-01-2025-10-07-55-0420-AM.png?width=1354&height=1127&name=PT-Dec-01-2025-10-07-55-0420-AM.png)](https://www.k2view.com/product-experience?utm_campaign=K2view&utm_source=top-nav-bar)
+  
+  - Company
+  
+  
+  
+  
+  
+  
+  ### Company
+  
+  
+  
+  
+    - [Who we are](https://www.k2view.com/company/)
+    - [News](https://www.k2view.com/news-blog)
+    - [Customers](https://www.k2view.com/customers/)
+    - [Partners](https://www.k2view.com/partners/)
+  
+  ### Reach Out
+  
+    - [Contact Us](https://www.k2view.com/contact)
+    - [Support](https://support.k2view.com/)
+    - [Careers](https://www.k2view.com/careers/)
+  
+  ### News Updates
+  
+    - [K2view Recognized as Visionary for Third Consecutive Year in 2025 Gartner® Magic Quadrant™ for Data Integration Tools](https://www.k2view.com/news-blog/k2view-named-a-visionary-in-the-2025-gartner-magic-quadrant)
+    - [K2view secures $15M to fuel the next generation of Agentic AI, powered by AI-ready data](https://www.k2view.com/news-blog/k2view-secures-15m-to-fuel-the-next-generation-of-agentic-ai-powered-by-ai-ready-data)
+    - [Rocket Software and K2view partner to accelerate mainframe modernization](https://www.k2view.com/news-blog/rocket-software-and-k2view-partner-to-accelerate-mainframe-modernization-with-governed-ai-ready-test-data-for-testing-analytics-and-ai)
+  
+  - Resources
+  
+  
+  
+  
+  
+  
+  ### Resources
+  
+  
+  
+  
+    - [Blog](https://www.k2view.com/blog)
+    - [eBooks](https://www.k2view.com/resources/ebooks)
+    - [Whitepapers](https://www.k2view.com/resources/whitepapers)
+    - [Videos](https://www.k2view.com/resources/videos)
+  
+  ### Education & Training
+  
+    - [Academy](https://academy.k2view.com/)
+    - [Knowledge Base](https://support.k2view.com/knowledge-base.html)
+    - [Community](https://support.k2view.com/community.html)
+  
+  [**K2view is a Visionary in the 2025 Gartner MQ 🎉** Read more](https://www.k2view.com/blog/gartner-magic-quadrant-for-data-integration-tools-2025)
+  
+  - [Contact](https://www.k2view.com/cs/c/?cta_guid=91cfab2f-4ac3-4a1b-b07a-3bdf9ae62b07&signature=AAH58kFxV09wMdI01CMG_d5R-wYGlLaI4Q&portal_id=5983023&pageId=172471027607&placement_guid=5e81ec3b-9436-4745-8150-39c959bc0746&click=1a0fac72-a5ab-45b7-9c8f-ab752996a015&redirect_url=APefjpEBO3YcihDXtbn33UnGLu6Ok0YR4wRaBM_ot3omFuFkExxvEb7F6n-ZvGVFm-ndKZsiF9lc_0hiCOC7caBgv-QBsdiERZrDsjZWKoULbU905MKlfGs&hsutk=&canon=https%3A%2F%2Fwww.k2view.com%2Fblog%2Fgrounding-ai%2F&ts=1781345072768 "Contact")
+  
+  [Take a Quick Tour](https://www.k2view.com/cs/c/?cta_guid=6ebfe399-50cb-4f12-87e2-bc39084f6134&signature=AAH58kGhd9CB-8JT4OmTVHjp1geg1UM93w&portal_id=5983023&pageId=172471027607&placement_guid=d77e28f9-6ca3-4e02-a52d-b9a69c308e1f&click=3507136d-d18c-4d2f-814d-83721438de19&redirect_url=APefjpH-HxR8UFbzzZ5J3noSFZOMOa_v_WKNeEoo5NY1nIBmB2Tmvd_dFr876St6_CE-vrGJhjVcXAKBZQJ9ol4mGbLBPnbygVKtvC5bB-lURXMoyiaktpzBGIt6vtNxpqT01UlN0O29&hsutk=&canon=https%3A%2F%2Fwww.k2view.com%2Fblog%2Fgrounding-ai%2F&ts=1781345072773 "Take a Quick Tour")
+  
+  [Book a Demo](https://www.k2view.com/cs/c/?cta_guid=4970a03b-a932-40e1-8366-7eb4ada9e3c9&signature=AAH58kF8I5UKV46MQ07bFBp38Py8oa5dHw&portal_id=5983023&pageId=172471027607&placement_guid=900dd571-ff54-44e9-af77-0ed420b3c35f&click=4d898d0c-183a-4643-9108-fff716531300&redirect_url=APefjpEF485zipF9x58FVc-sHbwfzRB5KVsRP1MVLwpmZkAWlj6GIJWkp25O208gSQN1Ys1Nqex6hcIILxPBf4GYrCg0Ty49Sm_k_sR4LsoTtDtIaS8hpTo&hsutk=&canon=https%3A%2F%2Fwww.k2view.com%2Fblog%2Fgrounding-ai%2F&ts=1781345072764 "Book a Demo")
+  
+  [![](https://www.k2view.com/hubfs/k2view-logo-1.svg)](https://www.k2view.com/)
+  
+  [Get a demo](https://www.k2view.com/cs/c/?cta_guid=b16d1d58-8f5c-4770-8c76-e4ed9c67ac40&signature=AAH58kEP1CGjGsANvdRc444c64FZ9KyAUQ&portal_id=5983023&pageId=172471027607&placement_guid=3cdba504-5719-459f-aa35-9c4c930f1d33&click=71e17658-8bcc-417d-accd-71e0e84a659e&redirect_url=APefjpFm6BXIyQTU1782OJo_RV3cfIllb1suoJAiP6SoRtusx-EymNBiDq3mPBtrrUGJD98c-SMDKjRdDKcVNs5VCDfAWe7VMIjXlRLSznZyb0NA31N7M-hvfzmxbJxzSoUO5H4C5xbU&hsutk=&canon=https%3A%2F%2Fwww.k2view.com%2Fblog%2Fgrounding-ai%2F&ts=1781345072761 "Get a demo")
+  
+  - Platform
+  - Solutions
+  - Company
+  - Resources
+  
+  Platform
+  
+  Overview
+  
+  - [Data Product Platform](https://www.k2view.com/platform/data-product-platform/)
+  - [Micro-Database Technology](https://www.k2view.com/platform/micro-database/)
+  - [Demo Video](https://www.k2view.com/data-product-platform-demo/)
+  
+  Capabilities
+  
+  - [Data Integration](https://www.k2view.com/platform/data-integration-tools/)
+  - [Data Virtualization](https://www.k2view.com/platform/data-virtualization-tools)
+  - [Data-as-a-Service Automation](https://www.k2view.com/platform/data-as-a-service-automation/)
+  - [Data Governance](https://www.k2view.com/platform/data-governance-tools/)
+  - [Data Catalog](https://www.k2view.com/platform/data-catalog/)
+  - [Data Orchestration](https://www.k2view.com/platform/data-orchestration-tools/)
+  
+  Architecture
+  
+  - [Data Fabric](https://www.k2view.com/platform/data-fabric-architecture/)
+  - [Data Mesh](https://www.k2view.com/platform/data-mesh-architecture/)
+  - [Data Hub](https://www.k2view.com/platform/data-hub-architecture/)
+  
+  Solutions
+  
+  Data Privacy and Compliance
+  
+  - [Synthetic Data Generation](https://www.k2view.com/solutions/synthetic-data-generation-tools/)
+  - [Test Data Management](https://www.k2view.com/solutions/test-data-management-software/)
+  - [Data Masking](https://www.k2view.com/solutions/data-masking-tools/)
+  - [Data Tokenization](https://www.k2view.com/solution/data-tokenization-tools/)
+  
+  Data for Generative AI
+  
+  - [AI Data Readiness](https://www.k2view.com/solutions/ai-ready-data/)
+  - [Data-Grounded AI Chatbots](https://www.k2view.com/solutions/ai-chatbot-for-customer-service)
+  - [MCP Data Integration](https://www.k2view.com/solutions/mcp-integration/)
+  - [Retrieval-Augmented Generation (RAG)](https://www.k2view.com/solutions/rag-tools/)
+  
+  Data Integration
+  
+  - [Customer Data Integration](https://www.k2view.com/solutions/customer-360-platform)
+  - [Data Pipelining](https://www.k2view.com/solutions/data-pipeline-tools/)
+  - [Cloud Data Integration (iPaaS)](https://www.k2view.com/platform/ipaas-platform/)
+  - [Data Migration](https://www.k2view.com/solutions/data-migration-tools/)
+  
+  Company
+  
+  Company
+  
+  - [Who we are](https://www.k2view.com/company/)
+  - [News](https://www.k2view.com/news-blog)
+  - [Customers](https://www.k2view.com/customers/)
+  - [Partners](https://www.k2view.com/partners/)
+  
+  Reach Out
+  
+  - [Contact Us](https://www.k2view.com/contact)
+  - [Support](https://support.k2view.com/)
+  - [Careers](https://www.k2view.com/careers/)
+  
+  - [K2view Recognized as Visionary for Third Consecutive Year in 2025 Gartner® Magic Quadrant™ for Data Integration Tools](https://www.k2view.com/news-blog/k2view-named-a-visionary-in-the-2025-gartner-magic-quadrant)
+  - [K2view secures $15M to fuel the next generation of Agentic AI, powered by AI-ready data](https://www.k2view.com/news-blog/k2view-secures-15m-to-fuel-the-next-generation-of-agentic-ai-powered-by-ai-ready-data)
+  - [Rocket Software and K2view partner to accelerate mainframe modernization](https://www.k2view.com/news-blog/rocket-software-and-k2view-partner-to-accelerate-mainframe-modernization-with-governed-ai-ready-test-data-for-testing-analytics-and-ai)
+  
+  [All News Updates](https://www.k2view.com/news/)
+  
+  Resources
+  
+  Resources
+  
+  - [Blog](https://www.k2view.com/blog)
+  - [eBooks](https://www.k2view.com/resources/ebooks)
+  - [Whitepapers](https://www.k2view.com/resources/whitepapers)
+  - [Videos](https://www.k2view.com/resources/videos)
+  
+  Education & Training
+  
+  - [Academy](https://academy.k2view.com/)
+  - [Knowledge Base](https://support.k2view.com/knowledge-base.html)
+  - [Community](https://support.k2view.com/community.html)
+  
+  ## See Agentic AI in Action
+  
+  Go behind the scenes and see how we ground AI agents with enterprise data
+  
+  ![chat](https://www.k2view.com/hs-fs/hubfs/chat.png?width=412&height=269&name=chat.png)
+  
+  ![](https://www.k2view.com/hubfs/close-3.svg)
+  
+  ## Start your live product tour
+  
+  First name\*
+  
+  Last name\*
+  
+  Work email\*
+  
+  Phone number\*
+  
+  Latest Product Interest
+  
+  By accessing this product tour, you'll receive related communications from K2view, which you may opt out from at any time.
+  
+  Demo/PT Submitted From
+  
+  Demo/PT CTA Name
+  
+  Demo/PT CTA Link
+  
+  [K2View Blog](https://www.k2view.com/blog/)
+  
+  May 27, 2025
+  
+  # Grounding AI reduces hallucinations and increases response accuracy
+  
+  ![Iris Zarecki](https://www.k2view.com/hubfs/Iris%20headshot.jpg)
+  
+  ### [Iris Zarecki,](https://www.k2view.com/blog/author/iris-zarecki-product-marketing-manager) Product Marketing Director
+  
+  ![Grounding AI](https://www.k2view.com/hubfs/Grounding%20AI.jpg)
+  
+  ### More on this topic
+  
+  - [Generative AI hallucinations: When GenAI is more artificial than intelligent](https://www.k2view.com/blog/generative-ai-hallucinations/)
+  - [What is grounding and hallucinations in AI?](https://www.k2view.com/blog/what-is-grounding-and-hallucinations-in-ai/)
+  - [RAG prompt engineering makes LLMs super smart](https://www.k2view.com/blog/rag-prompt-engineering/)
+  
+  [Take the product tour](https://www.k2view.com/cs/c/?cta_guid=37b1e82f-5aaa-4b9d-95ff-ff69e572f4e8&signature=AAH58kHH7TBW3lyY5_MTd3JVhOpLX64WjQ&portal_id=5983023&pageId=172471027607&placement_guid=fc1b2be8-1f77-4b95-b367-4b231d732e9c&click=90a34a90-3d2a-43b5-a91e-eac958cc833b&redirect_url=APefjpHbEqND9SzDv6kp3IzJpzDNjl_faqIf95E0JHNIzc01YRM_lb9CHqsr4p5WYMcQk0JW-BwEoMgdJMUka0dCbpBfMEvwPbH4obb7tU6NPNd9wGkRoXZZEDQ75YpfzewfLdVhsdXn&hsutk=&canon=https%3A%2F%2Fwww.k2view.com%2Fblog%2Fgrounding-ai%2F&ts=1781345072794 "Take the product tour")
+  
+  ![Group 838370](https://www.k2view.com/hs-fs/hubfs/Group%20838370.png?width=193&height=85&name=Group%20838370.png)
+  
+  ### Learn how to ground GenAI apps with enterprise data
+  
+  Equip your GenAI chatbot with the context they need
+  
+  [Take the product tour](https://www.k2view.com/cs/c/?cta_guid=37b1e82f-5aaa-4b9d-95ff-ff69e572f4e8&signature=AAH58kHH7TBW3lyY5_MTd3JVhOpLX64WjQ&portal_id=5983023&pageId=172471027607&placement_guid=fc1b2be8-1f77-4b95-b367-4b231d732e9c&click=90a34a90-3d2a-43b5-a91e-eac958cc833b&redirect_url=APefjpHbEqND9SzDv6kp3IzJpzDNjl_faqIf95E0JHNIzc01YRM_lb9CHqsr4p5WYMcQk0JW-BwEoMgdJMUka0dCbpBfMEvwPbH4obb7tU6NPNd9wGkRoXZZEDQ75YpfzewfLdVhsdXn&hsutk=&canon=https%3A%2F%2Fwww.k2view.com%2Fblog%2Fgrounding-ai%2F&ts=1781345072794 "Take the product tour")
+  
+  Play
+  
+  Grounding AI reduces hallucinations and increases response accuracy
+  
+  AI-generated audio
+  
+  8:27
+  
+  ### Table of contents
+  
+  - Avoiding hallucinations with real-world data
+  - Why grounding AI is essential
+  - The benefits of grounding AI
+  - Grounding AI with GenAI Data Fusion
+  
+  Grounding AI is the process of connecting large language models to real-world data to prevent hallucinations and ensure more reliable and relevant outputs.
+  
+  ## Avoiding hallucinations with real-world data
+  
+  Grounding AI tackles a common problem with Large Language Models (LLMs): [AI hallucinations](https://www.k2view.com/what-are-ai-hallucinations/), where models create seemingly plausible, but factually incorrect, responses.
+  
+  Grounding bridges the gap between the vast language skills of LLMs and the specifics of the real world. LLMs are trained on massive amounts of text data, but they generally lack access to industry-specific knowledge, internal company data, or even just everyday experiences and information. Grounding techniques connect the LLM's understanding of language to this type of real-world knowledge.
+  
+  One popular method of grounding AI is [Retrieval-Augmented Generation](https://www.k2view.com/what-is-retrieval-augmented-generation) (RAG). This technique avoids the cost and complexity of retraining your entire LLM. Instead, RAG intercepts and enhances user prompts with relevant and timely information – helping ensure that the LLM returns a more focused and accurate response.
+  
+  Today’s most advanced [RAG tools](https://www.k2view.com/solutions/rag-tools/) are based on business entities. Entity-based RAG retrieves and augments both structured and unstructured real-time data from any source – from enterprise systems to customer 360 platforms to knowledge base docs, and more. Then, it unifies data for each business entity (customers, vendors, devices, etc.) with a [data-as-a-product](https://www.k2view.com/blog/data-as-a-product/) approach to automatically enrich LLM prompts. The end results are highly accurate and specific prompts that yield far more personalized and relevant responses.
+  
+  ## Why grounding AI is essential
+  
+  Grounding acts as a bridge for AI, allowing an LLM to grasp the meaning behind words and connect its knowledge to real-world situations. It's crucial because LLMs are not knowledge repositories, but rather reasoning engines. While they possess a vast amount of information, this information is not constantly updated and LLMs lack access to external datasets and often have difficulty grasping context or nuance.
+  
+  The main reasons for grounding AI are:
+  
+  - Stale knowledge
+  
+  LLMs are trained on massive datasets, but these datasets have a fixed timeframe. If a model was trained in 2021, its knowledge won't reflect current events or trends. Grounding AI allows us to inject fresh information for more relevant responses.
+  
+  - Limited access
+  
+  LLMs are trained on publicly available information. They have no access to the wealth of data stored privately in companies, like customer details or industry-specific knowledge. Grounding AI bridges this gap, allowing LLMs to leverage this valuable, context-rich information.
+  
+  - Hallucination prevention
+  
+  Without grounding, LLMs can generate seemingly plausible but factually incorrect responses. Grounding AI helps them stay rooted in reality by providing a connection to verifiable information.
+  
+  
+  Grounding AI unlocks the full potential of LLMs. By connecting them to the real world and providing them with relevant context, you can ensure their responses are accurate and relevant, while avoiding [LLM hallucination](https://www.k2view.com/blog/llm-hallucination/) issues.
+  
+  ## The benefits of grounding AI
+  
+  While LLMs are impressive tools, they can sometimes generate outputs that seem true but aren’t. While hallucinations can be mildly amusing, in critical situations, they can be misleading or even dangerous. Grounding AI tackles this issue head-on, offering several key benefits such as:
+  
+  #### **1\. Minimizing hallucinations for reliable results**
+  
+  Imagine asking an LLM about what dinosaurs eat. It might give you the correct answer but add a long list of irrelevant details – for example, dinosaurs’ vocal capabilities or migratory habits. While technically not wrong, this "hallucination" detracts from the response's value. Grounding helps the LLM focus on the core information relevant to the prompt and avoid these unnecessary embellishments.
+  
+  It should be noted that hallucinations aren't always a bad thing. In casual conversation, a little creativity can be engaging. The key is teaching the LLM when imagination is acceptable and when it’s not. Grounding AI helps developers achieve this balance, ensuring that all outputs are accurate, trustworthy, and engaging.
+  
+  #### **2\. Improving decision-making in enterprise settings**
+  
+  Many businesses rely on AI for crucial functions like customer service, often via chatbots.   However, standard chatbots often come off as robotic when answering customer questions, and frequently miss the nuances contained in a particular query. A [RAG chatbot](https://www.k2view.com/blog/rag-chatbot/) bridges this gap by incorporating real-time customer data. For example, consider a customer chatting with a clothing store's chatbot. The customer asks about a specific dress she saw online but can't find in-store.
+  
+  A conventional chatbot might simply say "We apologize, that item is not currently available." With RAG, the chatbot accesses the store's inventory system. It discovers the dress is actually out of stock in-store, but there are several nearby locations where it is available. The chatbot can then offer the customer the option to check nearby stores or initiate a ship-to-home order, providing a much more helpful and personalized experience.
+  
+  Grounding anchors the AI's understanding in real-world context, based on real-world data. By being able to draw on both publicly available and private data sources the RG chatbot’s responses are based on factual evidence, not just its own internal models.
+  
+  #### **3\. Enhancing interpretation of complex situations**
+  
+  The real world is messy. Data can be ambiguous, nuanced, or inconsistent. AI often struggles with these complexities, leading to misunderstandings. Grounding AI bridges this gap by providing additional context.
+  
+  For example, a chatbot might misinterpret sarcasm in a conversation. Consider a hair salon customer who quips, "Thanks for this great new haircut – it makes me look like a potato head." Lacking social cues, the LLM could easily answer, "Congratulations! Customer satisfaction surveys consistently rank our stylists' ability to achieve a 'potato head' look very high. Would you like recommendations for potato-themed accessories?"
+  
+  Misinterpreting the sarcasm, such a response might easily compound the customer’s sense of frustration. Grounding AI can help the GenAI model understand true user sentiment by incorporating information about the sender and about previous interactions.
+  
+  > The takeaway from these examples is that training data doesn’t always equip a large language model with everything it needs to answer responsibly.
+  
+  Grounding AI bridges these gaps, allowing the LLM to process real-world data more effectively, for more meaningful responses in a wider range of situations. Beyond preventing hallucinations, grounding empowers AI apps to be more reliable, adaptable, and ultimately, more helpful.
+  
+  ## Grounding AI with GenAI Data Fusion
+  
+  Pioneered by K2View, a new set of retrieval-augmented generation tools known as GenAI Data Fusion is a promising method of grounding AI models and reducing [RAG hallucinations](https://www.k2view.com/blog/rag-hallucination/). GenAI Data Fusion accesses and augments both structured and unstructured data from private enterprise data sources in real time. It aggregates all structured data related to a single business entity (customer, employee, invoice, etc.) based on a data product approach.
+  
+  [Data products](https://www.k2view.com/what-is-a-data-product/) enable GenAI Data Fusion to access real-time data from multiple enterprise systems, not just static docs from knowledge bases. With this feature, generative AI apps can leverage RAG to integrate data from your [customer 360 platform](https://www.k2view.com/solutions/customer-360-platform), and turn it into contextual prompts. The prompts are fed into the LLM, together with the user’s query, enabling the model to generate a more accurate and personalized response.
+  
+  The K2view [data product platform](https://www.k2view.com/platform/data-product-platform/) lets RAG access data products via API, CDC, messaging, or streaming – in any variation – to unify data from a wide variety of different source systems.
+  
+  The data product-RAG combo:
+  
+  - **Solves** problems quicker.
+  - **Builds** hyper-personalized marketing campaigns.
+  - **Personalizes** cross-/up-sell insights and recommendations.
+  - **Detects** fraud via suspicious activity in user accounts.
+  
+  > Discover the best [RAG tools](https://www.k2view.com/solutions/rag-tools/) for grounding AI – GenAI Data Fusion by K2view.
+  
+  ## Achieve better business outcomeswith the K2view Data Product Platform
+  
+  [Solution Overview](https://www.k2view.com/cs/c/?cta_guid=6d05f4d5-83cd-4bfc-a771-dfa2f0f5192a&signature=AAH58kEkYVw-Ql9tZiGM5ZetqUBd8_e8_g&portal_id=5983023&pageId=172471027607&placement_guid=347c22b9-477d-46f8-ae4b-47266dbfbce6&click=de30965e-e9ac-4ba7-9ba1-adf887c111ad&redirect_url=APefjpG5TZSTaKmv1cRrQF_qskm2ZfvAldzzHoEIlJNvnKGueUfuk4K4nC8hV0sDMGQ4qu3QXBdpqPsW97OW_2ZeBvhRONQzVt8NiLPpyyNxLJTqJrjSMIVcqeo2w9umyBPMJZ6OjYGtms8tM7XzTs9X9uZhwrj8AA&hsutk=&canon=https%3A%2F%2Fwww.k2view.com%2Fblog%2Fgrounding-ai%2F&ts=1781345072790 "Solution Overview")
+  
+  ## Related articles for you
+  
+  ## [Generative AI hallucinations: When GenAI is more artificial than intelligent](https://www.k2view.com/blog/generative-ai-hallucinations/)
+  
+  [June 10, 2024](https://www.k2view.com/blog/generative-ai-hallucinations/)
+  
+  [Read more](https://www.k2view.com/blog/generative-ai-hallucinations/)
+  
+  ## [What is grounding and hallucinations in AI?](https://www.k2view.com/blog/what-is-grounding-and-hallucinations-in-ai/)
+  
+  [May 1, 2024](https://www.k2view.com/blog/what-is-grounding-and-hallucinations-in-ai/)
+  
+  [Read more](https://www.k2view.com/blog/what-is-grounding-and-hallucinations-in-ai/)
+  
+  ## [RAG prompt engineering makes LLMs super smart](https://www.k2view.com/blog/rag-prompt-engineering/)
+  
+  [August 5, 2024](https://www.k2view.com/blog/rag-prompt-engineering/)
+  
+  [Read more](https://www.k2view.com/blog/rag-prompt-engineering/)
+  
+  [Take the product tour](https://www.k2view.com/cs/c/?cta_guid=37b1e82f-5aaa-4b9d-95ff-ff69e572f4e8&signature=AAH58kHH7TBW3lyY5_MTd3JVhOpLX64WjQ&portal_id=5983023&pageId=172471027607&placement_guid=fc1b2be8-1f77-4b95-b367-4b231d732e9c&click=90a34a90-3d2a-43b5-a91e-eac958cc833b&redirect_url=APefjpHbEqND9SzDv6kp3IzJpzDNjl_faqIf95E0JHNIzc01YRM_lb9CHqsr4p5WYMcQk0JW-BwEoMgdJMUka0dCbpBfMEvwPbH4obb7tU6NPNd9wGkRoXZZEDQ75YpfzewfLdVhsdXn&hsutk=&canon=https%3A%2F%2Fwww.k2view.com%2Fblog%2Fgrounding-ai%2F&ts=1781345072794 "Take the product tour")
+  
+  ![Group 838370](https://www.k2view.com/hs-fs/hubfs/Group%20838370.png?width=193&height=85&name=Group%20838370.png)
+  
+  ### Learn how to ground GenAI apps with enterprise data
+  
+  Equip your GenAI chatbot with the context they need
+  
+  [Take the product tour](https://www.k2view.com/cs/c/?cta_guid=37b1e82f-5aaa-4b9d-95ff-ff69e572f4e8&signature=AAH58kHH7TBW3lyY5_MTd3JVhOpLX64WjQ&portal_id=5983023&pageId=172471027607&placement_guid=fc1b2be8-1f77-4b95-b367-4b231d732e9c&click=90a34a90-3d2a-43b5-a91e-eac958cc833b&redirect_url=APefjpHbEqND9SzDv6kp3IzJpzDNjl_faqIf95E0JHNIzc01YRM_lb9CHqsr4p5WYMcQk0JW-BwEoMgdJMUka0dCbpBfMEvwPbH4obb7tU6NPNd9wGkRoXZZEDQ75YpfzewfLdVhsdXn&hsutk=&canon=https%3A%2F%2Fwww.k2view.com%2Fblog%2Fgrounding-ai%2F&ts=1781345072794 "Take the product tour")
+  
+  [![logo all white](https://www.k2view.com/hs-fs/hubfs/logo%20all%20white@150x-8-3.png?width=250&height=68&name=logo%20all%20white@150x-8-3.png)](https://www.k2view.com/)Deliver AI-ready data products: protected, real-time, and complete.
+  
+  ### Get Started
+  
+  - [Start a Product Tour](https://www.k2view.com/pt-sign-up)
+  - [Watch Demo Video](https://www.k2view.com/data-product-platform-demo/)
+  - [Book a Demo](https://www.k2view.com/request-demo/)
+  - [Contact Us](https://www.k2view.com/contact)
+  
+  ### PLATFORM & SOLUTIONS
+  
+  - Data Product Platform
+    - [Overview](https://www.k2view.com/platform/data-product-platform/)
+    - [Micro-Database Technology](https://www.k2view.com/platform/micro-database/)
+    - Data Privacy & Compliance
+    - [Synthetic Data Generation](https://www.k2view.com/solutions/synthetic-data-generation-tools/)
+    - [Test Data Management](https://www.k2view.com/solutions/test-data-management-tools/)
+    - [Data Masking](https://www.k2view.com/solutions/data-masking-tools/)
+    - [Data Tokenization](https://www.k2view.com/solution/data-tokenization-tools/)
+    - [Workday Data Compliance](https://www.k2view.com/solutions/workday-data-compliance/)
+  - Data for Generative AI
+    - [AI Data Readiness](https://www.k2view.com/solutions/ai-ready-data/)
+    - [Data-Grounded AI Chatbots](https://www.k2view.com/solutions/ai-ready-data/)
+    - [MCP Data Integration](https://www.k2view.com/solutions/mcp-integration/)
+    - [Enterprise Data RAG](https://www.k2view.com/solutions/rag-tools/)
+    - [Data Architecture for Agentic AI](https://www.k2view.com/data-architecture-for-agentic-ai)
+    - Data Integration
+    - [Customer Data Integration](https://www.k2view.com/solutions/customer-360-platform)
+    - [Data Migration](https://www.k2view.com/solutions/data-migration-tools/)
+    - [Data Pipelining](https://www.k2view.com/solutions/data-pipeline-tools/)
+    - [Multi-Domain MDM](https://www.k2view.com/solutions/mdm-tools/)
+  
+  ### COMPANY
+  
+  - Company
+    - [About](https://www.k2view.com/company/)
+    - [Blog](https://www.k2view.com/blog)
+    - [Customers](https://www.k2view.com/customers/)
+    - [Partners](https://www.k2view.com/partners/)
+    - [Careers](https://www.k2view.com/careers/)
+    - [News](https://www.k2view.com/news-blog)
+    - [Support](https://support.k2view.com/?_gl=1*1i99bzf*_gcl_au*MTMzMDY3NTEwNC4xNzc1NDYzMjA4*_ga*MTM3Njk2MTA0MC4xNzY3NjAzMjQw*_ga_JH5MPR6MKD*czE3NzU1NTcxMDYkbzUxJGcxJHQxNzc1NTU3NDEzJGozMCRsMCRoMTA0MDExMDM3Ng..)
+    - [Knowledge Base](https://support.k2view.com/knowledge-base.html?_gl=1*1i99bzf*_gcl_au*MTMzMDY3NTEwNC4xNzc1NDYzMjA4*_ga*MTM3Njk2MTA0MC4xNzY3NjAzMjQw*_ga_JH5MPR6MKD*czE3NzU1NTcxMDYkbzUxJGcxJHQxNzc1NTU3NDEzJGozMCRsMCRoMTA0MDExMDM3Ng..)
+    - [Security](https://www.k2view.com/security/)
+  - Resources
+    - [Test Data Management eBook](https://www.k2view.com/what-is-test-data-management/)
+    - [Data Masking Guide](https://www.k2view.com/what-is-data-masking/)
+    - [Synthetic Data Generation eBook](https://www.k2view.com/what-is-synthetic-data-generation/)
+    - [Retrieval-Augmented Generation Guide](https://www.k2view.com/what-is-retrieval-augmented-generation)
+    - [Data Agents Guide](https://www.k2view.com/what-are-data-agents/)
+    - [MCP AI Overview](https://www.k2view.com/what-is-mcp-ai/)
+    - [Data Products Guide](https://www.k2view.com/what-is-a-data-product/)
+    - [Data Fabric Guide](https://www.k2view.com/what-is-data-fabric/)
+    - [Data Mesh Guide](https://www.k2view.com/what-is-data-mesh/)
+    - [Data Virtualization Guide](https://www.k2view.com/what-is-data-virtualization/)
+  
+  © COPYRIGHT 2026 K2VIEW
+  
+  - [Privacy Policy](https://www.k2view.com/privacy-policy)
+  - [Security](https://www.k2view.com/security/)
+  - [Terms Of Use](https://www.k2view.com/terms-of-use)
+  - [Cookie Policy](https://www.k2view.com/cookie-policy/)
+  
+  - [![group-839745](https://www.k2view.com/hs-fs/hubfs/group-839745.webp?width=27&height=27&name=group-839745.webp)](https://www.k2view.com/security/)
+  - [![image-669](https://www.k2view.com/hs-fs/hubfs/image-669.webp?width=27&height=27&name=image-669.webp)](https://www.k2view.com/security/)
+  - [![image-670](https://www.k2view.com/hs-fs/hubfs/image-670.webp?width=27&height=27&name=image-670.webp)](https://www.k2view.com/security/)
+  - [![group-839747](https://www.k2view.com/hs-fs/hubfs/group-839747.webp?width=26&height=28&name=group-839747.webp)](https://www.k2view.com/security/)
+  
+  Twitter Widget Iframe
+  
+  Chat Widget
+  --- End Content ---
+
+How to Stop AI from Making Up Facts - 12 Tested Techniques That ...
+  URL: https://www.reddit.com/r/PromptEngineering/comments/1o77fk0/how_to_stop_ai_from_making_up_facts_12_tested/
+  How to Stop AI from Making Up Facts - 12 Tested Techniques That Prevent ChatGPT and Claude Hallucinations (2025 Guide) · THE 12 TECHNIQUES RANKED ...
+
+How to reduce AI hallucinations with prompt engineering? - Facebook
+  URL: https://www.facebook.com/groups/vibecodinglife/posts/2019882805266913/
+  - Systems that reduce hallucinations: - retrieve relevant records first; - force responses to reference that context; - refuse to answer when ...
