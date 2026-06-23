@@ -19,7 +19,9 @@ CONFIG_MAPPING = [
 
 def _build_user_content(state: PipelineState) -> str:
     cfg_text = build_config_instructions(get_config(state), CONFIG_MAPPING)
-    return f"""## 用户输入数据
+    video_title = getattr(state, 'video_title', '') or ""
+    title_section = f"## 视频任务标题\n{video_title}\n\n" if video_title else ""
+    return f"""{title_section}## 用户输入数据
 {state.user_data}
 
 ## 频道定位
@@ -27,7 +29,7 @@ def _build_user_content(state: PipelineState) -> str:
 
 {cfg_text}
 
-请根据以上数据生成 5 个候选选题。"""
+请根据以上数据生成 5 个候选选题。选题必须与视频任务标题高度相关。"""
 
 
 def run(state: PipelineState) -> dict:

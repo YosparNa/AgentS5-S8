@@ -55,6 +55,7 @@ class PipelineState:
     # 用户输入
     user_data: str = ""       # 用户喂入的数据
     channel_desc: str = ""    # 频道定位描述
+    video_title: str = ""     # 视频任务标题
     stage_config: dict = field(default_factory=dict)  # 当前阶段配置
 
     # 历史记录

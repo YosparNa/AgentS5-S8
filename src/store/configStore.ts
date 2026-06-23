@@ -18,6 +18,7 @@ interface ConfigStore {
   // S5 选题
   s5_channelDesc: string;
   s5_userData: string;
+  s5_videoTitle: string;
   s5_toggles: [boolean, boolean, boolean];
   s5_sliders: [number, number, number, number];
   s5_autoLock: boolean;
@@ -64,6 +65,7 @@ export const useConfig = create<ConfigStore>((set, get) => ({
   // S5 初始值
   s5_channelDesc: "",
   s5_userData: "",
+  s5_videoTitle: "",
   s5_toggles: [true, true, true],
   s5_sliders: [7, 8, 6, 9],
   s5_autoLock: true,

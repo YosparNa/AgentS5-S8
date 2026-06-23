@@ -189,6 +189,7 @@ class CreateWorkflowRequest(BaseModel):
     title: Optional[str] = None
     user_data: Optional[str] = ""
     channel_desc: Optional[str] = ""
+    video_title: Optional[str] = ""
 
 
 @router.post("/api/workflows")
@@ -222,6 +223,7 @@ async def create_workflow(req: CreateWorkflowRequest):
         "input": {
             "user_data": req.user_data or "",
             "channel_desc": req.channel_desc or "",
+            "video_title": req.video_title or "",
             "seed_keywords": req.seed_keywords or [],
             "platform": req.platform or "",
             "language": req.language or "",
@@ -294,6 +296,7 @@ async def _run_agent(wf: dict, stage: dict, config_override: dict = None):
         ps = PipelineState()
         ps.user_data = wf["input"].get("user_data", "")
         ps.channel_desc = wf["input"].get("channel_desc", "")
+        ps.video_title = wf["input"].get("video_title", "")
         wf["_state"] = ps
     ps = wf["_state"]
 
